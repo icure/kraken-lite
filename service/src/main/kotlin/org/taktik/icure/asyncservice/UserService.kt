@@ -1,0 +1,74 @@
+/*
+ * Copyright (c) 2020. Taktik SA, All rights reserved.
+ */
+package org.taktik.icure.asyncservice
+
+import kotlinx.coroutines.flow.Flow
+import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.chain.FilterChain
+import org.taktik.icure.entities.User
+import org.taktik.icure.entities.base.PropertyStub
+
+interface UserService {
+	// region create
+
+	suspend fun createUser(user: User): User?
+
+	// endregion
+
+	// region get
+
+	suspend fun getUser(id: String): User?
+	suspend fun getUserByEmail(email: String): User?
+	/**
+	 * Get a user matching the given identifier in the same group as the current user.
+	 * The generic identifier can be an id, login, email or phone number, and the search is done in this order.
+	 * This means for example that if the given [genericIdentifier] matches the [User.id] of a user and the [User.login]
+	 * of a different user, the user with the matching [User.id] will be returned.
+	 * @param genericIdentifier the identifier to search for.
+	 * @return a user matching the given identifier in the given group, or null if no user matches the given identifier
+	 */
+	suspend fun getUserByGenericIdentifier(genericIdentifier: String): User?
+	suspend fun getUserByLogin(login: String): User?
+	suspend fun getUserByPhone(phone: String): User?
+	fun listUserIdsByHcpartyId(hcpartyId: String): Flow<String>
+	fun findByPatientId(patientId: String): Flow<String>
+	fun findByNameEmailPhone(searchString: String, pagination: PaginationOffset<String>): Flow<ViewQueryResultEvent>
+	fun getUsers(ids: List<String>): Flow<User>
+	fun getUsersByLogin(login: String): Flow<User>
+	fun listUserIdsByNameEmailPhone(searchString: String): Flow<String>
+	fun listUsers(paginationOffset: PaginationOffset<String>, skipPatients: Boolean): Flow<ViewQueryResultEvent>
+	fun filterUsers(paginationOffset: PaginationOffset<Nothing>, filter: FilterChain<User>): Flow<ViewQueryResultEvent>
+	// endregion
+
+	// region modify
+
+	suspend fun modifyUser(modifiedUser: User): User?
+	suspend fun setProperties(userId: String, properties: List<PropertyStub>): User?
+	suspend fun disableUser(userId: String): User? // TODO use?
+	suspend fun enableUser(userId: String): User? // TODO use?
+
+	/**
+	 * Create a token for a user matching the generic identifier [userIdentifier] in the current user group.
+	 * If there is already a token for [key] in the user it will be replaced by a new token.
+	 * @param userIdentifier the identifier of the user to create a token for. This can be an id, login, email or a phone number.
+	 * @param key the key to associate with the token
+	 * @param tokenValidity the validity of the token in seconds
+	 * @param token the token to use. If null a token will be automatically generated
+	 * @param useShortToken if true and [token] is null the generated token will be a short numeric token, else it will be a full uuid.
+	 * @return the created token
+	 */
+	suspend fun createOrUpdateToken(userIdentifier: String, key: String, tokenValidity: Long = 3600, token: String? = null, useShortToken: Boolean = false): String
+
+	// endregion
+
+	// region delete
+
+	suspend fun deleteUser(userId: String): DocIdentifier?
+	suspend fun undeleteUser(userId: String)
+
+	// endregion
+
+}

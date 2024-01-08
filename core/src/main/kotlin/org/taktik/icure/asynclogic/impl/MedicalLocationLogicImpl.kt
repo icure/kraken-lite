@@ -1,0 +1,62 @@
+/*
+ * Copyright (c) 2020. Taktik SA, All rights reserved.
+ */
+
+package org.taktik.icure.asynclogic.impl
+
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.flow
+import org.springframework.context.annotation.Profile
+import org.springframework.stereotype.Service
+import org.taktik.couchdb.DocIdentifier
+import org.taktik.icure.asyncdao.MedicalLocationDAO
+import org.taktik.icure.asynclogic.MedicalLocationLogic
+import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
+import org.taktik.icure.entities.MedicalLocation
+import org.taktik.icure.exceptions.DeletionException
+import org.taktik.icure.validation.aspect.Fixer
+
+@Service
+@Profile("app")
+class MedicalLocationLogicImpl(
+	private val medicalLocationDAO: MedicalLocationDAO,
+	datastoreInstanceProvider: DatastoreInstanceProvider,
+	fixer: Fixer
+) : GenericLogicImpl<MedicalLocation, MedicalLocationDAO>(fixer, datastoreInstanceProvider), MedicalLocationLogic {
+
+	override suspend fun createMedicalLocation(medicalLocation: MedicalLocation) = fix(medicalLocation) { fixedMedicalLocation ->
+		if(fixedMedicalLocation.rev != null) throw IllegalArgumentException("A new entity should not have a rev")
+		val datastoreInformation = getInstanceAndGroup()
+		medicalLocationDAO.create(datastoreInformation, fixedMedicalLocation)
+	}
+
+	override fun getAllMedicalLocations(): Flow<MedicalLocation> = getEntities()
+
+	override fun deleteMedicalLocations(ids: List<String>): Flow<DocIdentifier> = flow {
+		try {
+			emitAll(deleteEntities(ids))
+		} catch (e: Exception) {
+			throw DeletionException(e.message, e)
+		}
+	}
+
+	override suspend fun getMedicalLocation(medicalLocation: String): MedicalLocation? {
+		val datastoreInformation = getInstanceAndGroup()
+		return medicalLocationDAO.get(datastoreInformation, medicalLocation)
+	}
+
+	override suspend fun modifyMedicalLocation(medicalLocation: MedicalLocation) = fix(medicalLocation) { fixedMedicalLocation ->
+		val datastoreInformation = getInstanceAndGroup()
+		medicalLocationDAO.save(datastoreInformation, fixedMedicalLocation)
+	}
+
+	override fun findMedicalLocationByPostCode(postCode: String): Flow<MedicalLocation> = flow {
+		val datastoreInformation = getInstanceAndGroup()
+		emitAll(medicalLocationDAO.byPostCode(datastoreInformation, postCode))
+	}
+
+	override fun getGenericDAO(): MedicalLocationDAO {
+		return medicalLocationDAO
+	}
+}

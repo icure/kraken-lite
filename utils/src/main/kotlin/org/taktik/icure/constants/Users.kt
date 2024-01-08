@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2020. Taktik SA, All rights reserved.
+ */
+package org.taktik.icure.constants
+
+interface Users {
+	enum class Type {
+		database, ldap, token
+	}
+
+	enum class Status {
+		ACTIVE, DISABLED, REGISTERING;
+
+		companion object {
+			fun fromInt(value: Int): Status {
+				return Status::class.java.enumConstants[value]
+			}
+		}
+	}
+}

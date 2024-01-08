@@ -1,0 +1,31 @@
+/*
+ * Copyright (c) 2020. Taktik SA, All rights reserved.
+ */
+
+package org.taktik.icure.asynclogic
+
+import kotlinx.coroutines.flow.Flow
+import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewRowWithDoc
+import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.entities.Insurance
+
+interface InsuranceLogic : EntityPersister<Insurance, String> {
+	suspend fun createInsurance(insurance: Insurance): Insurance?
+	suspend fun deleteInsurance(insuranceId: String): DocIdentifier?
+
+	suspend fun getInsurance(insuranceId: String): Insurance?
+	fun listInsurancesByCode(code: String): Flow<Insurance>
+	fun listInsurancesByName(name: String): Flow<Insurance>
+
+	suspend fun modifyInsurance(insurance: Insurance): Insurance?
+	fun getInsurances(ids: Set<String>): Flow<Insurance>
+
+	/**
+	 * Retrieves all the [Insurance]s defined in the group of the current logged-in user in a format for pagination.
+	 *
+	 * @param paginationOffset a [PaginationOffset] for pagination.
+	 * @return a [Flow] of [Insurance]s wrapped in [ViewRowWithDoc]s for pagination.
+	 */
+	fun getAllInsurances(paginationOffset: PaginationOffset<Nothing>): Flow<ViewRowWithDoc<Any?, String, Insurance>>
+}
