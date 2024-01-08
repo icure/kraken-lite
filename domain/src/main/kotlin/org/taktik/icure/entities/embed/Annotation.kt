@@ -44,27 +44,6 @@ data class Annotation(
 
 	fun merge(other: Annotation) = Annotation(args = this.solveConflictsWith(other))
 
-	override fun equals(other: Any?): Boolean {
-		if (this === other) return true
-		if (javaClass != other?.javaClass) return false
-
-		other as Annotation
-
-		if (id != other.id) return false
-		if (author != other.author) return false
-		if (created != other.created) return false
-		if (modified != other.modified) return false
-		if (text != other.text) return false
-		if (location != other.location) return false
-		if (markdown != other.markdown) return false
-		if (encryptedSelf != other.encryptedSelf) return false
-		if (tags != other.tags) return false
-		if (confidential != other.confidential) return false
-
-		return true
-	}
-
-
 	fun solveConflictsWith(other: Annotation) = mapOf(
 		"id" to (this.id),
 		"author" to (this.author ?: other.author),
@@ -77,16 +56,4 @@ data class Annotation(
 		"confidential" to (this.confidential ?: other.confidential),
 		"encryptedSelf" to (this.encryptedSelf ?: other.encryptedSelf),
 	)
-
-	override fun hashCode(): Int {
-		var result = id.hashCode()
-		result = 31 * result + (author?.hashCode() ?: 0)
-		result = 31 * result + (created?.hashCode() ?: 0)
-		result = 31 * result + (modified?.hashCode() ?: 0)
-		result = 31 * result + (text?.hashCode() ?: 0)
-		result = 31 * result + (location?.hashCode() ?: 0)
-		result = 31 * result + (markdown.hashCode())
-		result = 31 * result + (encryptedSelf?.hashCode() ?: 0)
-		return result
-	}
 }

@@ -10,7 +10,7 @@ import org.taktik.icure.services.external.rest.v1.dto.security.AuthenticationTok
 import org.taktik.icure.services.external.rest.v1.mapper.security.UnsecureAuthenticationTokenMapper
 
 interface SecureUserV1Mapper : SecureUserMapper<UserDto>
-abstract class SecureUserV1MapperImpl(
+open class SecureUserV1MapperImpl(
     userLogic: UserLogic,
     private val unsecureMapper: UnsecureUserMapper,
     private val unsecureTokenMapper: UnsecureAuthenticationTokenMapper

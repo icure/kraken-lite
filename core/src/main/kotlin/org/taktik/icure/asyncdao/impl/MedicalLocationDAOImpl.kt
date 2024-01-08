@@ -20,10 +20,9 @@ import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
 import org.taktik.icure.cache.EntityCacheFactory
 import org.taktik.icure.entities.MedicalLocation
 
-@Repository("MedicalLocationDAO")
-@Profile("app")
+// Differences between lite and cloud version: instantiated as a bean in the respective DAOConfig
 @View(name = "all", map = "function(doc) { if (doc.java_type == 'org.taktik.icure.entities.MedicalLocation' && !doc.deleted) emit( null, doc._id )}")
-class MedicalLocationDAOImpl(
+open class MedicalLocationDAOImpl(
     @Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
     idGenerator: IDGenerator,
 	entityCacheFactory: EntityCacheFactory,

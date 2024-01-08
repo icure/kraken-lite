@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.TotalCount
 import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.ViewRowWithDoc
+import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.couchdb.entity.Option
 import org.taktik.icure.asyncdao.PatientDAO
@@ -344,7 +345,7 @@ class PatientLogicImpl(
 
 	override fun findOfHcPartyAndSsinOrDateOfBirthOrNameContainsFuzzy(
 		healthcarePartyId: String,
-		offset: PaginationOffset<List<String>>,
+		offset: PaginationOffset<ComplexKey>,
 		searchString: String?,
 		sorting: Sorting
 	) = flow {
@@ -354,27 +355,27 @@ class PatientLogicImpl(
 			if (searchString.isNullOrEmpty()) {
 				when (sorting.field) {
 					"ssin" -> {
-						patientDAO.findPatientsOfHcPartyAndSsin(datastoreInformation, null, healthcarePartyId, offset.toComplexKeyPaginationOffset(), descending)
+						patientDAO.findPatientsOfHcPartyAndSsin(datastoreInformation, null, healthcarePartyId, offset, descending)
 					}
 
 					"dateOfBirth" -> {
-						patientDAO.findPatientsOfHcPartyDateOfBirth(datastoreInformation, null, null, healthcarePartyId, offset.toComplexKeyPaginationOffset(), descending)
+						patientDAO.findPatientsOfHcPartyDateOfBirth(datastoreInformation, null, null, healthcarePartyId, offset, descending)
 					}
 
 					else -> {
-						patientDAO.findPatientsOfHcPartyAndName(datastoreInformation, null, healthcarePartyId, offset.toComplexKeyPaginationOffset(), descending)
+						patientDAO.findPatientsOfHcPartyAndName(datastoreInformation, null, healthcarePartyId, offset, descending)
 					}
 				}
 			} else {
 				when {
 					FuzzyValues.isSsin(searchString) -> {
-						patientDAO.findPatientsOfHcPartyAndSsin(datastoreInformation, searchString, healthcarePartyId, offset.toComplexKeyPaginationOffset(), false)
+						patientDAO.findPatientsOfHcPartyAndSsin(datastoreInformation, searchString, healthcarePartyId, offset, false)
 					}
 
 					FuzzyValues.isDate(searchString) -> {
 						patientDAO.findPatientsOfHcPartyDateOfBirth(
 							datastoreInformation, FuzzyValues.toYYYYMMDD(searchString),
-							FuzzyValues.getMaxRangeOf(searchString), healthcarePartyId, offset.toComplexKeyPaginationOffset(), false
+							FuzzyValues.getMaxRangeOf(searchString), healthcarePartyId, offset, false
 						)
 					}
 

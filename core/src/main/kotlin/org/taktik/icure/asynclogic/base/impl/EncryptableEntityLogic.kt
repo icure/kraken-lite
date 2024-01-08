@@ -157,7 +157,7 @@ where
                 (request as EntityShareRequest).canonicalHash to request.encryptedExchangeDataId
             }?.toMap() ?: emptyMap())
         }
-        exchangeDataMapLogic.createOrUpdateExchangeDataMapBatch(mapsToCreate).collect()
+        exchangeDataMapLogic.createOrUpdateExchangeDataMapBatchById(mapsToCreate).collect()
     }
 
     private data class ValidatedShareRequest<E : Encryptable>(

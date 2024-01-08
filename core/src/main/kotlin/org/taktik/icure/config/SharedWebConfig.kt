@@ -26,15 +26,39 @@ import org.taktik.icure.services.external.http.WebSocketOperationHandler
 import reactor.netty.http.server.WebsocketServerSpec
 
 @Configuration
-class SharedWebConfig : WebFluxConfigurer {
-	private val CLASSPATH_RESOURCE_LOCATIONS = arrayOf("classpath:/META-INF/resources/", "classpath:/resources/", "classpath:/static/", "classpath:/public/")
+class SharedWebConfig {
+	// Do not remove: these beans are not used directly in any of our classes, but they are used by spring.
+	@Bean
+	fun handlerMapping(webSocketHandler: WebSocketOperationHandler) = SimpleUrlHandlerMapping().apply {
+		urlMap = mapOf("/ws/**" to webSocketHandler)
+		order = Ordered.HIGHEST_PRECEDENCE
+	}
+
+	@Bean
+	fun handlerAdapter(webSocketService: WebSocketService) =
+		WebSocketHandlerAdapter(webSocketService)
+
+	@Bean
+	fun webSocketService() = HandshakeWebSocketService(ReactorNettyRequestUpgradeStrategy(WebsocketServerSpec.builder().maxFramePayloadLength(64 * 1024 * 1024)))
+
+	// endregion
+}
+
+abstract class SharedWebFluxConfiguration : WebFluxConfigurer {
+	private val CLASSPATH_RESOURCE_LOCATIONS =
+		arrayOf("classpath:/META-INF/resources/", "classpath:/resources/", "classpath:/static/", "classpath:/public/")
+
 	override fun addResourceHandlers(registry: ResourceHandlerRegistry) {
 		registry.addResourceHandler("/**")
 			.addResourceLocations(*CLASSPATH_RESOURCE_LOCATIONS)
 	}
 
 	override fun addCorsMappings(registry: CorsRegistry) {
-		registry.addMapping("/**").allowCredentials(true).allowedOriginPatterns("*").allowedMethods("*").allowedHeaders("*")
+		registry.addMapping("/**")
+			.allowCredentials(true)
+			.allowedOriginPatterns("*")
+			.allowedMethods("*")
+			.allowedHeaders("*")
 	}
 
 	override fun configureHttpMessageCodecs(configurer: ServerCodecConfigurer) {
@@ -72,21 +96,4 @@ class SharedWebConfig : WebFluxConfigurer {
 	).apply {
 		setSerializationInclusion(JsonInclude.Include.NON_NULL)
 	}
-
-	// region ws-config Do not remove: these beans are not used directly in any of our classes, but they are used by spring.
-
-	@Bean
-	fun handlerMapping(webSocketHandler: WebSocketOperationHandler) = SimpleUrlHandlerMapping().apply {
-		urlMap = mapOf("/ws/**" to webSocketHandler)
-		order = Ordered.HIGHEST_PRECEDENCE
-	}
-
-	@Bean
-	fun handlerAdapter(webSocketService: WebSocketService) =
-		WebSocketHandlerAdapter(webSocketService)
-
-	@Bean
-	fun webSocketService() = HandshakeWebSocketService(ReactorNettyRequestUpgradeStrategy(WebsocketServerSpec.builder().maxFramePayloadLength(64 * 1024 * 1024)))
-
-	// endregion
 }

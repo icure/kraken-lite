@@ -15,9 +15,9 @@ interface MessageDAO : GenericDAO<Message> {
 	fun listMessagesByFromAddressAndActor(datastoreInformation: IDatastoreInformation, partyId: String, fromAddress: String, actorKeys: List<String>?): Flow<Message>
 	fun listMessagesByToAddressAndActor(datastoreInformation: IDatastoreInformation, partyId: String, toAddress: String, actorKeys: List<String>?): Flow<Message>
 	fun listMessagesByTransportGuidAndActor(datastoreInformation: IDatastoreInformation, partyId: String, transportGuid: String, actorKeys: List<String>?): Flow<Message>
-	fun listMessagesByFromAddress(datastoreInformation: IDatastoreInformation, partyId: String, fromAddress: String, paginationOffset: PaginationOffset<List<*>>, reverse: Boolean = false): Flow<ViewQueryResultEvent>
+	fun listMessagesByFromAddress(datastoreInformation: IDatastoreInformation, partyId: String, fromAddress: String, paginationOffset: PaginationOffset<ComplexKey>, reverse: Boolean = false): Flow<ViewQueryResultEvent>
 
-	fun findMessagesByToAddress(datastoreInformation: IDatastoreInformation, partyId: String, toAddress: String, paginationOffset: PaginationOffset<List<*>>, reverse: Boolean = false): Flow<ViewQueryResultEvent>
+	fun findMessagesByToAddress(datastoreInformation: IDatastoreInformation, partyId: String, toAddress: String, paginationOffset: PaginationOffset<ComplexKey>, reverse: Boolean = false): Flow<ViewQueryResultEvent>
 	fun findMessagesByHcPartySortedByReceived(
 		datastoreInformation: IDatastoreInformation,
 		partyId: String,
@@ -27,17 +27,17 @@ interface MessageDAO : GenericDAO<Message> {
 		datastoreInformation: IDatastoreInformation,
 		partyId: String,
 		transportGuid: String?,
-		paginationOffset: PaginationOffset<List<*>>
+		paginationOffset: PaginationOffset<List<String?>>
 	): Flow<ViewQueryResultEvent>
 	fun listMessageIdsByTransportGuid(datastoreInformation: IDatastoreInformation, hcPartyId: String, transportGuid: String?): Flow<String>
 	fun findMessagesByTransportGuidReceived(
 		datastoreInformation: IDatastoreInformation,
 		partyId: String,
 		transportGuid: String?,
-		paginationOffset: PaginationOffset<List<*>>
+		paginationOffset: PaginationOffset<ComplexKey>
 	): Flow<ViewQueryResultEvent>
 
-	fun findMessagesByTransportGuidAndSentDate(datastoreInformation: IDatastoreInformation, partyId: String, transportGuid: String, fromDate: Long, toDate: Long, paginationOffset: PaginationOffset<List<*>>): Flow<ViewQueryResultEvent>
+	fun findMessagesByTransportGuidAndSentDate(datastoreInformation: IDatastoreInformation, partyId: String, transportGuid: String, fromDate: Long, toDate: Long, paginationOffset: PaginationOffset<ComplexKey>): Flow<ViewQueryResultEvent>
 	fun listMessagesByHcPartyAndPatient(datastoreInformation: IDatastoreInformation, searchKeys: Set<String>, secretPatientKeys: List<String>): Flow<Message>
 	fun getChildren(datastoreInformation: IDatastoreInformation, messageId: String): Flow<Message>
 	fun listMessagesByInvoiceIds(datastoreInformation: IDatastoreInformation, invoiceIds: Set<String>): Flow<Message>

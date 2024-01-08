@@ -4,6 +4,7 @@
 
 package org.taktik.icure.services.external.rest.v1.mapper.filter
 
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.id.Identifiable
 import org.taktik.icure.domain.filter.AbstractFilter
@@ -31,6 +32,7 @@ import org.taktik.icure.services.external.rest.v1.dto.embed.ServiceDto
 import org.taktik.icure.services.external.rest.v1.dto.filter.AbstractFilterDto
 import org.taktik.icure.entities.embed.Service as iCureService
 @Service
+@Profile("app")
 class FilterChainMapper(
 	private val filterMapper: FilterMapper
 ) {

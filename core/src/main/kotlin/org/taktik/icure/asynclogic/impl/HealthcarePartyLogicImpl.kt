@@ -33,7 +33,6 @@ import java.util.*
 class HealthcarePartyLogicImpl(
     private val filters: Filters,
     private val healthcarePartyDAO: HealthcarePartyDAO,
-    private val sessionLogic: SessionInformationProvider,
     datastoreInstanceProvider: org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider,
     fixer: Fixer
 ) : GenericLogicImpl<HealthcareParty, HealthcarePartyDAO>(fixer, datastoreInstanceProvider), HealthcarePartyLogic {

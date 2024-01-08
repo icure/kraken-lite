@@ -1,10 +1,12 @@
 package org.taktik.icure.security.credentials
 
+import org.springframework.context.annotation.Profile
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import org.taktik.icure.properties.AuthenticationProperties
 
 @Component
+@Profile("app")
 class BaseSecretValidator(
     private val passwordEncoder: PasswordEncoder,
     private val authenticationProperties: AuthenticationProperties,

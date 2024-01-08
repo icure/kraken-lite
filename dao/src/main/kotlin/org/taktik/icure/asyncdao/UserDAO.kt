@@ -25,7 +25,6 @@ interface UserDAO : GenericDAO<User> {
 	suspend fun getUserOnUserDb(datastoreInformation: IDatastoreInformation, userId: String, bypassCache: Boolean): User
 	suspend fun findUserOnUserDb(datastoreInformation: IDatastoreInformation, userId: String, bypassCache: Boolean): User?
 	fun getUsersOnDb(datastoreInformation: IDatastoreInformation): Flow<User>
-	suspend fun evictFromCache(datastoreInformation: IDatastoreInformation, userIds: Flow<String>)
 	fun findUsersByIds(datastoreInformation: IDatastoreInformation, userIds: Flow<String>): Flow<ViewQueryResultEvent>
 	fun findUsersByNameEmailPhone(datastoreInformation: IDatastoreInformation, searchString: String, pagination: PaginationOffset<String>): Flow<ViewQueryResultEvent>
 }

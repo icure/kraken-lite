@@ -31,47 +31,12 @@ class ExchangeDataMapController(
     private val exchangeDataMapService: ExchangeDataMapService,
     private val exchangeDataMapV2Mapper: ExchangeDataMapV2Mapper
 ) {
-
-    @Operation(description = "Retrieves an existing Exchange Data Map")
-    @GetMapping("/{exchangeDataMapId}")
-    fun getExchangeDataMap(
-        @PathVariable exchangeDataMapId: String
-    ) = mono {
-        exchangeDataMapService.getExchangeDataMap(exchangeDataMapId)?.let {
-            exchangeDataMapV2Mapper.map(it)
-        } ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot retrieve the Exchange Data Map with id $exchangeDataMapId")
-    }
-
-    @Operation(description = "Creates a new Exchange Data Map")
-    @PostMapping
-    fun createExchangeDataMap(
-        @RequestBody dataMap: ExchangeDataMapDto
-    ) = mono {
-        exchangeDataMapService.createExchangeDataMap(exchangeDataMapV2Mapper.map(dataMap))?.let {
-            exchangeDataMapV2Mapper.map(it)
-        } ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Exchange Data Map creation failed")
-    }
-
-    @Operation(description = "Modifies an existing Exchange Data Map")
-    @PutMapping("/forKey/{accessControlKey}")
-    fun modifyExchangeDataMap(
-        @PathVariable accessControlKey: String,
-        @RequestBody dataMap: ExchangeDataMapDto
-    ) = mono {
-        exchangeDataMapService.modifyExchangeDataMap(
-            accessControlKey,
-            exchangeDataMapV2Mapper.map(dataMap)
-        )?.let {
-            exchangeDataMapV2Mapper.map(it)
-        } ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Cannot modify the Exchange Data Map for key $accessControlKey")
-    }
-
     @Operation(description = "Creates a new Exchange Data Map batch, updating the ones that already exist")
     @PutMapping("/batch")
     fun createOrUpdateExchangeDataMapBatch(
         @RequestBody batch: ExchangeDataMapCreationBatch
     ) = mono {
-        exchangeDataMapService.createOrUpdateExchangeDataMapBatch(
+        exchangeDataMapService.createOrUpdateExchangeDataMapBatchByAccessControlKey(
             batch.batch
         ).collect()
         ResponseEntity.ok().body("ok")

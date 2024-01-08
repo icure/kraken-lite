@@ -325,7 +325,7 @@ class CodeLogicImpl(
 								code = mutableMapOf("type" to type, "version" to version, "label" to mapOf<String, String>(), "regions" to setOf<String>())
 							}
 							"CODE" -> charsHandler = { code["code"] = it }
-							"PARENT" -> charsHandler = { code["qualifiedLinks"] = mapOf(LinkQualification.parent to listOf("$type|$it|$version")) }
+							"PARENT" -> charsHandler = { code["qualifiedLinks"] = mapOf(LinkQualification.parent.name to listOf("$type|$it|$version")) }
 							"DESCRIPTION" -> charsHandler = { attributes?.getValue("L")?.let { attributesValue -> code["label"] = (code["label"] as Map<String, String>) + (attributesValue to it.trim()) } }
 							"REGIONS" -> charsHandler = { code["regions"] = (code["regions"] as Set<String>) + it.trim() }
 							else -> {

@@ -12,7 +12,7 @@ import org.taktik.icure.entities.base.Encryptable
 
 data class CodeByRegionTypeLabelLanguageFilter(
 	override val desc: String? = null,
-	override val region: String,
+	override val region: String? = null,
 	override val type: String,
 	override val language: String,
 	override val label: String? = null
@@ -37,9 +37,7 @@ data class CodeByRegionTypeLabelLanguageFilter(
 	override fun matches(item: Code, searchKeyMatcher: (String, Encryptable) -> Boolean): Boolean {
 		val ss = sanitizeString(label)
 		return ss != null && (
-			(region == null || item.regions.contains(region)) &&
-				type == null &&
-				if (language == null) item.label?.values?.any { s -> sanitizeString(s)?.contains(ss) == true } == true else item.label?.get(language)?.let { s -> sanitizeString(s)?.contains(ss) } == true
-			)
+			(region == null || item.regions.contains(region)) && item.label?.get(language)?.let { s -> sanitizeString(s)?.contains(ss) } == true
+		)
 	}
 }

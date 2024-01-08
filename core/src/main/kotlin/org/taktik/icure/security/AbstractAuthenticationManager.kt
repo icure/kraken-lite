@@ -6,6 +6,8 @@ import io.jsonwebtoken.security.SecurityException
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.mono
 import org.jboss.aerogear.security.otp.Totp
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.GrantedAuthority
@@ -14,12 +16,15 @@ import org.taktik.icure.asyncdao.HealthcarePartyDAO
 import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
 import org.taktik.icure.entities.HealthcareParty
 import org.taktik.icure.entities.User
+import org.taktik.icure.entities.base.BaseUser
 import org.taktik.icure.entities.embed.AuthenticationClass
+import org.taktik.icure.exceptions.IllegalEntityException
 import org.taktik.icure.exceptions.InvalidJwtException
 import org.taktik.icure.security.jwt.JwtAuthenticationToken
 import org.taktik.icure.security.jwt.JwtDetails
 import org.taktik.icure.security.jwt.JwtRefreshDetails
 import org.taktik.icure.security.jwt.JwtUtils
+import org.taktik.icure.utils.info
 import reactor.core.publisher.Mono
 
 abstract class AbstractAuthenticationManager <
@@ -30,6 +35,7 @@ abstract class AbstractAuthenticationManager <
     private val passwordEncoder: PasswordEncoder,
     protected val jwtUtils: JwtUtils
 ) : CustomReactiveAuthenticationManager {
+    protected val log: Logger = LoggerFactory.getLogger(javaClass)
 
     companion object {
         val TOKEN_REGEX = Regex("^[0-9]{6}[0-9]*$")
@@ -122,9 +128,13 @@ abstract class AbstractAuthenticationManager <
     protected tailrec suspend fun getHcpHierarchy(childHcp: HealthcareParty, datastore: IDatastoreInformation, hierarchy: List<HealthcareParty> = emptyList()): List<HealthcareParty> =
         if(childHcp.parentId == null) hierarchy
         else {
-            val parent = healthcarePartyDAO.get(datastore, childHcp.parentId!!)
-            if(parent == null) hierarchy
-            else getHcpHierarchy(parent, datastore, listOf(parent) + hierarchy)
+            if (hierarchy.drop(1).any { it.id == childHcp.id }) throw IllegalEntityException("Circular reference in the hcp hierarchy detected. You have set yourself as an ancestor in the hierarchy. Time loop threatening space time fabric detected.")
+            if (childHcp.parentId == childHcp.id) hierarchy.also {
+                log.info { "Hcp ${childHcp.id} set themself as a parent" }
+            } else {
+                val parent = healthcarePartyDAO.get(datastore, childHcp.parentId!!)
+                if (parent == null) hierarchy else getHcpHierarchy(parent, datastore, listOf(parent) + hierarchy)
+            }
         }
 
     /**
@@ -136,7 +146,7 @@ abstract class AbstractAuthenticationManager <
      * - [PasswordValidationStatus.Missing2fa]: Password validated, but 2FA verification code is missing
      * - [PasswordValidationStatus.Failed2fa]: Password validated, but 2FA verification code is wrong
      */
-    protected fun isPasswordValid(u: User, password: String): PasswordValidationStatus {
+    protected fun isPasswordValid(u: BaseUser, password: String): PasswordValidationStatus {
         val containsTokenResult = doesUserContainsToken(u, appToken = password)
         if (containsTokenResult.containsToken) return PasswordValidationStatus.Success(
             if (containsTokenResult.isShortLivedToken)
@@ -182,7 +192,7 @@ abstract class AbstractAuthenticationManager <
 
     @Suppress("DEPRECATION")
     private fun doesUserContainsToken(
-        u: User, appToken: String
+        u: BaseUser, appToken: String
     ) = if (u.applicationTokens?.containsValue(appToken) == true) {
         ContainsTokenResult(containsToken = true, isShortLivedToken = false)
     } else {

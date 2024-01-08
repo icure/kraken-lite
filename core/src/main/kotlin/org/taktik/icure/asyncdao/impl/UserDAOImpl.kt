@@ -30,10 +30,9 @@ import org.taktik.icure.cache.EntityCacheFactory
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.User
 
-@Repository("userDAO")
-@Profile("app")
+// Differences between lite and cloud version: instantiated as a bean in the respective DAOConfig
 @View(name = "all", map = "function(doc) { if (doc.java_type == 'org.taktik.icure.entities.User' && !doc.deleted) emit( null, doc._rev )}")
-class UserDAOImpl(
+open class UserDAOImpl(
 	@Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
 	idGenerator: IDGenerator,
 	entityCacheFactory: EntityCacheFactory,
@@ -185,12 +184,6 @@ class UserDAOImpl(
 		val client = couchDbDispatcher.getClient(datastoreInformation)
 
 		emitAll(client.queryViewIncludeDocsNoValue<String, User>(createQuery(datastoreInformation, "all").includeDocs(true)).map { it.doc })
-	}
-
-	override suspend fun evictFromCache(datastoreInformation: IDatastoreInformation, userIds: Flow<String>) {
-		userIds.collect { u ->
-			cacheChain?.evictFromCache(datastoreInformation.getFullIdFor(u))
-		}
 	}
 
 	override fun findUsersByIds(datastoreInformation: IDatastoreInformation, userIds: Flow<String>): Flow<ViewQueryResultEvent> = flow {

@@ -9,20 +9,6 @@ import org.taktik.icure.entities.utils.KeypairFingerprintV2String
 interface ExchangeDataMapService {
 
     /**
-     * Creates a new [ExchangeDataMap] in the database. All data owners can access this method.
-     * @param exchangeDataMap the [ExchangeDataMap] to create.
-     * @return the [ExchangeDataMap] as saved on the database.
-     */
-    suspend fun createExchangeDataMap(exchangeDataMap: ExchangeDataMap): ExchangeDataMap?
-
-    /**
-     * Gets an existing [ExchangeDataMap] from the database by its id. All data owners can access this method.
-     * @param id the id of the [ExchangeDataMap].
-     * @return an [ExchangeDataMap] or null if not found
-     */
-    suspend fun getExchangeDataMap(id: String): ExchangeDataMap?
-
-    /**
      * Updates an existing [ExchangeDataMap]. Only the data owners that can provide the access control key corresponding
      * to an exchange data map can update it.
      * @param accessControlKey the hex-encoded string of the access control key for the map to modify.
@@ -39,7 +25,7 @@ interface ExchangeDataMapService {
      * of the public key used to encrypt it.
      * @return a [Flow] of all the [ExchangeDataMap] that were successfully created or updated.
      */
-    fun createOrUpdateExchangeDataMapBatch(batch: Map<HexString, Map<KeypairFingerprintV2String, Base64String>>): Flow<ExchangeDataMap>
+    fun createOrUpdateExchangeDataMapBatchByAccessControlKey(batch: Map<HexString, Map<KeypairFingerprintV2String, Base64String>>): Flow<ExchangeDataMap>
 
     /**
      * Gets a batch of [ExchangeDataMap] by their ids. All data owners can access this method

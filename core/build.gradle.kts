@@ -25,7 +25,6 @@ dependencies {
     implementation(project(":kraken-common:service"))
 
     implementation(coreLibs.hibernateValidator)
-    implementation(coreLibs.bundles.hazelCastLibs)
     implementation(coreLibs.bundles.springBootLibs)
     implementation(coreLibs.bundles.jacksonLibs)
     implementation(coreLibs.bundles.springLibs)

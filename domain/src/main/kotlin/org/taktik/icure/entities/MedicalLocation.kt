@@ -36,6 +36,7 @@ data class MedicalLocation(
 	val address: Address? = null,
 	val agendaIds: Set<String> = emptySet(),
 	val options: Map<String, String> = emptyMap(),
+	val publicInformations: Map<String, String> = emptyMap(),
 	@JsonProperty("_attachments") override val attachments: Map<String, Attachment>? = emptyMap(),
 	@JsonProperty("_revs_info") override val revisionsInfo: List<RevisionInfo>? = emptyList(),
 	@JsonProperty("_conflicts") override val conflicts: List<String>? = emptyList(),

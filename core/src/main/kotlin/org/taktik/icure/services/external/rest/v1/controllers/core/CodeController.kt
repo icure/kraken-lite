@@ -78,7 +78,7 @@ class CodeController(
 
 		val realLimit = limit ?: DEFAULT_LIMIT
 
-		val startKeyElements: List<String?>? = if (startKey == null) null else objectMapper.readValue<List<String>>(startKey)
+		val startKeyElements = if (startKey == null) null else objectMapper.readValue<List<String?>>(startKey)
 		val paginationOffset = PaginationOffset(startKeyElements, startDocumentId, null, realLimit + 1)
 
 		val typesList = types.split(',').toSet()

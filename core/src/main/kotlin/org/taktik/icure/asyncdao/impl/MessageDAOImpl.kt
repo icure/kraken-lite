@@ -36,8 +36,7 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Message
 import org.taktik.icure.utils.*
 
-@Repository("MessageDAOImpl")
-@Profile("app")
+// Differences between lite and cloud version: instantiated as a bean in the respective DAOConfig
 @View(name = "all", map = "function(doc) { if (doc.java_type == 'org.taktik.icure.entities.Message' && !doc.deleted) emit( null, doc._id )}")
 open class MessageDAOImpl(
 	@Qualifier("healthdataCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
@@ -153,7 +152,7 @@ open class MessageDAOImpl(
 		datastoreInformation: IDatastoreInformation,
 		partyId: String,
 		fromAddress: String,
-		paginationOffset: PaginationOffset<List<*>>,
+		paginationOffset: PaginationOffset<ComplexKey>,
 		reverse: Boolean
 	) = flow {
 		val client = couchDbDispatcher.getClient(datastoreInformation)
@@ -167,7 +166,7 @@ open class MessageDAOImpl(
 			"by_data_owner_from_address" to DATA_OWNER_PARTITION,
 			startKey,
 			endKey,
-			paginationOffset.toPaginationOffset { ComplexKey.of(*it.toTypedArray()) },
+			paginationOffset,
 			reverse
 		)
 		emitAll(
@@ -192,7 +191,7 @@ open class MessageDAOImpl(
 		datastoreInformation: IDatastoreInformation,
 		partyId: String,
 		toAddress: String,
-		paginationOffset: PaginationOffset<List<*>>,
+		paginationOffset: PaginationOffset<ComplexKey>,
 		reverse: Boolean
 	) =
 		flow {
@@ -207,7 +206,7 @@ open class MessageDAOImpl(
 				"by_data_owner_to_address" to DATA_OWNER_PARTITION,
 				startKey,
 				endKey,
-				paginationOffset.toPaginationOffset { ComplexKey.of(*it.toTypedArray()) },
+				paginationOffset,
 				reverse
 			)
 			emitAll(
@@ -228,7 +227,7 @@ open class MessageDAOImpl(
 		datastoreInformation: IDatastoreInformation,
 		partyId: String,
 		transportGuid: String?,
-		paginationOffset: PaginationOffset<List<*>>
+		paginationOffset: PaginationOffset<List<String?>>
 	) = flow {
 		val client = couchDbDispatcher.getClient(datastoreInformation)
 
@@ -248,7 +247,7 @@ open class MessageDAOImpl(
 			"by_data_owner_transport_guid" to DATA_OWNER_PARTITION,
 			startKey,
 			endKey,
-			paginationOffset.toPaginationOffset { ComplexKey.of(*it.toTypedArray()) },
+			paginationOffset.toComplexKeyPaginationOffset(),
 			false
 		)
 		emitAll(client.interleave<ComplexKey, String, Message>(viewQueries, compareBy({it.components[0] as? String}, {it.components[1] as? String})))
@@ -287,7 +286,7 @@ open class MessageDAOImpl(
 		datastoreInformation: IDatastoreInformation,
 		partyId: String,
 		transportGuid: String?,
-		paginationOffset: PaginationOffset<List<*>>
+		paginationOffset: PaginationOffset<ComplexKey>
 	) = flow {
 		val client = couchDbDispatcher.getClient(datastoreInformation)
 
@@ -306,7 +305,7 @@ open class MessageDAOImpl(
 			"by_data_owner_transport_guid_received" to DATA_OWNER_PARTITION,
 			startKey,
 			endKey,
-			paginationOffset.toPaginationOffset { ComplexKey.of(*it.toTypedArray()) },
+			paginationOffset,
 			false
 		)
 		emitAll(client.interleave<ComplexKey, String, Message>(viewQueries, compareBy({it.components[0] as? String}, {it.components[1] as? String}, { (it.components[2] as? Number)?.toLong() })))
@@ -316,7 +315,7 @@ open class MessageDAOImpl(
     	View(name = "by_hcparty_transport_guid_sent_date", map = "classpath:js/message/By_hcparty_transport_guid_sent_date.js"),
     	View(name = "by_data_owner_transport_guid_sent_date", map = "classpath:js/message/By_data_owner_transport_guid_sent_date.js", secondaryPartition = DATA_OWNER_PARTITION),
 	)
-	override fun findMessagesByTransportGuidAndSentDate(datastoreInformation: IDatastoreInformation, partyId: String, transportGuid: String, fromDate: Long, toDate: Long, paginationOffset: PaginationOffset<List<*>>) =
+	override fun findMessagesByTransportGuidAndSentDate(datastoreInformation: IDatastoreInformation, partyId: String, transportGuid: String, fromDate: Long, toDate: Long, paginationOffset: PaginationOffset<ComplexKey>) =
 		flow {
 			val client = couchDbDispatcher.getClient(datastoreInformation)
 			val startKey = ComplexKey.of(partyId, transportGuid, fromDate)
@@ -328,7 +327,7 @@ open class MessageDAOImpl(
 				"by_data_owner_transport_guid_sent_date" to DATA_OWNER_PARTITION,
 				startKey,
 				endKey,
-				paginationOffset.toPaginationOffset { ComplexKey.of(*it.toTypedArray()) },
+				paginationOffset,
 				false
 			)
 			emitAll(client.interleave<ComplexKey, String, Message>(viewQueries, compareBy({it.components[0] as? String}, {it.components[1] as? String}, { (it.components[2] as? Number)?.toLong() })))

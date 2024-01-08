@@ -1,6 +1,7 @@
 package org.taktik.icure.asynclogic.impl
 
 import org.hibernate.validator.internal.engine.path.NodeImpl
+import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import org.taktik.icure.validation.AutoFix
 import org.taktik.icure.validation.DataOwnerProvider
@@ -13,8 +14,8 @@ import kotlin.reflect.full.instanceParameter
 import kotlin.reflect.full.memberFunctions
 import kotlin.reflect.full.memberProperties
 
-
 @Service
+@Profile("app")
 class FixerImpl (
     private val dataOwnerProvider: DataOwnerProvider,
 ) : Fixer {

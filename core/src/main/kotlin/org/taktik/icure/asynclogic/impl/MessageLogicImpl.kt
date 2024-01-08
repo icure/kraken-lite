@@ -90,26 +90,26 @@ class MessageLogicImpl(
 	}
 
 	override fun findMessagesByFromAddress(
-		partyId: String, fromAddress: String, paginationOffset: PaginationOffset<List<*>>
+		partyId: String, fromAddress: String, paginationOffset: PaginationOffset<ComplexKey>
 	) = flow {
 		val datastoreInformation = getInstanceAndGroup()
 		emitAll(messageDAO.listMessagesByFromAddress(datastoreInformation, partyId, fromAddress, paginationOffset))
 	}
 
-	override fun findMessagesByToAddress(partyId: String, toAddress: String, paginationOffset: PaginationOffset<List<*>>, reverse: Boolean) = flow {
+	override fun findMessagesByToAddress(partyId: String, toAddress: String, paginationOffset: PaginationOffset<ComplexKey>, reverse: Boolean) = flow {
 		val datastoreInformation = getInstanceAndGroup()
 		emitAll(messageDAO.findMessagesByToAddress(datastoreInformation, partyId, toAddress, paginationOffset, reverse))
 	}
 
 	override fun findMessagesByTransportGuidReceived(
-		partyId: String, transportGuid: String?, paginationOffset: PaginationOffset<List<*>>
+		partyId: String, transportGuid: String?, paginationOffset: PaginationOffset<ComplexKey>
 	) = flow {
 		val datastoreInformation = getInstanceAndGroup()
 		emitAll(messageDAO.findMessagesByTransportGuidReceived(datastoreInformation, partyId, transportGuid, paginationOffset))
 	}
 
 	override fun findMessagesByTransportGuid(
-		partyId: String, transportGuid: String?, paginationOffset: PaginationOffset<List<*>>
+		partyId: String, transportGuid: String?, paginationOffset: PaginationOffset<List<String?>>
 	) = flow {
 		val datastoreInformation = getInstanceAndGroup()
 		emitAll(messageDAO.findMessagesByTransportGuid(datastoreInformation, partyId, transportGuid, paginationOffset))
@@ -123,7 +123,7 @@ class MessageLogicImpl(
 		emitAll(messageDAO.listMessageIdsByTransportGuid(datastoreInformation, hcPartyId, transportGuid))
 	}
 
-	override fun findMessagesByTransportGuidSentDate(partyId: String, transportGuid: String, fromDate: Long, toDate: Long, paginationOffset: PaginationOffset<List<*>>) = flow {
+	override fun findMessagesByTransportGuidSentDate(partyId: String, transportGuid: String, fromDate: Long, toDate: Long, paginationOffset: PaginationOffset<ComplexKey>) = flow {
 		val datastoreInformation = getInstanceAndGroup()
 		emitAll(messageDAO.findMessagesByTransportGuidAndSentDate(datastoreInformation, partyId, transportGuid, fromDate, toDate, paginationOffset))
 	}

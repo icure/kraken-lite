@@ -6,11 +6,16 @@
 package org.taktik.icure.services.external.http
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.slf4j.LoggerFactory
+import org.springframework.http.HttpStatus
 import org.springframework.http.server.PathContainer
+import org.springframework.security.authentication.AuthenticationServiceException
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.reactive.socket.CloseStatus
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketMessage
+import org.springframework.web.reactive.socket.WebSocketSession
 import org.springframework.web.util.pattern.PathPattern
 import org.springframework.web.util.pattern.PathPatternParser
 import org.taktik.icure.asynclogic.SessionInformationProvider
@@ -27,7 +32,6 @@ import reactor.core.publisher.Mono
 import java.lang.reflect.Method
 import java.lang.reflect.Parameter
 
-
 abstract class WebSocketOperationHandler(
     wsControllers: List<WsController>,
     val objectMapper: ObjectMapper,
@@ -35,6 +39,15 @@ abstract class WebSocketOperationHandler(
     private val operationFactories: List<WebSocketOperationFactory>,
     private val defaultFactory: DefaultWebSocketOperationFactoryImpl,
 ) : WebSocketHandler {
+
+    companion object {
+        /**
+         * The status code for a custom close status.
+         * https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code
+         */
+        const val CUSTOM_CLOSE_STATUS_CODE = 4000
+    }
+
     private val log = LoggerFactory.getLogger(this.javaClass)
     val ppp: PathPatternParser = PathPatternParser.defaultInstance
     val methods: Map<String, Pair<PathPattern, WebSocketInvocation>> =
@@ -120,6 +133,23 @@ abstract class WebSocketOperationHandler(
                 Mono.error<Nothing>(IllegalArgumentException("Invalid parameters for method", e))
             }
         }
+    }
+
+    protected suspend fun handleOperationError(session: WebSocketSession, e: Throwable) {
+        when (e) {
+            is IllegalArgumentException ->
+                HttpStatus.BAD_REQUEST to e.message
+            is org.springframework.security.access.AccessDeniedException ->
+                HttpStatus.FORBIDDEN to e.message
+            is AuthenticationServiceException ->
+                HttpStatus.UNAUTHORIZED to "You must be authenticated to use this method"
+            else -> (HttpStatus.INTERNAL_SERVER_ERROR to "An internal error occurred").also {
+                log.error("Error while performing operation ")
+            }
+        }.let { (httpStatus, message) ->
+            session.close(CloseStatus(CUSTOM_CLOSE_STATUS_CODE + httpStatus.value(), message))
+        }.awaitFirstOrNull()
+        throw e
     }
 }
 

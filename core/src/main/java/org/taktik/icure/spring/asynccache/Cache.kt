@@ -4,7 +4,6 @@
 
 package org.taktik.icure.spring.asynccache
 
-import com.hazelcast.map.IMap
 import org.springframework.cache.Cache
 
 interface Cache<K, V> {

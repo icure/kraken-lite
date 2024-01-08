@@ -36,8 +36,6 @@ data class UserDto(
 	@Schema(description = "State of user's activeness: 'Active', 'Disabled' or 'Registering'") val status: Users.Status? = null,
 	@Schema(description = "Username for this user. We encourage using an email address") val login: String? = null,
 	@Schema(description = "Hashed version of the password (BCrypt is used for hashing)") val passwordHash: String? = null,
-	@Schema(description = "Secret token used to verify 2fa") val secret: String? = null,
-	@Schema(description = "Whether the user has activated two factors authentication") val use2fa: Boolean? = null,
 	@Schema(description = "id of the group (practice/hospital) the user is member of") val groupId: String? = null,
 	@Schema(description = "Id of the healthcare party if the user is a healthcare party.") val healthcarePartyId: String? = null,
 	@Schema(description = "Id of the patient if the user is a patient") val patientId: String? = null,

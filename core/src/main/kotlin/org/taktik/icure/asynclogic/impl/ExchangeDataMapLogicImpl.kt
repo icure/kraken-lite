@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.single
+import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
 import org.springframework.context.annotation.Profile
 import org.springframework.security.access.AccessDeniedException
@@ -16,6 +18,8 @@ import org.taktik.icure.entities.ExchangeDataMap
 import org.taktik.icure.entities.utils.Base64String
 import org.taktik.icure.entities.utils.HexString
 import org.taktik.icure.entities.utils.KeypairFingerprintV2String
+import org.taktik.icure.security.hashAccessControlKey
+import org.taktik.icure.utils.hexStringToByteArray
 import org.taktik.icure.validation.aspect.Fixer
 import java.lang.IllegalStateException
 
@@ -27,7 +31,14 @@ class ExchangeDataMapLogicImpl(
     fixer: Fixer
 ) : GenericLogicImpl<ExchangeDataMap, ExchangeDataMapDAO>(fixer, datastoreInstanceProvider), ExchangeDataMapLogic {
     override fun getGenericDAO(): ExchangeDataMapDAO = exchangeDataMapDAO
-    override fun createOrUpdateExchangeDataMapBatch(batch: Map<HexString, Map<KeypairFingerprintV2String, Base64String>>): Flow<ExchangeDataMap> = flow {
+
+    override suspend fun modifyExchangeDataMap(exchangeDataMap: ExchangeDataMap): ExchangeDataMap? =
+        modifyEntities(listOf(exchangeDataMap)).single()
+
+    override fun getExchangeDataMapBatch(ids: Collection<String>): Flow<ExchangeDataMap> =
+        getEntities(ids)
+
+    override fun createOrUpdateExchangeDataMapBatchById(batch: Map<HexString, Map<KeypairFingerprintV2String, Base64String>>): Flow<ExchangeDataMap> = flow {
         val existingBatch = getEntities(batch.keys).toList().associateBy { it.id }
         val updatedBatch = batch.mapNotNull { (secDelKey, encryptedExchangeDataIds) ->
             val originalXDM = existingBatch[secDelKey]
@@ -58,4 +69,7 @@ class ExchangeDataMapLogicImpl(
             )
         }
     }
+
+    override fun createOrUpdateExchangeDataMapBatchByAccessControlKey(batch: Map<HexString, Map<KeypairFingerprintV2String, Base64String>>): Flow<ExchangeDataMap> =
+        createOrUpdateExchangeDataMapBatchById(batch.mapKeys { (k, _) -> hashAccessControlKey(k.hexStringToByteArray()) })
 }

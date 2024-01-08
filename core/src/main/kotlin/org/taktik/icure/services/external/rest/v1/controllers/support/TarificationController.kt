@@ -64,7 +64,7 @@ class TarificationController(
 	) = mono {
 		val realLimit = limit ?: DEFAULT_LIMIT
 		val startKeyElements = startKey?.takeIf { it.isNotEmpty() }?.let {
-			objectMapper.readValue<List<String>>(
+			objectMapper.readValue<List<String?>>(
 				startKey,
 				objectMapper.typeFactory.constructCollectionType(List::class.java, String::class.java)
 			)
@@ -101,7 +101,7 @@ class TarificationController(
 	) = mono {
 		val realLimit = limit ?: DEFAULT_LIMIT
 		val startKeyElements = startKey?.takeIf { it.isNotEmpty() }?.let {
-			objectMapper.readValue<List<String>>(
+			objectMapper.readValue<List<String?>>(
 				startKey,
 				objectMapper.typeFactory.constructCollectionType(List::class.java, String::class.java)
 			)

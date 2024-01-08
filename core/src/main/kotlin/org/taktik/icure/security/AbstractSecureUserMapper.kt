@@ -47,7 +47,6 @@ abstract class AbstractSecureUserMapper<UserDto, AuthenticationTokenDto>(
             val filledAuthenticationTokens = existingUser.authenticationTokens + modifiedUser.authenticationTokens - userDto.deletedTokensKeys()
             modifiedUser.copy(
                 passwordHash = filledPassword,
-                secret = filledSecret,
                 applicationTokens = filledApplicationTokens,
                 authenticationTokens = filledAuthenticationTokens
             )
@@ -61,7 +60,6 @@ abstract class AbstractSecureUserMapper<UserDto, AuthenticationTokenDto>(
     override fun mapOmittingSecrets(user: User): UserDto = unsecureMapUserToDto(
         user.copy(
             passwordHash = user.passwordHash?.let { "*" },
-            secret = null,
             applicationTokens = emptyMap()
         )
     ).withAuthenticationTokens(

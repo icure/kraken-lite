@@ -1,17 +1,16 @@
 package org.taktik.icure.asynclogic.impl
 
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Profile
 import org.springframework.stereotype.Service
 import org.taktik.icure.applications.utils.JarUtils
-import org.taktik.icure.asynclogic.PropertyLogic
 import org.taktik.icure.asynclogic.VersionLogic
-import org.taktik.icure.constants.PropertyTypes
 
 @Service
 @Profile("app")
 class VersionLogicImpl(
-    private val propertyLogic: PropertyLogic,
-    private val jarUtils: JarUtils
+    private val jarUtils: JarUtils,
+    @Value("\${icure.version}") val versionFromProperties: String,
 ): VersionLogic {
     override fun getVersion(): String {
         val manifest = jarUtils.manifest
@@ -19,7 +18,7 @@ class VersionLogicImpl(
             val version = manifest.mainAttributes.getValue("Build-revision")
             version?.trim { it <= ' ' } ?: ""
         } else {
-            propertyLogic.getSystemPropertyValue<Any>(PropertyTypes.System.VERSION.identifier).toString().trim { it <= ' ' }
+            versionFromProperties.trim { it <= ' ' }
         }
     }
 

@@ -28,7 +28,6 @@ abstract class DataAttachmentModificationLogicImpl<T : HasDataAttachments<T>>(
     private val dao: AttachmentManagementDAO<T>,
     private val icureObjectStorage: IcureObjectStorage<T>,
     private val objectStorageProperties: ObjectStorageProperties,
-    private val sessionLogic: SessionInformationProvider,
     private val datastoreInstanceProvider: org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 ) : DataAttachmentModificationLogic<T> {
 	suspend fun getInstanceAndGroup() = datastoreInstanceProvider.getInstanceAndGroup()
@@ -258,13 +257,11 @@ class DocumentDataAttachmentModificationLogicImpl(
     dao: DocumentDAO,
     icureObjectStorage: DocumentObjectStorage,
     objectStorageProperties: ObjectStorageProperties,
-    sessionLogic: SessionInformationProvider,
     datastoreInstanceProvider: org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 ): DocumentDataAttachmentModificationLogic, DataAttachmentModificationLogic<Document> by object : DataAttachmentModificationLogicImpl<Document>(
 	dao,
 	icureObjectStorage,
 	objectStorageProperties,
-	sessionLogic,
 	datastoreInstanceProvider
 ) {
 	override fun Document.updateAttachmentInformation(

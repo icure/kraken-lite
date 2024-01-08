@@ -23,26 +23,26 @@ interface MessageService : EntityWithSecureDelegationsService<Message> {
     fun findMessagesByFromAddress(
         hcPartyId: String,
         fromAddress: String,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<ComplexKey>
     ): Flow<ViewQueryResultEvent>
 
     fun findMessagesByToAddress(
         hcPartyId: String,
         toAddress: String,
-        paginationOffset: PaginationOffset<List<*>>,
+        paginationOffset: PaginationOffset<ComplexKey>,
         reverse: Boolean?
     ): Flow<ViewQueryResultEvent>
 
     fun findMessagesByTransportGuidReceived(
         hcPartyId: String,
         transportGuid: String?,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<ComplexKey>
     ): Flow<ViewQueryResultEvent>
 
     fun findMessagesByTransportGuid(
         hcPartyId: String,
         transportGuid: String?,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<List<String?>>
     ): Flow<ViewQueryResultEvent>
 
     fun findMessagesByTransportGuidSentDate(
@@ -50,7 +50,7 @@ interface MessageService : EntityWithSecureDelegationsService<Message> {
         transportGuid: String,
         fromDate: Long,
         toDate: Long,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<ComplexKey>
     ): Flow<ViewQueryResultEvent>
 
     suspend fun addDelegation(messageId: String, delegation: Delegation): Message?

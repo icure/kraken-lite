@@ -19,21 +19,21 @@ interface MessageLogic : EntityPersister<Message, String>, EntityWithSecureDeleg
     fun findMessagesByFromAddress(
         partyId: String,
         fromAddress: String,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<ComplexKey>
     ): Flow<ViewQueryResultEvent>
 
-	fun findMessagesByToAddress(partyId: String, toAddress: String, paginationOffset: PaginationOffset<List<*>>, reverse: Boolean = false): Flow<ViewQueryResultEvent>
+	fun findMessagesByToAddress(partyId: String, toAddress: String, paginationOffset: PaginationOffset<ComplexKey>, reverse: Boolean = false): Flow<ViewQueryResultEvent>
 
     fun findMessagesByTransportGuidReceived(
         partyId: String,
         transportGuid: String?,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<ComplexKey>
     ): Flow<ViewQueryResultEvent>
 
     fun findMessagesByTransportGuid(
         partyId: String,
         transportGuid: String?,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<List<String?>>
     ): Flow<ViewQueryResultEvent>
 
     fun listMessageIdsByTransportGuid(hcPartyId: String, transportGuid: String?): Flow<String>
@@ -43,7 +43,7 @@ interface MessageLogic : EntityPersister<Message, String>, EntityWithSecureDeleg
         transportGuid: String,
         fromDate: Long,
         toDate: Long,
-        paginationOffset: PaginationOffset<List<*>>
+        paginationOffset: PaginationOffset<ComplexKey>
     ): Flow<ViewQueryResultEvent>
 
     suspend fun addDelegation(message: Message, delegation: Delegation): Message?

@@ -7,8 +7,6 @@
 plugins {
     // Apply the org.jetbrains.kotlin.jvm Plugin to add support for Kotlin.
     id("org.jetbrains.kotlin.jvm")
-//    id("org.jetbrains.kotlin.plugin.spring")
-//    id("org.jetbrains.kotlin.plugin.allopen")
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {

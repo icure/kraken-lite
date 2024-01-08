@@ -18,7 +18,7 @@ import org.taktik.icure.services.external.rest.v1.dto.filter.AbstractFilterDto
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class CodeByRegionTypeLabelLanguageFilter(
 	override val desc: String? = null,
-	val region: String,
+	val region: String? = null,
 	val type: String,
 	val language: String,
 	val label: String? = null

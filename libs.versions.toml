@@ -1,9 +1,8 @@
 [versions]
 springBoot = "2.7.15"
-hazelCast = "5.1.7"
 jackson = "2.13.5"
 caffeine = "2.9.3"
-kotlinx = "1.6.4"
+kotlinx = "1.7.3"
 kotest = "4.4.3"
 hibernateValidator = "6.2.5.Final"
 kmap = "0.1.52-main.8d4a565b58"
@@ -17,13 +16,11 @@ springBootWebflux = { group = "org.springframework.boot", name = "spring-boot-st
 springBootSecurity = { group = "org.springframework.boot", name = "spring-boot-starter-security", version.ref = "springBoot"  }
 springBootActuator = { group = "org.springframework.boot", name = "spring-boot-starter-actuator", version.ref = "springBoot"  }
 springBootCache = { group = "org.springframework.boot", name = "spring-boot-starter-cache", version.ref = "springBoot"  }
-springAspects = { group = "org.springframework", name = "spring-aspects" }
-springWebsocket = { group = "org.springframework", name = "spring-websocket" }
-springMessaging = { group = "org.springframework", name = "spring-messaging" }
-springSecurityMessaging = { group = "org.springframework.security", name = "spring-security-messaging" }
-springSession = { group = "org.springframework.session", name = "spring-session-core" }
-hazelCast = { group = "com.hazelcast", name = "hazelcast", version.ref = "hazelCast" }
-hazelCastSpring = { group = "com.hazelcast", name = "hazelcast-spring", version.ref = "hazelCast" }
+springAspects = { group = "org.springframework", name = "spring-aspects", version = "5.3.29" }
+springWebsocket = { group = "org.springframework", name = "spring-websocket", version = "5.3.29" }
+springMessaging = { group = "org.springframework", name = "spring-messaging", version = "5.3.29" }
+springSecurityMessaging = { group = "org.springframework.security", name = "spring-security-messaging", version = "5.7.10" }
+springSession = { group = "org.springframework.session", name = "spring-session-core", version = "2.7.2" }
 jacksonKotlin = { group = "com.fasterxml.jackson.module", name = "jackson-module-kotlin", version.ref = "jackson" }
 jacksonDatabind = { group = "com.fasterxml.jackson.core", name = "jackson-databind" }
 jacksonSmile = { group = "com.fasterxml.jackson.dataformat", name = "jackson-dataformat-smile" }
@@ -39,9 +36,9 @@ kotestAssertionsCore = { group = "io.kotest", name = "kotest-assertions-core", v
 kotestRunnerJunit5 = { group = "io.kotest", name = "kotest-runner-junit5", version.ref = "kotest" }
 kotestExtensionsSpring = { group = "io.kotest.extensions", name = "kotest-extensions-spring", version = "1.0.1" }
 jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
-springBootTest = { group = "org.springframework.boot", name = "spring-boot-starter-test" }
-mockk = { group = "io.mockk", name = "mockk", version = "1.13.4" }
-springmockk = { group = "com.ninja-squad", name = "springmockk", version = "3.1.1" }
+springBootTest = { group = "org.springframework.boot", name = "spring-boot-starter-test", version.ref = "springBoot" }
+mockk = { group = "io.mockk", name = "mockk", version = "1.13.8" }
+springmockk = { group = "com.ninja-squad", name = "springmockk", version = "4.0.2" }
 hibernateValidator = { group = "org.hibernate.validator", name = "hibernate-validator" }
 hibernateValidatorAnnotationProcessor = { group = "org.hibernate.validator", name = "hibernate-validator-annotation-processor", version.ref = "hibernateValidator" }
 hibernateValidatorCdi = { group = "org.hibernate.validator", name = "hibernate-validator-cdi", version.ref = "hibernateValidator" }
@@ -92,7 +89,6 @@ googleApiClient = { group = "com.google.api-client", name = "google-api-client",
 
 [bundles]
 springBootLibs = ["springBootWebflux", "springBootSecurity", "springBootActuator", "springBootCache"]
-hazelCastLibs = ["hazelCast", "hazelCastSpring"]
 jacksonLibs = ["jacksonKotlin", "jacksonDatabind", "jacksonSmile", "jacksonJsr310"]
 kotlinxCoroutinesLibs = ["kotlinxCoroutinesCore", "kotlinxCoroutinesJdk8", "kotlinxCoroutinesCoreJvm", "kotlinxCoroutinesReactive", "kotlinxCoroutinesReactor"]
 kotestLibs = ["kotestAssertionsCore", "kotestRunnerJunit5", "kotestExtensionsSpring"]
