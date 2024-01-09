@@ -1,0 +1,18 @@
+[versions]
+sonarqube = "3.3"
+kmehr = "0.1.54-g4f504e108c"
+
+[libraries]
+reactorCore = { group = "io.projectreactor", name = "reactor-core" }
+reactorTools = { group = "io.projectreactor", name = "reactor-tools" }
+reactorNetty = { group = "io.projectreactor.netty", name = "reactor-netty" }
+samModule = { group = "org.taktik.icure", name = "sam", version.ref="kmehr" }
+kmehrModule = { group = "org.taktik.icure", name = "kmehr", version.ref = "kmehr" }
+
+[bundles]
+reactorLibs = ["reactorCore", "reactorTools", "reactorNetty"]
+
+[plugins]
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
+dockerJava = { id = "com.taktik.gradle.docker-java", version = "2.1.7" }
+

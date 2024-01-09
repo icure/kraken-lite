@@ -1,0 +1,3 @@
+[submodule "kraken-common"]
+	path = kraken-common
+	url = https://github.com/icure/kraken-common.git
