@@ -53,5 +53,5 @@ data class Measure(
      *
      * conversion from min/max is done at the client side level since most of the data are encrypted, we can't do it at the server level (or we can, but it will be a lot of work for very little data that aren't encrypted)
      */
-    @param:ContentValue(ContentValues.NESTED_ENTITIES_LIST) val referenceRange: List<ReferenceRange>
+    @param:ContentValue(ContentValues.NESTED_ENTITIES_LIST) val referenceRange: List<ReferenceRange> = emptyList()
 ) : Serializable
