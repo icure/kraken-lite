@@ -15,8 +15,3 @@ RUN mv ci.settings.kts settings.gradle.kts
 # RUN apk --no-cache add bash # for git-version plugin
 
 RUN gradle -x test :dto:publish :domain:publish
-
-RUN rm core/build/libs/*-plain.jar
-
-FROM scratch
-COPY --from=builder /build/core/build/libs/*.jar /build/
