@@ -13,9 +13,17 @@ group = "org.taktik.icure"
 version = gitVersion ?: "0.0.1-SNAPSHOT"
 
 dependencies {
-    implementation(project(":kraken-common:domain"))
-    implementation(project(":kraken-common:dto"))
-    implementation(project(":kraken-common:utils"))
+
+    if (rootProject.name != "kraken-common") {
+        implementation(project(":kraken-common:domain"))
+        implementation(project(":kraken-common:dto"))
+        implementation(project(":kraken-common:utils"))
+    }
+    else {
+        implementation(project(":domain"))
+        implementation(project(":dto"))
+        implementation(project(":utils"))
+    }
 
     implementation(coreLibs.bundles.jsonWebTokenLibs) {
         exclude(group = "com.fasterxml.jackson.core")

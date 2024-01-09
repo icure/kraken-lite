@@ -20,7 +20,12 @@ tasks.withType<Test> {
 }
 
 dependencies {
-    implementation(project(":kraken-common:utils"))
+    if (rootProject.name != "kraken-common") {
+        implementation(project(":kraken-common:utils"))
+    }
+    else {
+        implementation(project(":utils"))
+    }
 
     implementation(coreLibs.bundles.jacksonLibs)
     implementation(coreLibs.bundles.kotlinxCoroutinesLibs)

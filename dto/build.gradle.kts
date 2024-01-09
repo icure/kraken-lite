@@ -12,7 +12,11 @@ group = "org.taktik.icure"
 version = gitVersion ?: "0.0.1-SNAPSHOT"
 
 dependencies {
-    implementation(project(":kraken-common:utils"))
+    if (rootProject.name != "kraken-common") {
+        implementation(project(":kraken-common:utils"))
+    } else {
+        implementation(project(":utils"))
+    }
 
     implementation(coreLibs.bundles.xmlLibs)
     implementation(coreLibs.bundles.jacksonLibs)

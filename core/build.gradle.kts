@@ -15,14 +15,27 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":kraken-common:logic"))
-    implementation(project(":kraken-common:mapper"))
-    implementation(project(":kraken-common:dto"))
-    implementation(project(":kraken-common:domain"))
-    implementation(project(":kraken-common:dao"))
-    implementation(project(":kraken-common:jwt"))
-    implementation(project(":kraken-common:utils"))
-    implementation(project(":kraken-common:service"))
+
+    if (rootProject.name != "kraken-common") {
+        implementation(project(":kraken-common:logic"))
+        implementation(project(":kraken-common:mapper"))
+        implementation(project(":kraken-common:dto"))
+        implementation(project(":kraken-common:domain"))
+        implementation(project(":kraken-common:dao"))
+        implementation(project(":kraken-common:jwt"))
+        implementation(project(":kraken-common:utils"))
+        implementation(project(":kraken-common:service"))
+    }
+    else {
+        implementation(project(":logic"))
+        implementation(project(":mapper"))
+        implementation(project(":dto"))
+        implementation(project(":domain"))
+        implementation(project(":dao"))
+        implementation(project(":jwt"))
+        implementation(project(":utils"))
+        implementation(project(":service"))
+    }
 
     implementation(coreLibs.hibernateValidator)
     implementation(coreLibs.bundles.springBootLibs)

@@ -14,8 +14,14 @@ version = gitVersion ?: "0.0.1-SNAPSHOT"
 
 dependencies{
 
-    implementation(project(":kraken-common:logic"))
-    implementation(project(":kraken-common:domain"))
+    if (rootProject.name != "kraken-common") {
+        implementation(project(":kraken-common:logic"))
+        implementation(project(":kraken-common:domain"))
+    }
+    else {
+        implementation(project(":logic"))
+        implementation(project(":domain"))
+    }
 
     implementation(coreLibs.bundles.kotlinxCoroutinesLibs)
 

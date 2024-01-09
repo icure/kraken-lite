@@ -6,9 +6,17 @@ plugins {
 }
 
 dependencies {
-    implementation(project(":kraken-common:domain"))
-    implementation(project(":kraken-common:logic"))
-    implementation(project(":kraken-common:utils"))
+
+    if (rootProject.name != "kraken-common") {
+        implementation(project(":kraken-common:domain"))
+        implementation(project(":kraken-common:logic"))
+        implementation(project(":kraken-common:utils"))
+    }
+    else {
+        implementation(project(":domain"))
+        implementation(project(":logic"))
+        implementation(project(":utils"))
+    }
 
     implementation(coreLibs.bundles.kotlinxCoroutinesLibs)
     implementation(coreLibs.bundles.springBootLibs)
