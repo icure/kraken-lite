@@ -14,4 +14,4 @@ RUN mv ci.settings.kts settings.gradle.kts
 
 # RUN apk --no-cache add bash # for git-version plugin
 
-RUN gradle -x test :dto:publish :domain:publish
+RUN gradle -x test :dto:publish :domain:publish :utils:publish
