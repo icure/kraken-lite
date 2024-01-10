@@ -7,6 +7,6 @@ data class ReferenceRangeDto(
     val high: Double? = null,
     val tags: List<CodeStubDto> = emptyList(),
     val codes: List<CodeStubDto> = emptyList(),
-    val notes: List<Annotation> = emptyList(),
+    val notes: List<AnnotationDto> = emptyList(),
     val age: RangeDto? = null
 )
