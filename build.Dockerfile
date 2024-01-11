@@ -8,7 +8,8 @@ WORKDIR /build
 COPY . ./
 RUN apk --no-cache add bash # for git-version plugin
 
-RUN ./gradlew -x test :lite-core:build -Dicure.optional.regions=be :lite-core:publish
+RUN ./gradlew -x test :lite-core:build -Dicure.optional.regions=be
+RUN ./gradlew -x test :lite-core:publish -Dicure.optional.regions=be
 
 RUN rm lite-core/build/libs/*-plain.jar
 
