@@ -110,24 +110,24 @@ tasks.withType<Test> {
     maxHeapSize = "16g"
 }
 
-// publishing {
-//     publications {
-//         create<MavenPublication>("kraken-lite") {
-//             from(components["java"])
-//         }
-//     }
-//
-//     repositories {
-//         maven {
-//             name = "Taktik"
-//             url = uri(mavenReleasesRepository)
-//             credentials {
-//                 username = repoUsername
-//                 password = repoPassword
-//             }
-//         }
-//     }
-// }
+publishing {
+    publications {
+        create<MavenPublication>("kraken-lite") {
+            from(components["java"])
+        }
+    }
+
+    repositories {
+        maven {
+            name = "Taktik"
+            url = uri(mavenReleasesRepository)
+            credentials {
+                username = repoUsername
+                password = repoPassword
+            }
+        }
+    }
+}
 
 tasks.withType<JavaCompile>().configureEach {
     options.isIncremental = true
