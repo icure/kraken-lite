@@ -148,7 +148,7 @@ tasks.withType<PublishToMavenRepository> {
 
 tasks.withType<GenerateMavenPom>().all {
     doLast {
-        val file = File("./lite-core/build/publications/maven/pom-default.xml")
+        val file = File("./lite-core/build/publications/kraken-lite/pom-default.xml")
         var text = file.readText()
         val regex = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)".toRegex()
         val matcher = regex.find(text)
