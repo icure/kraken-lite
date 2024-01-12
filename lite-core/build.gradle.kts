@@ -22,7 +22,7 @@ plugins {
     alias(coreLibs.plugins.gitVersion) apply(true)
     alias(coreLibs.plugins.kotlinxSerialization) apply(true)
     alias(coreLibs.plugins.licenceReport) apply(true)
-    alias(coreLibs.plugins.mavenRepository) apply(true)
+    // alias(coreLibs.plugins.mavenRepository) apply(true)
 
     alias(liteLibs.plugins.sonarqube) apply(true)
 //    alias(liteLibs.plugins.dockerJava) apply(true)
@@ -111,24 +111,25 @@ tasks.withType<Test> {
     maxHeapSize = "16g"
 }
 
-// publishing {
-//     publications {
-//         create<MavenPublication>("kraken-lite") {
-//             from(components["java"])
-//         }
-//     }
-//
-//     repositories {
-//         maven {
-//             name = "Taktik"
-//             url = uri(mavenReleasesRepository)
-//             credentials {
-//                 username = repoUsername
-//                 password = repoPassword
-//             }
-//         }
-//     }
-// }
+publishing {
+    publications {
+        create<MavenPublication>("kraken-lite") {
+            artifactId = "kraken-lite"
+            from(components["java"])
+        }
+    }
+
+    repositories {
+        maven {
+            name = "Taktik"
+            url = uri(mavenReleasesRepository)
+            credentials {
+                username = repoUsername
+                password = repoPassword
+            }
+        }
+    }
+}
 
 tasks.withType<JavaCompile>().configureEach {
     options.isIncremental = true
