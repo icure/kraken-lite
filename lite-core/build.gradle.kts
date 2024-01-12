@@ -145,6 +145,21 @@ tasks.withType<PublishToMavenRepository> {
     }
 }
 
+tasks.withType<GenerateMavenPom>().all {
+    doLast {
+        val file = File("./lite-core/build/publications/maven/pom-default.xml")
+        var text = file.readText()
+        val regex = "(?s)(<dependencyManagement>.+?<dependencies>)(.+?)(</dependencies>.+?</dependencyManagement>)".toRegex()
+        val matcher = regex.find(text)
+        if (matcher != null) {
+            text = regex.replaceFirst(text, "")
+            val firstDeps = matcher.groups[2]!!.value
+            text = regex.replaceFirst(text, "$1$2$firstDeps$3")
+        }
+        file.writeText(text)
+    }
+}
+
 tasks.withType<BootJar> {
     mainClass.set("org.taktik.icure.ICureBackendApplicationKt")
     manifest {
