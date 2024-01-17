@@ -2,6 +2,7 @@ package org.taktik.icure.services.external.rest.v2.dto.base
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
+import java.io.Serializable
 
 /**
  * An identifier intended for computation
@@ -46,4 +47,4 @@ data class IdentifierDto(
 	 * The value that is unique
 	 */
 	val value: String? = null
-)
+): Serializable
