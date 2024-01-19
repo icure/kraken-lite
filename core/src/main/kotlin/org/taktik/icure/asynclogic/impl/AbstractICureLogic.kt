@@ -16,7 +16,6 @@ import org.taktik.icure.domain.IndexingInfo
 import org.taktik.icure.entities.ReplicationInfo
 import org.taktik.icure.entities.embed.DatabaseSynchronization
 import org.taktik.icure.properties.CouchDbProperties
-import org.taktik.icure.services.external.rest.v1.dto.ReplicationInfoDto
 import java.lang.management.ManagementFactory
 import java.net.URI
 import java.text.DecimalFormat
