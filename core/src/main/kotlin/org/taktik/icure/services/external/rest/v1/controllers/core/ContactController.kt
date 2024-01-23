@@ -34,7 +34,6 @@ import org.taktik.icure.asynclogic.impl.filter.Filters
 import org.taktik.icure.asyncservice.ContactService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Contact
-import org.taktik.icure.entities.embed.Service
 import org.taktik.icure.exceptions.MissingRequirementsException
 import org.taktik.icure.services.external.rest.v1.dto.ContactDto
 import org.taktik.icure.services.external.rest.v1.dto.IcureStubDto
@@ -298,25 +297,15 @@ class ContactController(
 	@Operation(summary = "Modify a batch of contacts", description = "Returns the modified contacts.")
 	@PutMapping("/batch")
 	fun modifyContacts(@RequestBody contactDtos: List<ContactDto>): Flux<ContactDto> = flow {
-		try {
-			val contacts = contactService.modifyContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactMapper.map(f) })
-			emitAll(contacts.map { f -> contactMapper.map(f) })
-		} catch (e: Exception) {
-			log.warn(e) { e.message }
-			throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
-		}
+		val contacts = contactService.modifyContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactMapper.map(f) })
+		emitAll(contacts.map { f -> contactMapper.map(f) })
 	}.injectReactorContext()
 
 	@Operation(summary = "Create a batch of contacts", description = "Returns the modified contacts.")
 	@PostMapping("/batch")
 	fun createContacts(@RequestBody contactDtos: List<ContactDto>): Flux<ContactDto> = flow {
-		try {
-			val contacts = contactService.createContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactMapper.map(f) })
-			emitAll(contacts.map { f -> contactMapper.map(f) })
-		} catch (e: Exception) {
-			log.warn(e) { e.message }
-			throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
-		}
+		val contacts = contactService.createContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactMapper.map(f) })
+		emitAll(contacts.map { f -> contactMapper.map(f) })
 	}.injectReactorContext()
 
 	@Operation(summary = "Delegates a contact to a healthcare party", description = "It delegates a contact to a healthcare party (By current healthcare party). Returns the contact with new delegations.")

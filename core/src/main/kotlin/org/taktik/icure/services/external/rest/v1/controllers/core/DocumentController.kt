@@ -92,11 +92,7 @@ class DocumentController(
 	@DeleteMapping("/{documentIds}")
 	fun deleteDocument(@PathVariable documentIds: String) = flow {
 		val documentIdsList = documentIds.split(',')
-		try {
-			emitAll(documentService.deleteDocuments(documentIdsList))
-		} catch (e: Exception) {
-			throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Document deletion failed")
-		}
+		emitAll(documentService.deleteDocuments(documentIdsList))
 	}.injectReactorContext()
 
 	@Operation(summary = "Load a document's main attachment", responses = [ApiResponse(responseCode = "200", content = [Content(mediaType = MediaType.APPLICATION_OCTET_STREAM_VALUE, schema = Schema(type = "string", format = "binary"))])])

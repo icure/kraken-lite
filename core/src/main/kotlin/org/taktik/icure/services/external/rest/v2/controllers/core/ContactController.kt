@@ -133,13 +133,9 @@ class ContactController(
 	fun getContacts(@RequestBody contactIds: ListOfIdsDto): Flux<ContactDto> {
 		return contactIds.ids.takeIf { it.isNotEmpty() }
 			?.let { ids ->
-				try {
-					contactService.getContacts(ids.toSet())
-						.map { c -> contactV2Mapper.map(c) }
-						.injectReactorContext()
-				} catch (e: java.lang.Exception) {
-					throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message).also { logger.error(it.message) }
-				}
+				contactService.getContacts(ids.toSet())
+					.map { c -> contactV2Mapper.map(c) }
+					.injectReactorContext()
 			}
 			?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "A required query parameter was not specified for this request.").also { logger.error(it.message) }
 	}
@@ -299,25 +295,15 @@ class ContactController(
 	@Operation(summary = "Modify a batch of contacts", description = "Returns the modified contacts.")
 	@PutMapping("/batch")
 	fun modifyContacts(@RequestBody contactDtos: List<ContactDto>): Flux<ContactDto> {
-		return try {
-			val contacts = contactService.modifyContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactV2Mapper.map(f) })
-			contacts.map { f -> contactV2Mapper.map(f) }.injectReactorContext()
-		} catch (e: Exception) {
-			logger.warn(e.message, e)
-			throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
-		}
+		val contacts = contactService.modifyContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactV2Mapper.map(f) })
+		return contacts.map { f -> contactV2Mapper.map(f) }.injectReactorContext()
 	}
 
 	@Operation(summary = "Create a batch of contacts", description = "Returns the modified contacts.")
 	@PostMapping("/batch")
 	fun createContacts(@RequestBody contactDtos: List<ContactDto>): Flux<ContactDto> {
-		return try {
-			val contacts = contactService.createContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactV2Mapper.map(f) })
-			contacts.map { f -> contactV2Mapper.map(f) }.injectReactorContext()
-		} catch (e: Exception) {
-			logger.warn(e.message, e)
-			throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
-		}
+		val contacts = contactService.createContacts(contactDtos.map { c -> handleServiceIndexes(c) }.map { f -> contactV2Mapper.map(f) })
+		return contacts.map { f -> contactV2Mapper.map(f) }.injectReactorContext()
 	}
 
 	@Operation(summary = "List contacts for the current user (HcParty) or the given hcparty in the filter ", description = "Returns a list of contacts along with next start keys and Document ID. If the nextStartKey is Null it means that this is the last page.")
