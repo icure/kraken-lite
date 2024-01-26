@@ -10,6 +10,7 @@ git clone git@github.com:icure/kraken-lite.git
 cd kraken-lite
 git submodule init
 git submodule update
+./gradlew :lite-core:build
 ```
 
 After that, if the operation completes successfully, the repository and all its submodules will be correctly initialized. 
