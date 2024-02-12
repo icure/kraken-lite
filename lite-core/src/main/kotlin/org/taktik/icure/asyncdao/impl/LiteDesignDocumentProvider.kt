@@ -10,12 +10,14 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.Client
 import org.taktik.couchdb.dao.DesignDocumentProvider
 import org.taktik.couchdb.dao.designDocName
 import org.taktik.couchdb.entity.DesignDocument
 import org.taktik.couchdb.entity.Indexer
+import org.taktik.couchdb.entity.View
 import org.taktik.couchdb.entity.ViewQuery
 import org.taktik.couchdb.queryView
 import org.taktik.couchdb.support.StdDesignDocumentFactory
@@ -26,7 +28,7 @@ import java.util.concurrent.TimeUnit
 @Service
 @OptIn(DelicateCoroutinesApi::class)
 class LiteDesignDocumentProvider(
-    private val couchdDbProperties: CouchDbLiteProperties
+    private val couchDbProperties: CouchDbLiteProperties
 ) : DesignDocumentProvider {
     private data class DesignDocInfo(val metaDataSource: Any, val entityClass: Class<*>, val partition: String?)
 
@@ -38,7 +40,7 @@ class LiteDesignDocumentProvider(
 
     private val designDocIdProvider = CacheBuilder.newBuilder()
         .maximumSize(100)
-        .expireAfterAccess(couchdDbProperties.cachedDesignDocumentTtlMinutes, TimeUnit.MINUTES)
+        .expireAfterAccess(couchDbProperties.cachedDesignDocumentTtlMinutes, TimeUnit.MINUTES)
         .build(object : CacheLoader<Pair<Client, DesignDocInfo>, Deferred<String>>() {
             @Throws(Exception::class)
             override fun load(key: Pair<Client, DesignDocInfo>): Deferred<String> {
@@ -67,14 +69,14 @@ class LiteDesignDocumentProvider(
         .build(object : CacheLoader<Client, Deferred<List<String>>>() {
             override fun load(client: Client): Deferred<List<String>> = GlobalScope.async {
                 return@async client.activeTasks()
-                    .filterIsInstance(Indexer::class.java)
+                    .filterIsInstance<Indexer>()
                     .mapNotNull { it.design_document }
             }
         })
 
     private suspend fun isReadyDesignDoc(client: Client, designDocumentId: String): Boolean =
         viewsBeingIndexed.get(client).await().takeIf { it.contains(designDocumentId) }?.let { false }
-            ?: client.queryView<String, String>(ViewQuery().designDocId(designDocumentId).viewName("all").limit(1), Duration.ofMillis(couchdDbProperties.designDocumentStatusCheckTimeoutMilliseconds))
+            ?: client.queryView<String, String>(ViewQuery().designDocId(designDocumentId).viewName("all").limit(1), Duration.ofMillis(couchDbProperties.designDocumentStatusCheckTimeoutMilliseconds))
                 .map { true }
                 .catch { emit(false) }
                 .firstOrNull() ?: true
@@ -87,12 +89,37 @@ class LiteDesignDocumentProvider(
         return designDocIdProvider.get(client to DesignDocInfo(metaDataSource, entityClass, secondaryPartition)).await()
     }
 
-    override fun currentDesignDocumentId(entityClass: Class<*>, metaDataSource: Any, secondaryPartition: String?): String =
+    override suspend fun currentDesignDocumentId(entityClass: Class<*>, metaDataSource: Any, secondaryPartition: String?): String =
         baseDesignDocumentId(entityClass, secondaryPartition).let { baseId ->
             generateDesignDocuments(entityClass, metaDataSource).find { it.id.startsWith(baseId) }
                 ?: throw IllegalStateException("No design doc for $baseId can be found at this time")
         }.id
 
-    override fun generateDesignDocuments(entityClass: Class<*>, metaDataSource: Any): Set<DesignDocument> =
-        StdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true)
+    private fun View.normalizedMap() = map
+        .replace("map\\s*=\\s*function\\s*".toRegex(), "function")
+        .replace("\r?\n".toRegex(), "")
+        .replace("\\s+".toRegex(), " ")
+        .replace(" == ", " === ")
+        .replace("[ ;]$".toRegex(), "")
+
+    private infix fun DesignDocument.equipollent(other: DesignDocument): Boolean =
+        views.entries.all { (viewName, view) ->
+            other.views[viewName]?.let {
+                it.reduce == view.reduce && it.normalizedMap() == view.normalizedMap()
+            } ?: false
+        }
+
+    override suspend fun generateDesignDocuments(entityClass: Class<*>, metaDataSource: Any, client: Client?): Set<DesignDocument> {
+        val existingIds = client?.designDocumentsIds() ?: emptySet()
+        return StdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).map { dd ->
+            val (name, _) = dd.id.lastIndexOf('_').let { dd.id.substring(0, it) to dd.id.substring(it + 1) }
+            val currentDocument = existingIds.firstOrNull { it.substring(0, it.lastIndexOf('_')) == name }?.let { id ->
+                client?.get(id, DesignDocument::class.java)
+            }
+            if(currentDocument != null && dd equipollent currentDocument) {
+                dd.copy(id = currentDocument.id)
+            } else dd
+        }.toSet()
+    }
+
 }
