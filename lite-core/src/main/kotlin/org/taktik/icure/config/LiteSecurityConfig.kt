@@ -46,9 +46,7 @@ import org.springframework.security.web.server.util.matcher.ServerWebExchangeMat
 import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers
 import org.springframework.web.server.ServerWebExchange
 import org.taktik.icure.security.LiteAuthenticationManager
-import org.taktik.icure.security.TokenWebExchangeMatcher
 import org.taktik.icure.security.UnauthorizedEntryPoint
-import org.taktik.icure.security.database.ShaAndVerificationCodePasswordEncoder
 import org.taktik.icure.security.jwt.EncodedJwtAuthenticationToken
 import org.taktik.icure.spring.asynccache.AsyncCacheManager
 import reactor.core.publisher.Mono
@@ -70,32 +68,7 @@ class SecurityConfigAdapter(
     fun securityWebFilterChain(http: ServerHttpSecurity, asyncCacheManager: AsyncCacheManager): SecurityWebFilterChain {
         return http
             .authorizeExchange()
-            .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-            .pathMatchers("/v3/api-docs/v*").permitAll()
-            .pathMatchers("/api/**").permitAll()
-            .pathMatchers("/rest/*/replication/group/**").hasAnyRole("USER", "BOOTSTRAP")
-            .pathMatchers("/rest/*/auth/login").permitAll()
-            .pathMatchers("/rest/*/auth/refresh").permitAll()
-            .pathMatchers("/rest/*/auth/invalidate").permitAll()
-            .pathMatchers("/rest/*/user/forgottenPassword/*").permitAll()
-            .pathMatchers("/rest/*/pubsub/auth/recover/*").permitAll()
-            .pathMatchers("/rest/*/icure/v").permitAll()
-            .pathMatchers("/rest/*/icure/p").permitAll()
-            .pathMatchers("/rest/*/icure/check").permitAll()
-            .pathMatchers("/rest/*/icure/c").permitAll()
-            .pathMatchers("/rest/*/icure/ok").permitAll()
-            .pathMatchers("/rest/*/icure/pok").permitAll()
-            .pathMatchers("/").permitAll()
-            .pathMatchers("/ping.json").permitAll()
-            .pathMatchers("/actuator/**").permitAll()
-            .matchers(
-                TokenWebExchangeMatcher(asyncCacheManager).paths(
-                    "/rest/*/document/*/attachment/*",
-                    "/rest/*/form/template/*/attachment/*",
-                    "/ws/**"
-                )
-            ).hasRole("USER")
-            .pathMatchers("/**").hasRole("USER")
+            .pathMatchers("/**").permitAll()
             .and()
             .csrf().disable()
             .httpBasic()
