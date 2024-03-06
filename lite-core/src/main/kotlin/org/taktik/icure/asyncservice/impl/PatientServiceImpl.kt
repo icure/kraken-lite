@@ -18,6 +18,7 @@ import org.taktik.icure.entities.embed.Gender
 import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
+import org.taktik.icure.pagination.PaginationElement
 import java.time.Instant
 
 @Service
@@ -60,18 +61,16 @@ class PatientServiceImpl(
     override fun listByHcPartyAndActiveIdsOnly(active: Boolean, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyAndActiveIdsOnly(active, healthcarePartyId)
 
     override fun listOfMergesAfter(date: Long?): Flow<Patient> = patientLogic.listOfMergesAfter(date)
-
     override fun findByHcPartyIdsOnly(
         healthcarePartyId: String,
-        offset: PaginationOffset<List<String>>
-    ): Flow<ViewQueryResultEvent> = patientLogic.findByHcPartyIdsOnly(healthcarePartyId, offset)
-
+        offset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = patientLogic.findByHcPartyIdsOnly(healthcarePartyId, offset)
     override fun findByHcPartyAndSsinOrDateOfBirthOrNameContainsFuzzy(
         healthcarePartyId: String,
-        offset: PaginationOffset<List<String>>,
+        offset: PaginationOffset<ComplexKey>,
         searchString: String?,
-        sorting: Sorting
-    ): Flow<ViewQueryResultEvent> = patientLogic.findByHcPartyAndSsinOrDateOfBirthOrNameContainsFuzzy(healthcarePartyId, offset, searchString, sorting)
+        sorting: Sorting<PatientLogic.Companion.PatientSearchField>
+    ): Flow<PaginationElement> = patientLogic.findByHcPartyAndSsinOrDateOfBirthOrNameContainsFuzzy(healthcarePartyId, offset, searchString, sorting)
 
     override fun listPatients(
         paginationOffset: PaginationOffset<*>,
@@ -83,7 +82,7 @@ class PatientServiceImpl(
     override fun findByHcPartyNameContainsFuzzy(
         searchString: String?,
         healthcarePartyId: String,
-        offset: PaginationOffset<*>,
+        offset: PaginationOffset<ComplexKey>,
         descending: Boolean
     ): Flow<ViewQueryResultEvent> = patientLogic.findByHcPartyNameContainsFuzzy(searchString, healthcarePartyId, offset, descending)
 
@@ -91,8 +90,8 @@ class PatientServiceImpl(
         healthcarePartyId: String,
         offset: PaginationOffset<ComplexKey>,
         searchString: String?,
-        sorting: Sorting
-    ): Flow<ViewQueryResultEvent> = patientLogic.findOfHcPartyAndSsinOrDateOfBirthOrNameContainsFuzzy(healthcarePartyId, offset, searchString, sorting)
+        sorting: Sorting<PatientLogic.Companion.PatientSearchField>
+    ): Flow<PaginationElement> = patientLogic.findOfHcPartyAndSsinOrDateOfBirthOrNameContainsFuzzy(healthcarePartyId, offset, searchString, sorting)
 
     override fun findByHcPartyAndSsin(
         ssin: String?,
@@ -150,23 +149,20 @@ class PatientServiceImpl(
     override suspend fun getHcPartyKeysForDelegate(healthcarePartyId: String): Map<String, String> = patientLogic.getHcPartyKeysForDelegate(healthcarePartyId)
 
     override suspend fun getAesExchangeKeysForDelegate(healthcarePartyId: String): Map<String, Map<String, Map<String, String>>> = patientLogic.getAesExchangeKeysForDelegate(healthcarePartyId)
-
     override fun listOfPatientsModifiedAfter(
         date: Long,
-        startKey: Long?,
-        startDocumentId: String?,
-        limit: Int?
-    ): Flow<ViewQueryResultEvent> = patientLogic.listOfPatientsModifiedAfter(date, startKey, startDocumentId, limit)
-
-    override fun getDuplicatePatientsBySsin(
-        healthcarePartyId: String,
-        paginationOffset: PaginationOffset<List<String>>
-    ): Flow<ViewQueryResultEvent> = patientLogic.getDuplicatePatientsBySsin(healthcarePartyId, paginationOffset)
+        paginationOffset: PaginationOffset<Long>
+    ): Flow<PaginationElement> = patientLogic.listOfPatientsModifiedAfter(date, paginationOffset)
 
     override fun getDuplicatePatientsByName(
         healthcarePartyId: String,
-        paginationOffset: PaginationOffset<List<String>>
-    ): Flow<ViewQueryResultEvent> = patientLogic.getDuplicatePatientsByName(healthcarePartyId, paginationOffset)
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = patientLogic.getDuplicatePatientsByName(healthcarePartyId, paginationOffset)
+
+    override fun getDuplicatePatientsBySsin(
+        healthcarePartyId: String,
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = patientLogic.getDuplicatePatientsBySsin(healthcarePartyId, paginationOffset)
 
     override fun fuzzySearchPatients(
         firstName: String?,
@@ -184,7 +180,7 @@ class PatientServiceImpl(
         end: Long?,
         descending: Boolean,
         paginationOffset: PaginationOffset<Long>
-    ): Flow<ViewQueryResultEvent> = patientLogic.findDeletedPatientsByDeleteDate(start, end, descending, paginationOffset)
+    ): Flow<PaginationElement> = patientLogic.findDeletedPatientsByDeleteDate(start, end, descending, paginationOffset)
 
     override fun listDeletedPatientsByNames(firstName: String?, lastName: String?): Flow<Patient> = patientLogic.listDeletedPatientsByNames(firstName, lastName)
 

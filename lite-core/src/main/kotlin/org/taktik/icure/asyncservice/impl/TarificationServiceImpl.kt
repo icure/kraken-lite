@@ -3,10 +3,12 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.icure.asynclogic.TarificationLogic
 import org.taktik.icure.asyncservice.TarificationService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Tarification
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class TarificationServiceImpl(
@@ -36,15 +38,16 @@ class TarificationServiceImpl(
         type: String?,
         tarification: String?,
         version: String?,
-        paginationOffset: PaginationOffset<List<String?>>
-    ): Flow<ViewQueryResultEvent> = tarificationLogic.findTarificationsBy(region, type, tarification, version, paginationOffset)
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = tarificationLogic.findTarificationsBy(region, type, tarification, version, paginationOffset)
 
-    override fun findTarificationsByLabel(
+    override fun findTarificationsOfTypesByLabel(
         region: String?,
         language: String?,
         label: String?,
-        paginationOffset: PaginationOffset<List<String?>>
-    ): Flow<ViewQueryResultEvent> = tarificationLogic.findTarificationsByLabel(region, language, label, paginationOffset)
+        types: Set<String>?,
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = tarificationLogic.findTarificationsOfTypesByLabel(region, language, label, types, paginationOffset)
 
     override fun findTarificationsByLabel(
         region: String?,

@@ -7,7 +7,9 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.icure.asynclogic.AgendaLogic
 import org.taktik.icure.asyncservice.AgendaService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Agenda
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class AgendaServiceImpl(
@@ -26,6 +28,6 @@ class AgendaServiceImpl(
     override fun getAgendasByUser(userId: String): Flow<Agenda> = agendaLogic.getAgendasByUser(userId)
 
     override fun getReadableAgendaForUser(userId: String): Flow<Agenda> = agendaLogic.getReadableAgendaForUser(userId)
+    override fun getAllAgendas(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = agendaLogic.getAllPaginated(offset)
 
-    override fun getAllAgendas(): Flow<Agenda> = agendaLogic.getEntities()
 }

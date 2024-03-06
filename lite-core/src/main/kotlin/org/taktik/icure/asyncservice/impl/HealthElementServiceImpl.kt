@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.singleOrNull
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.HealthElementLogic
 import org.taktik.icure.asyncservice.HealthElementService
@@ -17,6 +18,7 @@ import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class HealthElementServiceImpl(
@@ -39,10 +41,16 @@ class HealthElementServiceImpl(
     ): Flow<HealthElement> =
         healthElementLogic.listHealthElementsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
 
+    override fun listHealthElementsByHCPartyIdAndSecretPatientKey(
+        hcPartyId: String,
+        secretPatientKey: String,
+        offset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = healthElementLogic.listHealthElementsByHCPartyIdAndSecretPatientKey(hcPartyId, secretPatientKey, offset)
+
     override fun listHealthElementIdsByHcPartyAndSecretPatientKeys(
         hcPartyId: String,
-        secretPatinetKeys: List<String>
-    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatinetKeys)
+        secretPatientKeys: List<String>
+    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
 
     override fun listHealthElementIdsByHcParty(hcpId: String): Flow<String> =
         healthElementLogic.listHealthElementIdsByHcParty(hcpId)

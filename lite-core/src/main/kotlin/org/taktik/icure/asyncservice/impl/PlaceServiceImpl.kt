@@ -5,14 +5,15 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.icure.asynclogic.PlaceLogic
 import org.taktik.icure.asyncservice.PlaceService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Place
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class PlaceServiceImpl(
     private val placeLogic: PlaceLogic
 ) : PlaceService {
-    override fun getAllPlaces(): Flow<Place> = placeLogic.getEntities()
-
+    override fun getAllPlaces(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = placeLogic.getAllPlaces(paginationOffset)
     override suspend fun createPlace(place: Place): Place? = placeLogic.createPlace(place)
 
     override fun deletePlace(ids: List<String>): Flow<DocIdentifier> = placeLogic.deleteEntities(ids)

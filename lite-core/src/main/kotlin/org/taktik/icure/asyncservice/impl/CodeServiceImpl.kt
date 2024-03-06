@@ -9,6 +9,7 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.base.Code
 import org.taktik.icure.entities.base.CodeStub
+import org.taktik.icure.pagination.PaginationElement
 import java.io.InputStream
 
 @Service
@@ -43,7 +44,7 @@ class CodeServiceImpl(
         code: String?,
         version: String?,
         paginationOffset: PaginationOffset<List<String?>>
-    ): Flow<ViewQueryResultEvent> = codeLogic.findCodesBy(region, type, code, version, paginationOffset)
+    ): Flow<PaginationElement> = codeLogic.findCodesBy(region, type, code, version, paginationOffset)
 
     override fun findCodesByLabel(
         region: String?,
@@ -52,7 +53,7 @@ class CodeServiceImpl(
         label: String,
         version: String?,
         paginationOffset: PaginationOffset<List<String?>>
-    ): Flow<ViewQueryResultEvent> = codeLogic.findCodesByLabel(region, language, types, label, version, paginationOffset)
+    ): Flow<PaginationElement> = codeLogic.findCodesByLabel(region, language, types, label, version, paginationOffset)
 
     override fun listCodeIdsByTypeCodeVersionInterval(
         startType: String?,
@@ -68,7 +69,7 @@ class CodeServiceImpl(
         linkType: String,
         linkedId: String?,
         pagination: PaginationOffset<List<String>>
-    ): Flow<ViewQueryResultEvent> = codeLogic.findCodesByQualifiedLinkId(region, linkType, linkedId, pagination)
+    ): Flow<PaginationElement> = codeLogic.findCodesByQualifiedLinkId(region, linkType, linkedId, pagination)
 
     override fun listCodeIdsByQualifiedLinkId(linkType: String, linkedId: String?): Flow<String> = codeLogic.listCodeIdsByQualifiedLinkId(linkType, linkedId)
 

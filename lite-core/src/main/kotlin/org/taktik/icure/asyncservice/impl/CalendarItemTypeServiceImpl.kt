@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.icure.asynclogic.CalendarItemTypeLogic
 import org.taktik.icure.asyncservice.CalendarItemTypeService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.CalendarItemType
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class CalendarItemTypeServiceImpl(
@@ -18,10 +20,7 @@ class CalendarItemTypeServiceImpl(
     override suspend fun getCalendarItemType(calendarItemTypeId: String): CalendarItemType? = calendarItemTypeLogic.getCalendarItemType(calendarItemTypeId)
 
     override fun getCalendarItemTypes(calendarItemTypeIds: Collection<String>): Flow<CalendarItemType> = calendarItemTypeLogic.getCalendarItemTypes(calendarItemTypeIds)
-
-    override fun getAllCalendarItemTypes(): Flow<CalendarItemType> = calendarItemTypeLogic.getAllCalendarItemTypes()
-
+    override fun getAllCalendarItemTypes(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = calendarItemTypeLogic.getAllCalendarItemTypes(offset)
     override suspend fun modifyCalendarItemType(calendarItemType: CalendarItemType): CalendarItemType? = calendarItemTypeLogic.modifyCalendarTypeItem(calendarItemType)
-
-    override fun getAllEntitiesIncludeDelete(): Flow<CalendarItemType> = calendarItemTypeLogic.getAllEntitiesIncludeDelete()
+    override fun getAllEntitiesIncludeDeleted(offset: PaginationOffset<String>): Flow<PaginationElement>  = calendarItemTypeLogic.getAllEntitiesIncludeDeleted(offset)
 }

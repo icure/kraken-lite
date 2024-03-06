@@ -10,6 +10,7 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.User
 import org.taktik.icure.entities.base.PropertyStub
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class UserServiceImpl(
@@ -45,7 +46,7 @@ class UserServiceImpl(
     override fun listUsers(
         paginationOffset: PaginationOffset<String>,
         skipPatients: Boolean
-    ): Flow<ViewQueryResultEvent> = userLogic.listUsers(paginationOffset, skipPatients)
+    ): Flow<PaginationElement> = userLogic.listUsers(paginationOffset, skipPatients)
 
     override fun filterUsers(
         paginationOffset: PaginationOffset<Nothing>,

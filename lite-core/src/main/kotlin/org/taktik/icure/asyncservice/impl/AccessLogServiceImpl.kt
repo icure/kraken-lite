@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.singleOrNull
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
-import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.icure.asynclogic.AccessLogLogic
 import org.taktik.icure.asyncservice.AccessLogService
 import org.taktik.icure.db.PaginationOffset
@@ -13,6 +13,7 @@ import org.taktik.icure.domain.result.AggregatedAccessLogs
 import org.taktik.icure.entities.AccessLog
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class AccessLogServiceImpl(
@@ -36,15 +37,15 @@ class AccessLogServiceImpl(
         toEpoch: Long,
         paginationOffset: PaginationOffset<Long>,
         descending: Boolean
-    ): Flow<ViewQueryResultEvent> = accessLogLogic.listAccessLogsBy(fromEpoch, toEpoch, paginationOffset, descending)
+    ): Flow<PaginationElement> = accessLogLogic.listAccessLogsBy(fromEpoch, toEpoch, paginationOffset, descending)
 
     override fun findAccessLogsByUserAfterDate(
         userId: String,
         accessType: String?,
         startDate: Long?,
-        pagination: PaginationOffset<List<*>>,
+        pagination: PaginationOffset<ComplexKey>,
         descending: Boolean
-    ): Flow<ViewQueryResultEvent> = accessLogLogic.findAccessLogsByUserAfterDate(userId, accessType, startDate, pagination, descending)
+    ): Flow<PaginationElement> = accessLogLogic.findAccessLogsByUserAfterDate(userId, accessType, startDate, pagination, descending)
 
     override suspend fun modifyAccessLog(accessLog: AccessLog): AccessLog? = accessLogLogic.modifyEntities(listOf(accessLog)).singleOrNull()
 
@@ -58,6 +59,12 @@ class AccessLogServiceImpl(
         startDocumentId: String?,
         limit: Int
     ): AggregatedAccessLogs = accessLogLogic.aggregatePatientByAccessLogs(userId, accessType, startDate, startKey, startDocumentId, limit)
+
+    override fun listAccessLogsBySearchKeyAndSecretPatientKey(
+        searchKey: String,
+        secretPatientKey: String,
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = accessLogLogic.listAccessLogBySearchKeyAndSecretPatientKey(searchKey, secretPatientKey, paginationOffset)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<AccessLog>> = accessLogLogic.bulkShareOrUpdateMetadata(requests)
 }

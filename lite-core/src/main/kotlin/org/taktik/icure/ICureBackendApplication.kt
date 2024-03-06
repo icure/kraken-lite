@@ -58,7 +58,6 @@ import org.taktik.icure.properties.AuthenticationProperties
 import org.taktik.icure.properties.CouchDbLiteProperties
 import org.taktik.icure.utils.suspendRetry
 import java.util.*
-import javax.xml.bind.JAXBContext
 import kotlin.system.exitProcess
 
 @SpringBootApplication(
@@ -198,7 +197,6 @@ class ICureBackendApplication {
 }
 
 fun main(args: Array<String>) {
-    System.setProperty(JAXBContext.JAXB_CONTEXT_FACTORY, "com.sun.xml.bind.v2.ContextFactory")
     val profile = args.firstOrNull() ?: "app"
     SpringApplicationBuilder(ICureBackendApplication::class.java)
         .profiles(profile)

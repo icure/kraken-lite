@@ -2,10 +2,13 @@
  * Copyright (c) 2020. Taktik SA, All rights reserved.
  */
 
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package org.taktik.icure.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.icure.asyncjacksonhttpclient.net.web.WebClient
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.apache.commons.logging.Log
 import org.apache.commons.logging.LogFactory
 import org.springframework.context.annotation.Bean
@@ -40,7 +43,7 @@ class CouchDbLiteConfig(
 		xff.add(
 			ExchangeFilterFunction.ofRequestProcessor { req ->
 				if (webClientLogger.isDebugEnabled) {
-					webClientLogger.debug("-> ${req.method().name} ${req.url()}")
+					webClientLogger.debug("-> ${req.method().name()} ${req.url()}")
 				}
 				Mono.just(req)
 			}
