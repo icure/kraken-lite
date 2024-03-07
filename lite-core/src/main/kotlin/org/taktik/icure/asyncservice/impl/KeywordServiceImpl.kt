@@ -15,6 +15,7 @@ class KeywordServiceImpl(
 ) : KeywordService {
     override suspend fun createKeyword(keyword: Keyword): Keyword? = keywordLogic.createKeyword(keyword)
     override fun getAllKeywords(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = keywordLogic.getAllKeywords(paginationOffset)
+    override fun getAllKeywords(): Flow<Keyword> = keywordLogic.getEntities()
     override suspend fun getKeyword(keywordId: String): Keyword? = keywordLogic.getEntity(keywordId)
 
     override fun deleteKeywords(ids: Set<String>): Flow<DocIdentifier> = keywordLogic.deleteEntities(ids)

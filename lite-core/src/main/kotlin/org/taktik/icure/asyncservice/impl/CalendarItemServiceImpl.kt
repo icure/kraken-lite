@@ -44,11 +44,17 @@ class CalendarItemServiceImpl(
 
     override suspend fun modifyCalendarItem(calendarItem: CalendarItem): CalendarItem? = calendarItemLogic.modifyEntities(listOf(calendarItem)).single()
     override fun getAllCalendarItems(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = getAllCalendarItems(offset)
+    override fun getAllCalendarItems(): Flow<CalendarItem> = calendarItemLogic.getEntities()
     override fun getCalendarItems(ids: List<String>): Flow<CalendarItem> = calendarItemLogic.getCalendarItems(ids)
     override fun getCalendarItemsByRecurrenceId(
         recurrenceId: String,
         paginationOffset: PaginationOffset<String>
     ): Flow<PaginationElement> = calendarItemLogic.getCalendarItemsByRecurrenceId(recurrenceId, paginationOffset)
+
+    override fun getCalendarItemsByRecurrenceId(recurrenceId: String): Flow<CalendarItem> {
+        TODO("Not yet implemented")
+    }
+
     override fun modifyEntities(entities: Collection<CalendarItem>): Flow<CalendarItem> = calendarItemLogic.modifyEntities(entities)
 
     override fun findCalendarItemsByHCPartyAndSecretPatientKeys(

@@ -29,5 +29,6 @@ class AgendaServiceImpl(
 
     override fun getReadableAgendaForUser(userId: String): Flow<Agenda> = agendaLogic.getReadableAgendaForUser(userId)
     override fun getAllAgendas(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = agendaLogic.getAllPaginated(offset)
+    override fun getAllAgendas(): Flow<Agenda>  = agendaLogic.getEntities()
 
 }

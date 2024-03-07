@@ -21,6 +21,8 @@ class CalendarItemTypeServiceImpl(
 
     override fun getCalendarItemTypes(calendarItemTypeIds: Collection<String>): Flow<CalendarItemType> = calendarItemTypeLogic.getCalendarItemTypes(calendarItemTypeIds)
     override fun getAllCalendarItemTypes(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = calendarItemTypeLogic.getAllCalendarItemTypes(offset)
+    override fun getAllCalendarItemTypes(): Flow<CalendarItemType> = calendarItemTypeLogic.getEntities()
     override suspend fun modifyCalendarItemType(calendarItemType: CalendarItemType): CalendarItemType? = calendarItemTypeLogic.modifyCalendarTypeItem(calendarItemType)
     override fun getAllEntitiesIncludeDeleted(offset: PaginationOffset<String>): Flow<PaginationElement>  = calendarItemTypeLogic.getAllEntitiesIncludeDeleted(offset)
+    override fun getAllEntitiesIncludeDeleted(): Flow<CalendarItemType> = calendarItemTypeLogic.getAllEntitiesIncludeDeleted()
 }

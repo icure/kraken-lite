@@ -23,4 +23,5 @@ class MedicalLocationServiceImpl(
 
     override fun findMedicalLocationByPostCode(postCode: String): Flow<MedicalLocation> = medicalLocationLogic.findMedicalLocationByPostCode(postCode)
     override fun getAllMedicalLocations(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = medicalLocationLogic.getAllMedicalLocations(paginationOffset)
+    override fun getAllMedicalLocations(): Flow<MedicalLocation> = medicalLocationLogic.getEntities()
 }

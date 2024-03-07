@@ -34,4 +34,5 @@ class DocumentTemplateServiceImpl(
 
     override fun deleteDocumentTemplates(ids: Set<String>): Flow<DocIdentifier> = documentTemplateLogic.deleteEntities(ids)
     override fun getAllDocumentTemplates(paginationOffset: PaginationOffset<String>): Flow<PaginationElement> = documentTemplateLogic.getAllDocumentTemplates(paginationOffset)
+    override fun getAllDocumentTemplates(): Flow<DocumentTemplate> = documentTemplateLogic.getEntities()
 }

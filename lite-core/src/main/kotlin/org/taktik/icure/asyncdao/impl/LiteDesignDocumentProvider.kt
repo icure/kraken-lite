@@ -21,6 +21,7 @@ import org.taktik.couchdb.entity.View
 import org.taktik.couchdb.entity.ViewQuery
 import org.taktik.couchdb.queryView
 import org.taktik.couchdb.support.StdDesignDocumentFactory
+import org.taktik.icure.asyncdao.Partitions
 import org.taktik.icure.properties.CouchDbLiteProperties
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -109,9 +110,15 @@ class LiteDesignDocumentProvider(
             } ?: false
         }
 
-    override suspend fun generateDesignDocuments(entityClass: Class<*>, metaDataSource: Any, client: Client?): Set<DesignDocument> {
+    override suspend fun generateDesignDocuments(entityClass: Class<*>, metaDataSource: Any, client: Client?, partition: Partitions): Set<DesignDocument> {
         val existingIds = client?.designDocumentsIds() ?: emptySet()
-        return StdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).map { dd ->
+        return StdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).filter { dd ->
+            when(partition) {
+                Partitions.All -> true
+                Partitions.Main -> "^_design/${entityClass.simpleName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
+                else -> "^_design/${entityClass.simpleName}-${partition.partitionName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
+            }
+        }.map { dd ->
             val (name, _) = dd.id.lastIndexOf('_').let { dd.id.substring(0, it) to dd.id.substring(it + 1) }
             val currentDocument = existingIds.firstOrNull { it.substring(0, it.lastIndexOf('_')) == name }?.let { id ->
                 client?.get(id, DesignDocument::class.java)

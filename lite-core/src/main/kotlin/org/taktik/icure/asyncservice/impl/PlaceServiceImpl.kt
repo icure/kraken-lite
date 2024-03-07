@@ -14,6 +14,7 @@ class PlaceServiceImpl(
     private val placeLogic: PlaceLogic
 ) : PlaceService {
     override fun getAllPlaces(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = placeLogic.getAllPlaces(paginationOffset)
+    override fun getAllPlaces(): Flow<Place> = placeLogic.getEntities()
     override suspend fun createPlace(place: Place): Place? = placeLogic.createPlace(place)
 
     override fun deletePlace(ids: List<String>): Flow<DocIdentifier> = placeLogic.deleteEntities(ids)
