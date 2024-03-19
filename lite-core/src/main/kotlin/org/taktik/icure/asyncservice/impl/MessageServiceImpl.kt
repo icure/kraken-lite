@@ -21,6 +21,7 @@ import org.taktik.icure.entities.Message
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class MessageServiceImpl(
@@ -31,34 +32,33 @@ class MessageServiceImpl(
         hcPartyId: String,
         fromAddress: String,
         paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<ViewQueryResultEvent> = messageLogic.findMessagesByFromAddress(hcPartyId, fromAddress, paginationOffset)
+    ): Flow<PaginationElement> = messageLogic.findMessagesByFromAddress(hcPartyId, fromAddress, paginationOffset)
 
     override fun findMessagesByToAddress(
         hcPartyId: String,
         toAddress: String,
         paginationOffset: PaginationOffset<ComplexKey>,
         reverse: Boolean?
-    ): Flow<ViewQueryResultEvent> = messageLogic.findMessagesByToAddress(hcPartyId, toAddress, paginationOffset, reverse ?: false)
+    ): Flow<PaginationElement> = messageLogic.findMessagesByToAddress(hcPartyId, toAddress, paginationOffset, reverse ?: false)
 
     override fun findMessagesByTransportGuidReceived(
         hcPartyId: String,
         transportGuid: String?,
         paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<ViewQueryResultEvent> = messageLogic.findMessagesByTransportGuidReceived(hcPartyId, transportGuid, paginationOffset)
+    ): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuidReceived(hcPartyId, transportGuid, paginationOffset)
 
     override fun findMessagesByTransportGuid(
         hcPartyId: String,
         transportGuid: String?,
-        paginationOffset: PaginationOffset<List<String?>>
-    ): Flow<ViewQueryResultEvent> = messageLogic.findMessagesByTransportGuid(hcPartyId, transportGuid, paginationOffset)
-
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuid(hcPartyId, transportGuid, paginationOffset)
     override fun findMessagesByTransportGuidSentDate(
         hcPartyId: String,
         transportGuid: String,
         fromDate: Long,
         toDate: Long,
         paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<ViewQueryResultEvent> = messageLogic.findMessagesByTransportGuidSentDate(hcPartyId, transportGuid, fromDate, toDate, paginationOffset)
+    ): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuidSentDate(hcPartyId, transportGuid, fromDate, toDate, paginationOffset)
 
     override suspend fun addDelegation(messageId: String, delegation: Delegation): Message? = getMessage(messageId)?.let {
         messageLogic.addDelegation(it, delegation)
@@ -75,6 +75,14 @@ class MessageServiceImpl(
     override fun listMessagesByCurrentHCPartySecretPatientKeys(secretPatientKeys: List<String>): Flow<Message> = flow {
         emitAll(
             messageLogic.listMessagesByHCPartySecretPatientKeys(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKeys)
+        )
+    }
+    override fun listMessagesByCurrentHCPartySecretPatientKey(
+        secretPatientKey: String,
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = flow {
+        emitAll(
+            messageLogic.listMessagesByHcPartySecretPatientKey(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKey, paginationOffset)
         )
     }
 
@@ -94,7 +102,7 @@ class MessageServiceImpl(
         )
     }
 
-    override fun findForCurrentHcPartySortedByReceived(paginationOffset: PaginationOffset<ComplexKey>): Flow<ViewQueryResultEvent> = flow {
+    override fun findForCurrentHcPartySortedByReceived(paginationOffset: PaginationOffset<ComplexKey>): Flow<PaginationElement> = flow {
         emitAll(
             messageLogic.findForHcPartySortedByReceived(sessionInformationProvider.getCurrentHealthcarePartyId(), paginationOffset)
         )

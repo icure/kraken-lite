@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
-import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.InvoiceLogic
 import org.taktik.icure.asyncservice.InvoiceService
@@ -18,6 +18,7 @@ import org.taktik.icure.entities.embed.InvoicingCode
 import org.taktik.icure.entities.embed.MediumType
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class InvoiceServiceImpl(
@@ -36,20 +37,21 @@ class InvoiceServiceImpl(
     override fun modifyInvoices(invoices: List<Invoice>): Flow<Invoice> = invoiceLogic.modifyEntities(invoices)
 
     override suspend fun addDelegation(invoiceId: String, delegation: Delegation): Invoice? = invoiceLogic.addDelegation(invoiceId, delegation)
-
     override fun findInvoicesByAuthor(
         hcPartyId: String,
         fromDate: Long?,
         toDate: Long?,
-        paginationOffset: PaginationOffset<List<*>>
-    ): Flow<ViewQueryResultEvent> = invoiceLogic.findInvoicesByAuthor(hcPartyId, fromDate, toDate, paginationOffset)
-
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = invoiceLogic.findInvoicesByAuthor(hcPartyId, fromDate, toDate, paginationOffset)
     override fun listInvoicesByHcPartyContacts(hcPartyId: String, contactIds: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyContacts(hcPartyId, contactIds)
 
     override fun listInvoicesByHcPartyAndRecipientIds(hcPartyId: String, recipientIds: Set<String?>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndRecipientIds(hcPartyId, recipientIds)
-
-    override fun listInvoicesByHcPartyAndPatientSks(hcPartyId: String, secretPatientKeys: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndPatientSks(hcPartyId, secretPatientKeys)
-
+    override fun listInvoicesByHcPartyAndPatientSfks(hcPartyId: String, secretPatientKeys: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndPatientSfks(hcPartyId, secretPatientKeys)
+    override fun listInvoicesByHcPartyAndPatientSfk(
+        hcPartyId: String,
+        secretPatientKey: String,
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = invoiceLogic.listInvoicesByHcPartyAndPatientSfk(hcPartyId, secretPatientKey, paginationOffset)
     override fun listInvoicesByHcPartySentMediumTypeInvoiceTypeSentDate(
         hcPartyId: String,
         sentMediumType: MediumType,

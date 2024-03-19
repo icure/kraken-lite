@@ -4,10 +4,13 @@
 
 package org.taktik.icure
 
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
@@ -31,11 +34,14 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.taktik.couchdb.ViewRowWithDoc
 import org.taktik.icure.asyncdao.GenericDAO
+import org.taktik.icure.asyncdao.ICureDAO
 import org.taktik.icure.asyncdao.InternalDAO
+import org.taktik.icure.asyncdao.Partitions
 import org.taktik.icure.asynclogic.CodeLogic
 import org.taktik.icure.asynclogic.ICureLogic
 import org.taktik.icure.asynclogic.UserLogic
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
+import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorage
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorageMigration
 import org.taktik.icure.constants.Users
@@ -58,8 +64,9 @@ import org.taktik.icure.properties.AuthenticationProperties
 import org.taktik.icure.properties.CouchDbLiteProperties
 import org.taktik.icure.utils.suspendRetry
 import java.util.*
-import javax.xml.bind.JAXBContext
 import kotlin.system.exitProcess
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 @SpringBootApplication(
     scanBasePackages = [
@@ -107,6 +114,7 @@ class ICureBackendApplication {
         userLogic: UserLogic,
         iCureLogic: ICureLogic,
         codeLogic: CodeLogic,
+        iCureDAO: ICureDAO,
         allDaos: List<GenericDAO<*>>,
         allInternalDaos: List<InternalDAO<*>>,
         couchDbProperties: CouchDbLiteProperties,
@@ -121,11 +129,12 @@ class ICureBackendApplication {
 
         runBlocking {
             allDaos.forEach {
-                it.forceInitStandardDesignDocument(datastoreInstanceProvider.getInstanceAndGroup(), true)
+                it.forceInitStandardDesignDocument(datastoreInstanceProvider.getInstanceAndGroup(), true, partition = Partitions.Main)
             }
             allInternalDaos.forEach {
                 it.forceInitStandardDesignDocument(true)
             }
+            deferDataOwnerDesignDocIndexation(allDaos, iCureDAO, datastoreInstanceProvider.getInstanceAndGroup())
             allObjectStorageLogic.forEach { it.rescheduleFailedStorageTasks() }
             allObjectStorageMigrationLogic.forEach { it.rescheduleStoredMigrationTasks() }
 
@@ -169,6 +178,36 @@ class ICureBackendApplication {
         log.info("icure (" + iCureLogic.getVersion() + ") is started")
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
+    fun deferDataOwnerDesignDocIndexation(
+        genericDAOs: List<GenericDAO<*>>,
+        iCureDAO: ICureDAO,
+        datastoreInformation: IDatastoreInformation
+    ) = GlobalScope.launch {
+
+        suspend fun isIndexingWithDebouncing(): Boolean {
+            val firstAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
+            delay(1L.seconds.inWholeMilliseconds)
+            val secondAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
+            delay(1L.seconds.inWholeMilliseconds)
+            val thirdAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
+            return  firstAttempt || secondAttempt || thirdAttempt
+        }
+
+        // It is important to index All Maurice partition before the DataOwner ones
+        listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+            log.info("Deferring indexation of $partition design docs.")
+            genericDAOs.forEach {
+                while(isIndexingWithDebouncing()) {
+                    delay(1L.minutes.inWholeMilliseconds)
+                }
+                log.info("Indexing design docs for ${it::class.java.simpleName}")
+                it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition)
+            }
+            log.info("Indexation of $partition design docs completed.")
+        }
+    }
+
     @Component
     @Profile("cmd")
     class Commander(val applicationContext: ConfigurableApplicationContext) : CommandLineRunner {
@@ -182,10 +221,10 @@ class ICureBackendApplication {
             val tailArgs = args.drop(1)
             log.info("icure commander started. Executing ${tailArgs.firstOrNull()}")
 
-
-            when (tailArgs.firstOrNull()) {
-                //TODO: Add support for plugins from build time added jars
-            }
+            // TODO: Add support for plugins from build time added jars
+            // when (tailArgs.firstOrNull()) {
+            //
+            // }
             applicationContext.close()
 
             runBlocking {
@@ -198,7 +237,6 @@ class ICureBackendApplication {
 }
 
 fun main(args: Array<String>) {
-    System.setProperty(JAXBContext.JAXB_CONTEXT_FACTORY, "com.sun.xml.bind.v2.ContextFactory")
     val profile = args.firstOrNull() ?: "app"
     SpringApplicationBuilder(ICureBackendApplication::class.java)
         .profiles(profile)

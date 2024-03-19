@@ -3,11 +3,11 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
-import org.taktik.couchdb.ViewRowWithDoc
 import org.taktik.icure.asynclogic.InsuranceLogic
 import org.taktik.icure.asyncservice.InsuranceService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Insurance
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class InsuranceServiceImpl(
@@ -27,5 +27,5 @@ class InsuranceServiceImpl(
 
     override fun getInsurances(ids: Set<String>): Flow<Insurance> = insuranceLogic.getInsurances(ids)
 
-    override fun getAllInsurances(paginationOffset: PaginationOffset<Nothing>): Flow<ViewRowWithDoc<Any?, String, Insurance>> = insuranceLogic.getAllInsurances(paginationOffset)
+    override fun getAllInsurances(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = insuranceLogic.getAllInsurances(paginationOffset)
 }

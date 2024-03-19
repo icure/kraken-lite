@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.singleOrNull
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.ContactLogic
 import org.taktik.icure.asyncservice.ContactService
@@ -18,6 +19,7 @@ import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.embed.Service
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
+import org.taktik.icure.pagination.PaginationElement
 
 @org.springframework.stereotype.Service
 class ContactServiceImpl(
@@ -30,6 +32,11 @@ class ContactServiceImpl(
     override fun findContactsByIds(selectedIds: Collection<String>): Flow<ViewQueryResultEvent> = contactLogic.findContactsByIds(selectedIds)
 
     override fun listContactsByHCPartyAndPatient(hcPartyId: String, secretPatientKeys: List<String>): Flow<Contact> = contactLogic.listContactsByHCPartyAndPatient(hcPartyId, secretPatientKeys)
+    override fun listContactByHCPartyIdAndSecretPatientKey(
+        hcPartyId: String,
+        secretPatientKey: String,
+        paginationOffset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = contactLogic.listContactByHCPartyIdAndSecretPatientKey(hcPartyId, secretPatientKey, paginationOffset)
 
     override fun listContactIdsByHCPartyAndPatient(hcPartyId: String, secretPatientKeys: List<String>): Flow<String> = contactLogic.listContactIdsByHCPartyAndPatient(hcPartyId, secretPatientKeys)
 
@@ -135,13 +142,12 @@ class ContactServiceImpl(
     ): Flow<Service> = contactLogic.filterServices(paginationOffset, filter)
 
     override fun solveConflicts(limit: Int?): Flow<IdAndRev> = contactLogic.solveConflicts(limit)
-
     override fun listContactsByOpeningDate(
         hcPartyId: String,
         startOpeningDate: Long,
         endOpeningDate: Long,
-        offset: PaginationOffset<List<String>>
-    ): Flow<ViewQueryResultEvent> = contactLogic.listContactsByOpeningDate(hcPartyId, startOpeningDate, endOpeningDate, offset)
+        offset: PaginationOffset<ComplexKey>
+    ): Flow<PaginationElement> = contactLogic.listContactsByOpeningDate(hcPartyId, startOpeningDate, endOpeningDate, offset)
 
     override suspend fun addDelegations(contactId: String, delegations: List<Delegation>): Contact? = contactLogic.addDelegations(contactId, delegations)
 

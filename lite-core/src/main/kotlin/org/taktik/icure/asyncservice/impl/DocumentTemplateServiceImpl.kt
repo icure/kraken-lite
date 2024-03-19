@@ -5,7 +5,9 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.icure.asynclogic.DocumentTemplateLogic
 import org.taktik.icure.asyncservice.DocumentTemplateService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.DocumentTemplate
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class DocumentTemplateServiceImpl(
@@ -31,6 +33,6 @@ class DocumentTemplateServiceImpl(
     override fun createDocumentTemplates(entities: Collection<DocumentTemplate>): Flow<DocumentTemplate> = documentTemplateLogic.createEntities(entities)
 
     override fun deleteDocumentTemplates(ids: Set<String>): Flow<DocIdentifier> = documentTemplateLogic.deleteEntities(ids)
-
+    override fun getAllDocumentTemplates(paginationOffset: PaginationOffset<String>): Flow<PaginationElement> = documentTemplateLogic.getAllDocumentTemplates(paginationOffset)
     override fun getAllDocumentTemplates(): Flow<DocumentTemplate> = documentTemplateLogic.getEntities()
 }

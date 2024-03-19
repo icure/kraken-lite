@@ -4,18 +4,20 @@
 
 package org.taktik.icure.config
 
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.springframework.beans.factory.annotation.Value
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
+import org.springframework.http.codec.json.Jackson2JsonEncoder
 import org.springframework.web.reactive.config.EnableWebFlux
-import org.springframework.web.reactive.config.WebFluxConfigurer
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.services.external.http.WebSocketOperationLiteHandler
 import org.taktik.icure.services.external.http.WsController
 import org.taktik.icure.services.external.http.websocket.factory.DefaultWebSocketOperationFactoryImpl
 import org.taktik.icure.services.external.http.websocket.operation.WebSocketOperationFactory
+import org.taktik.icure.spring.encoder.PaginatedCollectingJackson2JsonEncoder
 
 @Configuration
 class LiteWebConfig {
@@ -31,4 +33,14 @@ class LiteWebConfig {
 
 @Configuration
 @EnableWebFlux
-class LiteWebFluxConfigurer : SharedWebFluxConfiguration()
+class LiteWebFluxConfigurer : SharedWebFluxConfiguration() {
+	override fun getJackson2JsonEncoder(): Jackson2JsonEncoder =
+		PaginatedCollectingJackson2JsonEncoder(
+			ObjectMapper().registerModule(
+				KotlinModule.Builder()
+					.configure(KotlinFeature.NullIsSameAsDefault, true)
+					.build()
+			).apply { setSerializationInclusion(JsonInclude.Include.NON_NULL) }
+		)
+
+}
