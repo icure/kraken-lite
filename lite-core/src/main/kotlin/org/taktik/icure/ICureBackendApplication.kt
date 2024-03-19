@@ -195,25 +195,17 @@ class ICureBackendApplication {
         }
 
         // It is important to index All Maurice partition before the DataOwner ones
-        log.info("Deferring indexation of Maurice design docs.")
-        genericDAOs.forEach {
-            while(isIndexingWithDebouncing()) {
-                delay(1L.minutes.inWholeMilliseconds)
+        listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+            log.info("Deferring indexation of $partition design docs.")
+            genericDAOs.forEach {
+                while(isIndexingWithDebouncing()) {
+                    delay(1L.minutes.inWholeMilliseconds)
+                }
+                log.info("Indexing design docs for ${it::class.java.simpleName}")
+                it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition)
             }
-            log.info("Indexing design docs for ${it::class.java.simpleName}")
-            it.forceInitStandardDesignDocument(datastoreInformation, true, partition = Partitions.Maurice)
+            log.info("Indexation of $partition design docs completed.")
         }
-        log.info("Indexation of Maurice design docs completed.")
-
-        log.info("Deferring indexation of DataOwner design docs.")
-        genericDAOs.forEach {
-            while(isIndexingWithDebouncing()) {
-                delay(1L.minutes.inWholeMilliseconds)
-            }
-            log.info("Indexing design docs for ${it::class.java.simpleName}")
-            it.forceInitStandardDesignDocument(datastoreInformation, true, partition = Partitions.DataOwner)
-        }
-        log.info("Indexation of DataOwner design docs completed.")
     }
 
     @Component
