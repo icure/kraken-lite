@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.Client
 import org.taktik.couchdb.dao.DesignDocumentProvider
@@ -103,6 +102,17 @@ class LiteDesignDocumentProvider(
         .replace(" == ", " === ")
         .replace("[ ;]$".toRegex(), "")
 
+    /**
+     * Checks if all the [View]s defined in [other] exist in the receiver [DesignDocument] and did not have any
+     * significant changes (i.e. only formatting changes happened.)
+     * Note: this operator is NOT commutative. if some views are missing in the receiver [DesignDocument] but are
+     * present in [other], then this function will return true.
+     *
+     * @receiver a [DesignDocument].
+     * @param other a [DesignDocument].
+     * @return true if all the views defined in the receiver are present and equal to the ones defined in [other],
+     * false otherwise.
+     */
     private infix fun DesignDocument.equipollent(other: DesignDocument): Boolean =
         views.entries.all { (viewName, view) ->
             other.views[viewName]?.let {
@@ -118,14 +128,12 @@ class LiteDesignDocumentProvider(
                 Partitions.Main -> "^_design/${entityClass.simpleName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
                 else -> "^_design/${entityClass.simpleName}-${partition.partitionName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
             }
-        }.map { dd ->
+        }.mapNotNull { dd ->
             val (name, _) = dd.id.lastIndexOf('_').let { dd.id.substring(0, it) to dd.id.substring(it + 1) }
             val currentDocument = existingIds.firstOrNull { it.substring(0, it.lastIndexOf('_')) == name }?.let { id ->
                 client?.get(id, DesignDocument::class.java)
             }
-            if(currentDocument != null && dd equipollent currentDocument) {
-                dd.copy(id = currentDocument.id)
-            } else dd
+            dd.takeIf { currentDocument == null || !(dd equipollent currentDocument) }
         }.toSet()
     }
 

@@ -128,15 +128,15 @@ class ICureBackendApplication {
         log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
 
         runBlocking {
-            allDaos.forEach {
-                it.forceInitStandardDesignDocument(datastoreInstanceProvider.getInstanceAndGroup(), true, partition = Partitions.Main)
+            allDaos.forEach { dao ->
+                dao.forceInitStandardDesignDocument(datastoreInstanceProvider.getInstanceAndGroup(), true, partition = Partitions.Main)
             }
-            allInternalDaos.forEach {
-                it.forceInitStandardDesignDocument(true)
+            allInternalDaos.forEach { dao ->
+                dao.forceInitStandardDesignDocument(true)
             }
             deferDataOwnerDesignDocIndexation(allDaos, iCureDAO, datastoreInstanceProvider.getInstanceAndGroup())
-            allObjectStorageLogic.forEach { it.rescheduleFailedStorageTasks() }
-            allObjectStorageMigrationLogic.forEach { it.rescheduleStoredMigrationTasks() }
+            allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
+            allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
 
             if (authenticationLiteProperties.createAdminUser && suspendRetry(10) { userLogic.listUsers(PaginationOffset(1), true).filterIsInstance<ViewRowWithDoc<String, Nothing, User>>().toList().isEmpty() } ) {
                 val password = UUID.randomUUID().toString().substring(0,13).replace("-","")
