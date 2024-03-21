@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
-import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.Client
 import org.taktik.couchdb.dao.DesignDocumentProvider
@@ -118,14 +117,12 @@ class LiteDesignDocumentProvider(
                 Partitions.Main -> "^_design/${entityClass.simpleName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
                 else -> "^_design/${entityClass.simpleName}-${partition.partitionName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
             }
-        }.map { dd ->
+        }.mapNotNull { dd ->
             val (name, _) = dd.id.lastIndexOf('_').let { dd.id.substring(0, it) to dd.id.substring(it + 1) }
             val currentDocument = existingIds.firstOrNull { it.substring(0, it.lastIndexOf('_')) == name }?.let { id ->
                 client?.get(id, DesignDocument::class.java)
             }
-            if(currentDocument != null && dd equipollent currentDocument) {
-                dd.copy(id = currentDocument.id)
-            } else dd
+            dd.takeIf { currentDocument == null || !(dd equipollent currentDocument) }
         }.toSet()
     }
 
