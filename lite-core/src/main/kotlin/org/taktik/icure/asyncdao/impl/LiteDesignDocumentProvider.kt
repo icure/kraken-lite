@@ -102,6 +102,17 @@ class LiteDesignDocumentProvider(
         .replace(" == ", " === ")
         .replace("[ ;]$".toRegex(), "")
 
+    /**
+     * Checks if all the [View]s defined in [other] exist in the receiver [DesignDocument] and did not have any
+     * significant changes (i.e. only formatting changes happened.)
+     * Note: this operator is NOT commutative. if some views are missing in the receiver [DesignDocument] but are
+     * present in [other], then this function will return true.
+     *
+     * @receiver a [DesignDocument].
+     * @param other a [DesignDocument].
+     * @return true if all the views defined in the receiver are present and equal to the ones defined in [other],
+     * false otherwise.
+     */
     private infix fun DesignDocument.equipollent(other: DesignDocument): Boolean =
         views.entries.all { (viewName, view) ->
             other.views[viewName]?.let {
