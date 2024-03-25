@@ -2,12 +2,12 @@ package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
-import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.icure.asynclogic.ExchangeDataLogic
 import org.taktik.icure.asyncservice.ExchangeDataService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.DataOwnerType
 import org.taktik.icure.entities.ExchangeData
+import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class ExchangeDataServiceImpl(
@@ -18,7 +18,7 @@ class ExchangeDataServiceImpl(
     override fun findExchangeDataByParticipant(
         dataOwnerId: String,
         paginationOffset: PaginationOffset<String>
-    ): Flow<ViewQueryResultEvent> = exchangeDataLogic.findExchangeDataByParticipant(dataOwnerId, paginationOffset)
+    ): Flow<PaginationElement> = exchangeDataLogic.findExchangeDataByParticipant(dataOwnerId, paginationOffset)
 
     override fun findExchangeDataByDelegatorDelegatePair(delegatorId: String, delegateId: String): Flow<ExchangeData> =
         exchangeDataLogic.findExchangeDataByDelegatorDelegatePair(delegatorId, delegateId)
