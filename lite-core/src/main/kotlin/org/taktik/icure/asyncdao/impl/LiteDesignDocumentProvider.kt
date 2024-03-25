@@ -120,7 +120,13 @@ class LiteDesignDocumentProvider(
             } ?: false
         }
 
-    override suspend fun generateDesignDocuments(entityClass: Class<*>, metaDataSource: Any, client: Client?, partition: Partitions): Set<DesignDocument> {
+    override suspend fun generateDesignDocuments(
+        entityClass: Class<*>,
+        metaDataSource: Any,
+        client: Client?,
+        partition: Partitions,
+        ignoreIfUnchanged: Boolean
+    ): Set<DesignDocument> {
         val existingIds = client?.designDocumentsIds() ?: emptySet()
         return StdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).filter { dd ->
             when(partition) {
@@ -133,7 +139,7 @@ class LiteDesignDocumentProvider(
             val currentDocument = existingIds.firstOrNull { it.substring(0, it.lastIndexOf('_')) == name }?.let { id ->
                 client?.get(id, DesignDocument::class.java)
             }
-            dd.takeIf { currentDocument == null || !(dd equipollent currentDocument) }
+            dd.takeIf { currentDocument == null || !(dd equipollent currentDocument) || !ignoreIfUnchanged}
         }.toSet()
     }
 
