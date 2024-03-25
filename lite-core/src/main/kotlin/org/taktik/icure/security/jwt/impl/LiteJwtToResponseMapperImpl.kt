@@ -3,10 +3,10 @@ package org.taktik.icure.security.jwt.impl
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Component
 import org.taktik.icure.entities.DataOwnerType
+import org.taktik.icure.entities.security.jwt.JwtResponse
 import org.taktik.icure.security.jwt.BaseJwtRefreshDetails
 import org.taktik.icure.security.jwt.JwtDetails
 import org.taktik.icure.security.jwt.JwtRefreshDetails
-import org.taktik.icure.security.jwt.JwtResponse
 import org.taktik.icure.security.jwt.JwtToResponseMapper
 import org.taktik.icure.security.jwt.JwtUtils
 import org.taktik.icure.services.external.rest.v1.dto.AuthenticationResponse
