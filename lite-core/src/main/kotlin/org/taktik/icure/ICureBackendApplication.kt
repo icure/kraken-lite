@@ -33,6 +33,7 @@ import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.taktik.couchdb.ViewRowWithDoc
+import org.taktik.icure.asyncdao.ContactDAO
 import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asyncdao.ICureDAO
 import org.taktik.icure.asyncdao.InternalDAO
@@ -129,7 +130,7 @@ class ICureBackendApplication {
 
         runBlocking {
             allDaos.forEach { dao ->
-                dao.forceInitStandardDesignDocument(datastoreInstanceProvider.getInstanceAndGroup(), true, partition = Partitions.Main)
+                dao.forceInitStandardDesignDocument(datastoreInstanceProvider.getInstanceAndGroup(), true, partition = Partitions.Main, ignoreIfUnchanged = true)
             }
             allInternalDaos.forEach { dao ->
                 dao.forceInitStandardDesignDocument(true)
@@ -202,7 +203,7 @@ class ICureBackendApplication {
                     delay(1L.minutes.inWholeMilliseconds)
                 }
                 log.info("Indexing design docs for ${it::class.java.simpleName}")
-                it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition)
+                it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
             }
             log.info("Indexation of $partition design docs completed.")
         }
