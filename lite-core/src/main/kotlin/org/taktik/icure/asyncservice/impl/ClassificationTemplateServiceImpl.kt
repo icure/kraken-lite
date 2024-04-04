@@ -29,34 +29,7 @@ class ClassificationTemplateServiceImpl(
 
     override suspend fun modifyClassificationTemplate(classificationTemplate: ClassificationTemplate): ClassificationTemplate = classificationTemplateLogic.modifyEntities(setOf(classificationTemplate)).single()
 
-    override suspend fun addDelegation(
-        classificationTemplateId: String,
-        healthcarePartyId: String,
-        delegation: Delegation
-    ): ClassificationTemplate? = getClassificationTemplate(classificationTemplateId)?.let {
-        classificationTemplateLogic.addDelegation(it, healthcarePartyId, delegation)
-    }
-
-    override suspend fun addDelegations(
-        classificationTemplateId: String,
-        delegations: List<Delegation>
-    ): ClassificationTemplate? = getClassificationTemplate(classificationTemplateId)?.let {
-        classificationTemplateLogic.addDelegations(it, delegations)
-    }
-
     override fun getClassificationTemplates(ids: List<String>): Flow<ClassificationTemplate> = classificationTemplateLogic.getClassificationTemplates(ids)
-    override fun listClassificationsByHCPartyAndSecretPatientKeys(
-        hcPartyId: String,
-        secretPatientKeys: List<String>
-    ): Flow<ClassificationTemplate> = classificationTemplateLogic.listClassificationsByHCPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
-
-    override fun listClassificationsByHCPartyAndSecretPatientKey(
-        hcPartyId: String,
-        secretPatientKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = classificationTemplateLogic.listClassificationsByHCPartyAndSecretPatientKey(hcPartyId, secretPatientKey, paginationOffset)
 
     override fun listClassificationTemplates(paginationOffset: PaginationOffset<String>): Flow<PaginationElement> = classificationTemplateLogic.listClassificationTemplates(paginationOffset)
-
-    override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<ClassificationTemplate>> = classificationTemplateLogic.bulkShareOrUpdateMetadata(requests)
 }
