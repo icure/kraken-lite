@@ -1,6 +1,7 @@
 package org.taktik.icure.config
 
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -15,9 +16,11 @@ import org.taktik.icure.asyncdao.impl.MessageDAOImpl
 import org.taktik.icure.asyncdao.impl.UserDAOImpl
 import org.taktik.icure.cache.EntityCacheFactory
 
-@Configuration("icure.dao")
+@Configuration
 @Profile("app")
 class LiteDAOConfig : DaoConfig {
+
+    @Value("\${icure.dao.useDataOwnerPartition:false}")
     override var useDataOwnerPartition: Boolean = false
 
     @Bean
