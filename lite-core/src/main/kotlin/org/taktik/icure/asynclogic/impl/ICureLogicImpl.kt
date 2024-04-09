@@ -1,11 +1,11 @@
 package org.taktik.icure.asynclogic.impl
 
-import kotlinx.coroutines.flow.collect
 import org.springframework.context.annotation.Profile
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asyncdao.ICureDAO
+import org.taktik.icure.asyncdao.Partitions
 import org.taktik.icure.asynclogic.VersionLogic
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 import org.taktik.icure.entities.ReplicationInfo
@@ -29,7 +29,7 @@ class ICureLiteLogicImpl(
                 val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
                 dao.forceInitStandardDesignDocument(datastoreInformation, true, warmup)
                 if (warmup) {
-                    dao.getEntityIds(datastoreInformation, 1).collect()
+                    dao.warmupPartition(datastoreInformation, Partitions.All)
                 }
             }
     }

@@ -204,6 +204,7 @@ class ICureBackendApplication {
                 }
                 log.info("Indexing design docs for ${it::class.java.simpleName}")
                 it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
+                it.warmupPartition(datastoreInformation, partition)
             }
             log.info("Indexation of $partition design docs completed.")
         }
