@@ -29,6 +29,9 @@ class ExchangeDataServiceImpl(
     override suspend fun modifyExchangeData(exchangeData: ExchangeData): ExchangeData =
         exchangeDataLogic.modifyExchangeData(exchangeData)
 
-    override fun getParticipantCounterparts(dataOwnerId: String, counterpartsType: List<DataOwnerType>): Flow<String> =
-        exchangeDataLogic.getParticipantCounterparts(dataOwnerId, counterpartsType)
+    override fun getParticipantCounterparts(
+        dataOwnerId: String,
+        counterpartsType: List<DataOwnerType>,
+        ignoreOnEntryForFingerprint: String?
+    ): Flow<String> = exchangeDataLogic.getParticipantCounterparts(dataOwnerId, counterpartsType, ignoreOnEntryForFingerprint)
 }
