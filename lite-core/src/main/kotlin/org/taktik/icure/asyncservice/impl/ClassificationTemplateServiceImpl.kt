@@ -27,5 +27,4 @@ class ClassificationTemplateServiceImpl(
     override fun getClassificationTemplates(ids: List<String>): Flow<ClassificationTemplate> = classificationTemplateLogic.getClassificationTemplates(ids)
 
     override fun listClassificationTemplates(paginationOffset: PaginationOffset<String>): Flow<PaginationElement> = classificationTemplateLogic.listClassificationTemplates(paginationOffset)
-
 }

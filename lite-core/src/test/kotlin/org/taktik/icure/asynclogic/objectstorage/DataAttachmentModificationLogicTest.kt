@@ -189,7 +189,8 @@ class DataAttachmentModificationLogicTest : StringSpec({
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
 					smallAttachment.byteSizeDataBufferFlow(),
 					smallAttachment.size.toLong(),
-					sampleUtis
+					sampleUtis,
+					false
 				)
 			)
 		)
@@ -207,7 +208,8 @@ class DataAttachmentModificationLogicTest : StringSpec({
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
 					bigAttachment.byteSizeDataBufferFlow(),
 					bigAttachment.size.toLong(),
-					sampleUtis
+					sampleUtis,
+					false
 				)
 			)
 		)
@@ -223,7 +225,8 @@ class DataAttachmentModificationLogicTest : StringSpec({
 					sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
 						bigAttachment.byteSizeDataBufferFlow(),
 						bigAttachment.size.toLong(),
-						sampleUtis
+						sampleUtis,
+						false
 					)
 				)
 			)
@@ -296,10 +299,10 @@ class DataAttachmentModificationLogicTest : StringSpec({
 		dataAttachmentModificationLogic.updateAttachments(
 			document,
 			mapOf(
-				key1 to DataAttachmentChange.CreateOrUpdate(small1.byteSizeDataBufferFlow(), small1.size.toLong(), sampleUtis),
-				key2 to DataAttachmentChange.CreateOrUpdate(big1.byteSizeDataBufferFlow(), big1.size.toLong(), sampleUtis),
-				key3 to DataAttachmentChange.CreateOrUpdate(small2.byteSizeDataBufferFlow(), small2.size.toLong(), sampleUtis),
-				key4 to DataAttachmentChange.CreateOrUpdate(big2.byteSizeDataBufferFlow(), big2.size.toLong(), sampleUtis),
+				key1 to DataAttachmentChange.CreateOrUpdate(small1.byteSizeDataBufferFlow(), small1.size.toLong(), sampleUtis, false),
+				key2 to DataAttachmentChange.CreateOrUpdate(big1.byteSizeDataBufferFlow(), big1.size.toLong(), sampleUtis, false),
+				key3 to DataAttachmentChange.CreateOrUpdate(small2.byteSizeDataBufferFlow(), small2.size.toLong(), sampleUtis, false),
+				key4 to DataAttachmentChange.CreateOrUpdate(big2.byteSizeDataBufferFlow(), big2.size.toLong(), sampleUtis, false),
 			)
 		)
 		verify()
@@ -329,7 +332,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			document,
 			mapOf(
 				key2 to DataAttachmentChange.Delete,
-				key4 to DataAttachmentChange.CreateOrUpdate(bigAttachment.byteSizeDataBufferFlow(), bigAttachment.size.toLong(), sampleUtis),
+				key4 to DataAttachmentChange.CreateOrUpdate(bigAttachment.byteSizeDataBufferFlow(), bigAttachment.size.toLong(), sampleUtis, false),
 			)
 		).shouldNotBeNull().apply { author shouldBe sampleAuthor }
 		verify()
@@ -347,7 +350,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 		)
 		dataAttachmentModificationLogic.updateAttachments(
 			document,
-			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), newUtis))
+			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), newUtis, false))
 		)
 		verify()
 	}
@@ -363,7 +366,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 		)
 		dataAttachmentModificationLogic.updateAttachments(
 			document,
-			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), null))
+			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), null, false))
 		)
 		verify()
 	}
