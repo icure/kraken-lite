@@ -33,7 +33,6 @@ import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.taktik.couchdb.ViewRowWithDoc
-import org.taktik.icure.asyncdao.ContactDAO
 import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asyncdao.ICureDAO
 import org.taktik.icure.asyncdao.InternalDAO
@@ -195,6 +194,15 @@ class ICureBackendApplication {
             return  firstAttempt || secondAttempt || thirdAttempt
         }
 
+        suspend fun canWarmUp(
+            dao: GenericDAO<*>,
+            datastoreInformation: IDatastoreInformation,
+            partition: Partitions
+        ): Boolean = runCatching {
+            dao.warmupPartition(datastoreInformation, partition)
+            true
+        }.getOrDefault(false)
+
         // It is important to index All Maurice partition before the DataOwner ones
         listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
             log.info("Deferring indexation of $partition design docs.")
@@ -204,7 +212,9 @@ class ICureBackendApplication {
                 }
                 log.info("Indexing design docs for ${it::class.java.simpleName}")
                 it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
-                it.warmupPartition(datastoreInformation, partition)
+                while(!canWarmUp(it, datastoreInformation, partition)) {
+                    delay(1L.seconds.inWholeMilliseconds)
+                }
             }
             log.info("Indexation of $partition design docs completed.")
         }

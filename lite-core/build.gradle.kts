@@ -238,5 +238,6 @@ fun DependencyHandlerScope.injectOptionalJars() {
     if (regions.contains("be")) {
         implementation(liteLibs.samModule)
         implementation(liteLibs.kmehrModule)
+        implementation(liteLibs.bundles.kmehrDependencies)
     }
 }
