@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
@@ -19,7 +18,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.codec.json.Jackson2JsonDecoder
 import org.springframework.http.codec.json.Jackson2JsonEncoder
-import org.springframework.stereotype.Service
 import org.springframework.util.DigestUtils
 import org.springframework.web.reactive.function.BodyInserters
 import org.springframework.web.reactive.function.client.WebClient
@@ -41,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap
 
 interface ObjectStorageClientBean<T : HasDataAttachments<T>> : ObjectStorageClient<T>, InitializingBean {}
 
-@OptIn(ExperimentalCoroutinesApi::class)
 private class ObjectStorageClientImpl<T : HasDataAttachments<T>>(
 	private val objectStorageProperties: ObjectStorageProperties,
 	private val cloudAuthenticationLogic: CloudAuthenticationLogic,
