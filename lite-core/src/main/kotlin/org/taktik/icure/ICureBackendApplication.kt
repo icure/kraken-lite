@@ -194,7 +194,7 @@ class ICureBackendApplication {
             return  firstAttempt || secondAttempt || thirdAttempt
         }
 
-        suspend fun canWarmUp(
+        suspend fun warmupPartitionAndCheckForCompletion(
             dao: GenericDAO<*>,
             datastoreInformation: IDatastoreInformation,
             partition: Partitions
@@ -212,7 +212,7 @@ class ICureBackendApplication {
                 }
                 log.info("Indexing design docs for ${it::class.java.simpleName}")
                 it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
-                while(!canWarmUp(it, datastoreInformation, partition)) {
+                while(!warmupPartitionAndCheckForCompletion(it, datastoreInformation, partition)) {
                     delay(1L.seconds.inWholeMilliseconds)
                 }
             }
