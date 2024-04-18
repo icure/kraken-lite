@@ -5,17 +5,14 @@ import kotlinx.coroutines.flow.single
 import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
-import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.DocumentLogic
 import org.taktik.icure.asynclogic.objectstorage.DataAttachmentChange
 import org.taktik.icure.asyncservice.DocumentService
-import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.BatchUpdateDocumentInfo
 import org.taktik.icure.entities.Document
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
-import org.taktik.icure.pagination.PaginationElement
 import java.nio.ByteBuffer
 
 @Service
@@ -57,11 +54,13 @@ class DocumentServiceImpl(
         secretForeignKeys: List<String>
     ): Flow<Document> = documentLogic.listDocumentsByHCPartySecretMessageKeys(hcPartyId, secretForeignKeys)
 
-    override fun listDocumentsByHcPartyIdAndSecretMessageKey(
-        hcPartyId: String,
-        secretForeignKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = documentLogic.listDocumentsByHcPartyIdAndSecretMessageKey(hcPartyId, secretForeignKey, paginationOffset)
+    override fun listDocumentIdsByDataOwnerPatientCreated(
+        dataOwnerId: String,
+        secretForeignKeys: Set<String>,
+        startDate: Long?,
+        endDate: Long?,
+        descending: Boolean
+    ): Flow<String> = documentLogic.listDocumentIdsByDataOwnerPatientCreated(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
     override fun listDocumentsWithoutDelegation(limit: Int): Flow<Document> = documentLogic.listDocumentsWithoutDelegation(limit)
 

@@ -77,14 +77,14 @@ class MessageServiceImpl(
             messageLogic.listMessagesByHCPartySecretPatientKeys(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKeys)
         )
     }
-    override fun listMessagesByCurrentHCPartySecretPatientKey(
-        secretPatientKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = flow {
-        emitAll(
-            messageLogic.listMessagesByHcPartySecretPatientKey(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKey, paginationOffset)
-        )
-    }
+
+    override fun listMessageIdsByDataOwnerPatientSentDate(
+        dataOwnerId: String,
+        secretForeignKeys: Set<String>,
+        startDate: Long?,
+        endDate: Long?,
+        descending: Boolean
+    ): Flow<String> = messageLogic.listMessageIdsByDataOwnerPatientSentDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
     override fun setStatus(messageIds: List<String>, status: Int): Flow<Message> = flow {
         emitAll(

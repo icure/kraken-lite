@@ -32,11 +32,14 @@ class ContactServiceImpl(
     override fun findContactsByIds(selectedIds: Collection<String>): Flow<ViewQueryResultEvent> = contactLogic.findContactsByIds(selectedIds)
 
     override fun listContactsByHCPartyAndPatient(hcPartyId: String, secretPatientKeys: List<String>): Flow<Contact> = contactLogic.listContactsByHCPartyAndPatient(hcPartyId, secretPatientKeys)
-    override fun listContactByHCPartyIdAndSecretPatientKey(
-        hcPartyId: String,
-        secretPatientKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = contactLogic.listContactByHCPartyIdAndSecretPatientKey(hcPartyId, secretPatientKey, paginationOffset)
+
+    override fun listContactIdsByDataOwnerPatientOpeningDate(
+        dataOwnerId: String,
+        secretForeignKeys: Set<String>,
+        startDate: Long?,
+        endDate: Long?,
+        descending: Boolean
+    ): Flow<String> = contactLogic.listContactIdsByDataOwnerPatientOpeningDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
     override fun listContactIdsByHCPartyAndPatient(hcPartyId: String, secretPatientKeys: List<String>): Flow<String> = contactLogic.listContactIdsByHCPartyAndPatient(hcPartyId, secretPatientKeys)
 
