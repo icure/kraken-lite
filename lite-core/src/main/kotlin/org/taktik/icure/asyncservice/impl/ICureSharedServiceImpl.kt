@@ -16,9 +16,7 @@ class ICureSharedServiceImpl(
 
     override fun getVersion(): String = iCureLogic.getVersion()
 
-    override fun getProcessInfo(): String = iCureLogic.getProcessInfo()
-
-    override fun tokenCheck(token: String): String = iCureLogic.tokenCheck(token)
+    override suspend fun getProcessInfo(): String = iCureLogic.getProcessInfo()
 
     override suspend fun setLogLevel(logLevel: String, packageName: String): String = iCureLogic.setLogLevel(logLevel, packageName)
 
