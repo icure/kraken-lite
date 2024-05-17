@@ -31,6 +31,7 @@ class AccessLogServiceImpl(
     ): Flow<AccessLog> = accessLogLogic.listAccessLogsByHCPartyAndSecretPatientKeys(hcPartyId, secretForeignKeys)
 
     override suspend fun getAccessLog(accessLogId: String): AccessLog? = accessLogLogic.getAccessLog(accessLogId)
+    override fun getAccessLogs(ids: List<String>): Flow<AccessLog> = accessLogLogic.getAccessLogs(ids)
 
     override fun listAccessLogsBy(
         fromEpoch: Long,

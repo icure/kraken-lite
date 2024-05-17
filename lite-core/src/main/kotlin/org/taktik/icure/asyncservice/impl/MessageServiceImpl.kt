@@ -70,6 +70,8 @@ class MessageServiceImpl(
 
     override suspend fun getMessage(messageId: String): Message? = messageLogic.getMessage(messageId)
 
+    override fun getMessages(messageIds: List<String>): Flow<Message> = messageLogic.getMessages(messageIds)
+
     override suspend fun modifyMessage(message: Message): Message? = messageLogic.modifyEntities(flowOf(message)).singleOrNull()
 
     override fun listMessagesByCurrentHCPartySecretPatientKeys(secretPatientKeys: List<String>): Flow<Message> = flow {
