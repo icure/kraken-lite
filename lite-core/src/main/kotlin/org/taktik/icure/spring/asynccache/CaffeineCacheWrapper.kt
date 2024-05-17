@@ -18,21 +18,22 @@
 
 package org.taktik.icure.spring.asynccache
 
-import org.springframework.cache.support.SimpleValueWrapper
+import com.github.benmanes.caffeine.cache.Caffeine
+import java.util.concurrent.TimeUnit
 
-class MapCache<K, V>(private val name: String, private val map: HashMap<K, V>) : Cache<K, V> {
+class CaffeineCacheWrapper<K : Any, V>(
+	private val name: String,
+	ttlSeconds: Int?
+) : Cache<K, V> {
+	val  cache: com.github.benmanes.caffeine.cache.Cache<K, V> = Caffeine.newBuilder()
+		.maximumSize(10_000)
+		.apply { ttlSeconds?.let { expireAfterWrite(it.toLong(), TimeUnit.SECONDS) } }
+		.build()
 
-	override suspend fun getWrapper(key: K?): org.springframework.cache.Cache.ValueWrapper? {
-		return key?.let {
-			val value: V? = get(key)
-			value?.let { SimpleValueWrapper(value) }
-		}
-	}
-
-	override suspend fun get(key: K): V? = map[key]
+	override suspend fun get(key: K): V? = cache.getIfPresent(key)
 
 	override fun clear() {
-		map.clear()
+		cache.invalidateAll()
 	}
 
 	override fun invalidate(): Boolean {
@@ -41,11 +42,11 @@ class MapCache<K, V>(private val name: String, private val map: HashMap<K, V>) :
 	}
 
 	override suspend fun evict(key: K) {
-		map.remove(key)
+		cache.invalidate(key)
 	}
 
 	override suspend fun put(key: K, value: V) {
-		map[key] = value
+		cache.put(key, value)
 	}
 
 	override fun getName(): String {
@@ -53,6 +54,6 @@ class MapCache<K, V>(private val name: String, private val map: HashMap<K, V>) :
 	}
 
 	override fun iterator(): Iterator<Map.Entry<K, V>> {
-		return map.iterator()
+		return cache.asMap().toMap().iterator()
 	}
 }

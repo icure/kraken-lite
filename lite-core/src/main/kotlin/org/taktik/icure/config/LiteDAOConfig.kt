@@ -14,6 +14,7 @@ import org.taktik.icure.asyncdao.UserDAO
 import org.taktik.icure.asyncdao.impl.MedicalLocationDAOImpl
 import org.taktik.icure.asyncdao.impl.MessageDAOImpl
 import org.taktik.icure.asyncdao.impl.UserDAOImpl
+import org.taktik.icure.cache.ConfiguredCacheProvider
 import org.taktik.icure.cache.EntityCacheFactory
 
 @Configuration
@@ -28,7 +29,7 @@ class LiteDAOConfig : DaoConfig {
     fun messageDAO(
         @Qualifier("healthdataCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
         idGenerator: IDGenerator,
-        entityCacheFactory: EntityCacheFactory,
+        entityCacheFactory: ConfiguredCacheProvider,
         designDocumentProvider: DesignDocumentProvider
     ): MessageDAO = MessageDAOImpl(
         couchDbDispatcher = couchDbDispatcher,
@@ -43,7 +44,7 @@ class LiteDAOConfig : DaoConfig {
     fun medicalLocationDAO(
         @Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
         idGenerator: IDGenerator,
-        entityCacheFactory: EntityCacheFactory,
+        entityCacheFactory: ConfiguredCacheProvider,
         designDocumentProvider: DesignDocumentProvider
     ): MedicalLocationDAO = MedicalLocationDAOImpl(
         couchDbDispatcher = couchDbDispatcher,
@@ -58,7 +59,7 @@ class LiteDAOConfig : DaoConfig {
     fun userDAO(
         @Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
         idGenerator: IDGenerator,
-        entityCacheFactory: EntityCacheFactory,
+        entityCacheFactory: ConfiguredCacheProvider,
         designDocumentProvider: DesignDocumentProvider
     ): UserDAO = UserDAOImpl(
         couchDbDispatcher = couchDbDispatcher,

@@ -17,20 +17,20 @@ class DocumentTemplateServiceImpl(
 
     override suspend fun getDocumentTemplate(documentTemplateId: String): DocumentTemplate? = documentTemplateLogic.getDocumentTemplate(documentTemplateId)
 
-    override fun getDocumentTemplatesBySpecialty(specialityCode: String, loadLayout: Boolean): Flow<DocumentTemplate> =
-        documentTemplateLogic.getDocumentTemplatesBySpecialty(specialityCode, loadLayout)
+    override fun getDocumentTemplatesBySpecialty(specialityCode: String, loadAttachment: Boolean): Flow<DocumentTemplate> =
+        documentTemplateLogic.getDocumentTemplatesBySpecialty(specialityCode, loadAttachment)
 
-    override fun getDocumentTemplatesByDocumentType(documentTypeCode: String, loadLayout: Boolean): Flow<DocumentTemplate> =
-        documentTemplateLogic.getDocumentTemplatesByDocumentType(documentTypeCode, loadLayout)
+    override fun getDocumentTemplatesByDocumentType(documentTypeCode: String, loadAttachment: Boolean): Flow<DocumentTemplate> =
+        documentTemplateLogic.getDocumentTemplatesByDocumentType(documentTypeCode, loadAttachment)
 
     override fun getDocumentTemplatesByDocumentTypeAndUser(
         documentTypeCode: String,
         userId: String,
-        loadLayout: Boolean
-    ): Flow<DocumentTemplate> = documentTemplateLogic.getDocumentTemplatesByDocumentTypeAndUser(documentTypeCode, userId, loadLayout)
+        loadAttachment: Boolean
+    ): Flow<DocumentTemplate> = documentTemplateLogic.getDocumentTemplatesByDocumentTypeAndUser(documentTypeCode, userId, loadAttachment)
 
-    override fun getDocumentTemplatesByUser(userId: String, loadLayout: Boolean): Flow<DocumentTemplate> =
-        documentTemplateLogic.getDocumentTemplatesByUser(userId, loadLayout)
+    override fun getDocumentTemplatesByUser(userId: String, loadAttachment: Boolean): Flow<DocumentTemplate> =
+        documentTemplateLogic.getDocumentTemplatesByUser(userId, loadAttachment)
 
     override suspend fun modifyDocumentTemplate(documentTemplate: DocumentTemplate): DocumentTemplate? = documentTemplateLogic.modifyDocumentTemplate(documentTemplate)
 
