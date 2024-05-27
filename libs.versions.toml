@@ -1,6 +1,6 @@
 [versions]
 sonarqube = "3.3"
-kmehr = "1.0.31-gd4992d5fdd"
+kmehr = "1.0.33-gd8c5edb699"
 
 [libraries]
 reactorCore = { group = "io.projectreactor", name = "reactor-core" }
@@ -8,9 +8,14 @@ reactorTools = { group = "io.projectreactor", name = "reactor-tools" }
 reactorNetty = { group = "io.projectreactor.netty", name = "reactor-netty" }
 samModule = { group = "org.taktik.icure", name = "sam", version.ref="kmehr" }
 kmehrModule = { group = "org.taktik.icure", name = "kmehr", version.ref = "kmehr" }
+commonsCodec = { group = "commons-codec", name = "commons-codec", version = "1.15"}
+mustacheJava = { group = "com.github.spullara.mustache.java", name = "compiler", version = "0.9.10" }
+jaxbApi = { group = "javax.xml.bind", name = "jaxb-api", version = "2.3.1" }
+jaxbRuntime = { group = "org.glassfish.jaxb", name = "jaxb-runtime", version = "2.3.8" }
 
 [bundles]
 reactorLibs = ["reactorCore", "reactorTools", "reactorNetty"]
+kmehrDependencies = ["commonsCodec", "mustacheJava", "jaxbApi", "jaxbRuntime"]
 
 [plugins]
 sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }

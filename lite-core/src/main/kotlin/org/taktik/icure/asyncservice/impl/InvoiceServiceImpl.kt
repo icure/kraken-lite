@@ -47,11 +47,13 @@ class InvoiceServiceImpl(
 
     override fun listInvoicesByHcPartyAndRecipientIds(hcPartyId: String, recipientIds: Set<String?>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndRecipientIds(hcPartyId, recipientIds)
     override fun listInvoicesByHcPartyAndPatientSfks(hcPartyId: String, secretPatientKeys: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndPatientSfks(hcPartyId, secretPatientKeys)
-    override fun listInvoicesByHcPartyAndPatientSfk(
-        hcPartyId: String,
-        secretPatientKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = invoiceLogic.listInvoicesByHcPartyAndPatientSfk(hcPartyId, secretPatientKey, paginationOffset)
+    override fun listInvoiceIdsByDataOwnerPatientInvoiceDate(
+        dataOwnerId: String,
+        secretForeignKeys: Set<String>,
+        startDate: Long?,
+        endDate: Long?,
+        descending: Boolean
+    ): Flow<String> = invoiceLogic.listInvoiceIdsByDataOwnerPatientInvoiceDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
     override fun listInvoicesByHcPartySentMediumTypeInvoiceTypeSentDate(
         hcPartyId: String,
         sentMediumType: MediumType,

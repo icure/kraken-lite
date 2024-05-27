@@ -29,7 +29,9 @@ class ICureLiteLogicImpl(
                 val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
                 dao.forceInitStandardDesignDocument(datastoreInformation, true, warmup)
                 if (warmup) {
-                    dao.warmupPartition(datastoreInformation, Partitions.All)
+                    runCatching {
+                        dao.warmupPartition(datastoreInformation, Partitions.All)
+                    }
                 }
             }
     }

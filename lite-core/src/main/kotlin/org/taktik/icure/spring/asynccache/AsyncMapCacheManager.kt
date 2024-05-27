@@ -18,23 +18,30 @@
 
 package org.taktik.icure.spring.asynccache
 
+import org.slf4j.LoggerFactory
+import org.taktik.icure.properties.IcureEntitiesCacheProperties
 import java.io.Serializable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 
-class AsyncMapCacheManager : AsyncCacheManager {
+class AsyncMapCacheManager(
+	private val entitiesCacheProperties: IcureEntitiesCacheProperties
+) : AsyncCacheManager {
+	private val log = LoggerFactory.getLogger(AsyncMapCacheManager::class.java)
 
-	private val caches: ConcurrentMap<String, Cache<Any, Any>> = ConcurrentHashMap()
+	private val caches: ConcurrentMap<String, Cache<*, *>> = ConcurrentHashMap()
 
-	override fun <K : Serializable, V : Any> getCache(name: String): Cache<K, V> {
-		var cache = caches[name] as Cache<K, V>?
-		if (cache == null) {
-			cache = MapCache(name, HashMap())
-			val currentCache = caches.putIfAbsent(name, (cache as Cache<Any, Any>))
-			if (currentCache != null) {
-				cache = currentCache as Cache<K, V>
-			}
-		}
-		return cache
+	override fun <K : Serializable, V : Any> getCache(name: String): Cache<K, V> =
+		caches.computeIfAbsent(
+			name
+		) { n -> CaffeineCacheWrapper<K, V>(n, getTtlSecondsForName(name)) } as Cache<K, V>
+
+	/**
+	 * Configures the time to leave given the map name, null means infinite
+	 */
+	private fun getTtlSecondsForName(name: String): Int? = when {
+		name == "spring.security.tokens" -> 5 * 60
+		name.startsWith("org.taktik.icure.entities.") -> entitiesCacheProperties.getConfigurationForName(name).ttl
+		else -> null.also { log.warn("No TTL configured for cache $name - will be unlimited") }
 	}
 }

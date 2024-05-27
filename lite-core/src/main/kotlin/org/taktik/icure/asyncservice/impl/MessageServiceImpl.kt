@@ -70,6 +70,8 @@ class MessageServiceImpl(
 
     override suspend fun getMessage(messageId: String): Message? = messageLogic.getMessage(messageId)
 
+    override fun getMessages(messageIds: List<String>): Flow<Message> = messageLogic.getMessages(messageIds)
+
     override suspend fun modifyMessage(message: Message): Message? = messageLogic.modifyEntities(flowOf(message)).singleOrNull()
 
     override fun listMessagesByCurrentHCPartySecretPatientKeys(secretPatientKeys: List<String>): Flow<Message> = flow {
@@ -77,14 +79,14 @@ class MessageServiceImpl(
             messageLogic.listMessagesByHCPartySecretPatientKeys(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKeys)
         )
     }
-    override fun listMessagesByCurrentHCPartySecretPatientKey(
-        secretPatientKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = flow {
-        emitAll(
-            messageLogic.listMessagesByHcPartySecretPatientKey(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKey, paginationOffset)
-        )
-    }
+
+    override fun listMessageIdsByDataOwnerPatientSentDate(
+        dataOwnerId: String,
+        secretForeignKeys: Set<String>,
+        startDate: Long?,
+        endDate: Long?,
+        descending: Boolean
+    ): Flow<String> = messageLogic.listMessageIdsByDataOwnerPatientSentDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
     override fun setStatus(messageIds: List<String>, status: Int): Flow<Message> = flow {
         emitAll(

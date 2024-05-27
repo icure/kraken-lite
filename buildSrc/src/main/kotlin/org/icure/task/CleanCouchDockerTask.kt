@@ -3,7 +3,6 @@ package org.icure.task
 import com.icure.test.setup.ICureTestSetup
 import org.gradle.api.DefaultTask
 import org.gradle.api.tasks.TaskAction
-import java.io.File
 
 open class CleanCouchDockerTask : DefaultTask() {
 

@@ -17,16 +17,20 @@ class DocumentTemplateServiceImpl(
 
     override suspend fun getDocumentTemplate(documentTemplateId: String): DocumentTemplate? = documentTemplateLogic.getDocumentTemplate(documentTemplateId)
 
-    override fun getDocumentTemplatesBySpecialty(specialityCode: String): Flow<DocumentTemplate> = documentTemplateLogic.getDocumentTemplatesBySpecialty(specialityCode)
+    override fun getDocumentTemplatesBySpecialty(specialityCode: String, loadAttachment: Boolean): Flow<DocumentTemplate> =
+        documentTemplateLogic.getDocumentTemplatesBySpecialty(specialityCode, loadAttachment)
 
-    override fun getDocumentTemplatesByDocumentType(documentTypeCode: String): Flow<DocumentTemplate> = documentTemplateLogic.getDocumentTemplatesByDocumentType(documentTypeCode)
+    override fun getDocumentTemplatesByDocumentType(documentTypeCode: String, loadAttachment: Boolean): Flow<DocumentTemplate> =
+        documentTemplateLogic.getDocumentTemplatesByDocumentType(documentTypeCode, loadAttachment)
 
     override fun getDocumentTemplatesByDocumentTypeAndUser(
         documentTypeCode: String,
-        userId: String
-    ): Flow<DocumentTemplate> = documentTemplateLogic.getDocumentTemplatesByDocumentTypeAndUser(documentTypeCode, userId)
+        userId: String,
+        loadAttachment: Boolean
+    ): Flow<DocumentTemplate> = documentTemplateLogic.getDocumentTemplatesByDocumentTypeAndUser(documentTypeCode, userId, loadAttachment)
 
-    override fun getDocumentTemplatesByUser(userId: String): Flow<DocumentTemplate> = documentTemplateLogic.getDocumentTemplatesByUser(userId)
+    override fun getDocumentTemplatesByUser(userId: String, loadAttachment: Boolean): Flow<DocumentTemplate> =
+        documentTemplateLogic.getDocumentTemplatesByUser(userId, loadAttachment)
 
     override suspend fun modifyDocumentTemplate(documentTemplate: DocumentTemplate): DocumentTemplate? = documentTemplateLogic.modifyDocumentTemplate(documentTemplate)
 

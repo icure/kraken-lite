@@ -4,15 +4,12 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
-import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.icure.asynclogic.ClassificationLogic
 import org.taktik.icure.asyncservice.ClassificationService
-import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Classification
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
-import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class ClassificationServiceImpl(
@@ -27,11 +24,15 @@ class ClassificationServiceImpl(
         secretPatientKeys: List<String>
     ): Flow<Classification> = classificationLogic.listClassificationsByHCPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
 
-    override fun listClassificationsByHCPartyAndSecretPatientKey(
-        hcPartyId: String,
-        secretPatientKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = classificationLogic.listClassificationsByHCPartyAndSecretPatientKey(hcPartyId, secretPatientKey, paginationOffset)
+    override fun listClassificationIdsByDataOwnerPatientCreated(
+        dataOwnerId: String,
+        secretForeignKeys: Set<String>,
+        startDate: Long?,
+        endDate: Long?,
+        descending: Boolean
+    ): Flow<String> = classificationLogic.listClassificationIdsByDataOwnerPatientCreated(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
+
+
     override fun deleteClassifications(ids: Set<String>): Flow<DocIdentifier> = classificationLogic.deleteClassifications(ids)
 
     override suspend fun deleteClassification(classificationId: String): DocIdentifier = classificationLogic.deleteClassifications(setOf(classificationId)).single()

@@ -18,97 +18,59 @@
 
 package org.taktik.icure.config
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.http.HttpMethod
+import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
-import org.springframework.security.core.context.SecurityContext
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
-import org.springframework.security.crypto.password.DelegatingPasswordEncoder
-import org.springframework.security.crypto.password.PasswordEncoder
-import org.springframework.security.crypto.password.Pbkdf2PasswordEncoder
-import org.springframework.security.web.firewall.StrictHttpFirewall
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter
 import org.springframework.security.web.server.authentication.ServerAuthenticationEntryPointFailureHandler
-import org.springframework.security.web.server.authentication.ServerHttpBasicAuthenticationConverter
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository
-import org.springframework.security.web.server.context.WebSessionServerSecurityContextRepository
-import org.springframework.security.web.server.util.matcher.AndServerWebExchangeMatcher
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatcher
-import org.springframework.security.web.server.util.matcher.ServerWebExchangeMatchers
-import org.springframework.web.server.ServerWebExchange
 import org.taktik.icure.security.LiteAuthenticationManager
+import org.taktik.icure.security.SecurityToken
 import org.taktik.icure.security.UnauthorizedEntryPoint
-import org.taktik.icure.security.jwt.EncodedJwtAuthenticationToken
 import org.taktik.icure.spring.asynccache.AsyncCacheManager
-import reactor.core.publisher.Mono
+import org.taktik.icure.spring.asynccache.Cache
 
-@ExperimentalCoroutinesApi
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 class SecurityConfigAdapter(
-    private val authenticationManager: LiteAuthenticationManager
-) {
+    private val authenticationManager: LiteAuthenticationManager,
+    asyncCacheManager: AsyncCacheManager
+) : AbstractSecurityConfigAdapter() {
 
     @Value("\${spring.session.enabled}")
-    private val sessionEnabled: Boolean = false
+    override val sessionEnabled: Boolean = false
+
+    override val cache: Cache<String, SecurityToken> = asyncCacheManager.getCache("spring.security.tokens")
 
     val log: Logger = LoggerFactory.getLogger(javaClass)
 
     @Bean
     fun securityWebFilterChain(http: ServerHttpSecurity, asyncCacheManager: AsyncCacheManager): SecurityWebFilterChain {
-        return http
-            .authorizeExchange()
-            .pathMatchers("/**").permitAll()
-            .and()
-            .csrf().disable()
-            .httpBasic()
-            .and()
-            .addFilterAfter(
-                AuthenticationWebFilter(authenticationManager).apply {
-                    this.setAuthenticationFailureHandler(ServerAuthenticationEntryPointFailureHandler(UnauthorizedEntryPoint()))
-                    if (sessionEnabled) this.setSecurityContextRepository(object:WebSessionServerSecurityContextRepository() {
-                        override fun save(exchange: ServerWebExchange, context: SecurityContext) = exchange.request.headers["X-Bypass-Session"]?.let { Mono.empty() } ?: super.save(exchange, context)
-                        override fun load(exchange: ServerWebExchange) = exchange.request.headers["X-Bypass-Session"]?.let { Mono.empty() } ?: super.load(exchange)
-                    })
-                    else this.setSecurityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-
-                    // TODO: When SESSION ID will be dismissed, change it back to JwtAuthenticationConverter
-                    this.setServerAuthenticationConverter { exchange ->
-                        // First I check for the JWT Header
-                        exchange?.request?.headers?.get("Authorization")
-                            ?.filterNotNull()
-                            ?.firstOrNull { it.contains("Bearer") }
-                            ?.let {
-                                Mono.just(EncodedJwtAuthenticationToken(encodedJwt = it.replace("Bearer ", "")))
-                            } ?: if (sessionEnabled) exchange.session.flatMap { webSession -> //Otherwise, I check the session
-                            ServerHttpBasicAuthenticationConverter().convert(exchange).flatMap { auth ->
-                                //Ignore basic auth if SPRING_SECURITY_CONTEXT was loaded from session
-                                webSession.attributes[WebSessionServerSecurityContextRepository.DEFAULT_SPRING_SECURITY_CONTEXT_ATTR_NAME]?.let {
-                                    (it as? SecurityContext)?.let { context ->
-                                        if (context.authentication.principal != auth.principal) Mono.just(auth)
-                                        else Mono.empty()
-                                    }
-                                } ?: Mono.just(auth)
-                            }
-                        }
-                        else Mono.empty()
-                    }
-                },
-                SecurityWebFiltersOrder.REACTOR_CONTEXT
-            )
-            .build()
+        return http.authorizeExchange { exchange ->
+            exchange.pathMatchers("/**").permitAll()
+        }.csrf {
+            it.disable()
+        }.httpBasic(Customizer.withDefaults())
+        .addFilterAfter(
+            AuthenticationWebFilter(authenticationManager).apply {
+                this.setAuthenticationFailureHandler(ServerAuthenticationEntryPointFailureHandler(UnauthorizedEntryPoint()))
+                if (sessionEnabled) {
+                    this.setSecurityContextRepository(sessionLessSecurityContextRepository)
+                } else {
+                    this.setSecurityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+                }
+                this.setServerAuthenticationConverter(multiTokenAuthConverter)
+            },
+            SecurityWebFiltersOrder.REACTOR_CONTEXT
+        ).build()
     }
 }
-
-private fun ServerWebExchangeMatcher.and(matcher: ServerWebExchangeMatcher): ServerWebExchangeMatcher = AndServerWebExchangeMatcher(this, matcher)
-private fun ServerWebExchangeMatcher.paths(vararg antPatterns: String): ServerWebExchangeMatcher = AndServerWebExchangeMatcher(this, ServerWebExchangeMatchers.pathMatchers(*antPatterns))

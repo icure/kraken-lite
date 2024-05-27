@@ -31,6 +31,7 @@ class AccessLogServiceImpl(
     ): Flow<AccessLog> = accessLogLogic.listAccessLogsByHCPartyAndSecretPatientKeys(hcPartyId, secretForeignKeys)
 
     override suspend fun getAccessLog(accessLogId: String): AccessLog? = accessLogLogic.getAccessLog(accessLogId)
+    override fun getAccessLogs(ids: List<String>): Flow<AccessLog> = accessLogLogic.getAccessLogs(ids)
 
     override fun listAccessLogsBy(
         fromEpoch: Long,
@@ -60,11 +61,14 @@ class AccessLogServiceImpl(
         limit: Int
     ): AggregatedAccessLogs = accessLogLogic.aggregatePatientByAccessLogs(userId, accessType, startDate, startKey, startDocumentId, limit)
 
-    override fun listAccessLogsBySearchKeyAndSecretPatientKey(
-        searchKey: String,
-        secretPatientKey: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = accessLogLogic.listAccessLogBySearchKeyAndSecretPatientKey(searchKey, secretPatientKey, paginationOffset)
+    override fun listAccessLogIdsByDataOwnerPatientDate(
+        dataOwnerId: String,
+        secretForeignKeys: Set<String>,
+        startDate: Long?,
+        endDate: Long?,
+        descending: Boolean
+    ): Flow<String> = accessLogLogic.listAccessLogIdsByDataOwnerPatientDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
+
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<AccessLog>> = accessLogLogic.bulkShareOrUpdateMetadata(requests)
 }

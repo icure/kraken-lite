@@ -1,4 +1,3 @@
-
 import com.github.jk1.license.render.CsvReportRenderer
 import com.github.jk1.license.render.ReportRenderer
 import org.icure.task.CleanCouchDockerTask
@@ -14,13 +13,13 @@ val kmapVersion = "0.1.52-main.8d4a565b58"
 
 plugins {
     id("com.icure.kotlin-application-conventions")
+    kotlin("plugin.serialization")
 
     alias(coreLibs.plugins.springBootPlugin) apply(true)
     alias(coreLibs.plugins.springBootDependenciesManagement) apply(true)
     alias(coreLibs.plugins.kotlinAllOpen) apply(true)
     alias(coreLibs.plugins.kotlinSpring) apply(true)
     alias(coreLibs.plugins.gitVersion) apply(true)
-    alias(coreLibs.plugins.kotlinxSerialization) apply(true)
     alias(coreLibs.plugins.licenceReport) apply(true)
     // alias(coreLibs.plugins.mavenRepository) apply(true)
 
@@ -238,5 +237,6 @@ fun DependencyHandlerScope.injectOptionalJars() {
     if (regions.contains("be")) {
         implementation(liteLibs.samModule)
         implementation(liteLibs.kmehrModule)
+        implementation(liteLibs.bundles.kmehrDependencies)
     }
 }

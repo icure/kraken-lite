@@ -14,3 +14,15 @@ git submodule update
 ```
 
 After that, if the operation completes successfully, the repository and all its submodules will be correctly initialized. 
+
+## How to enable SAM and Kmehr modules
+To include SAM and Kmehr module, two steps are needed:  
+When building the `-Dicure.optional.regions=be` option should be set:
+```
+./gradlew -x test :lite-core:build -Dicure.optional.regions=be
+```
+
+When running the generated jar, the spring profiles `kmehr` (to include kmehr module) and `sam` (to include the SAM module) should be added:
+``` 
+-Dspring.profiles.active=app,kmehr,sam
+```
