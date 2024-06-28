@@ -50,7 +50,7 @@ class FormServiceImpl(
 
     override suspend fun addDelegations(formId: String, delegations: List<Delegation>): Form? = formLogic.addDelegations(formId, delegations)
 
-    override fun solveConflicts(limit: Int?): Flow<IdAndRev> = formLogic.solveConflicts(limit)
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = formLogic.solveConflicts(limit, ids)
 
     override suspend fun getAllByLogicalUuid(formUuid: String): List<Form> = formLogic.getAllByLogicalUuid(formUuid)
 

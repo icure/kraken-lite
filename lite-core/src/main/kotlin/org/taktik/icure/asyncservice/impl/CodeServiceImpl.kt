@@ -3,6 +3,7 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.CodeLogic
 import org.taktik.icure.asyncservice.CodeService
 import org.taktik.icure.db.PaginationOffset
@@ -95,4 +96,6 @@ class CodeServiceImpl(
     override suspend fun isValid(code: CodeStub, ofType: String?): Boolean = codeLogic.isValid(code, ofType)
 
     override suspend fun getCodeByLabel(region: String?, label: String, type: String, languages: List<String>): Code? = codeLogic.getCodeByLabel(region, label, type, languages)
+
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = codeLogic.solveConflicts(limit, ids)
 }

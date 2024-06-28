@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.UserLogic
 import org.taktik.icure.asyncservice.UserService
 import org.taktik.icure.db.PaginationOffset
@@ -72,4 +73,6 @@ class UserServiceImpl(
     override suspend fun deleteUser(userId: String): DocIdentifier? = userLogic.deleteUser(userId)
 
     override suspend fun undeleteUser(userId: String) = userLogic.undeleteUser(userId)
+
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = userLogic.solveConflicts(limit, ids)
 }
