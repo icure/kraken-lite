@@ -96,7 +96,8 @@ class HealthElementServiceImpl(
     override suspend fun addDelegations(healthElementId: String, delegations: List<Delegation>): HealthElement? =
         healthElementLogic.addDelegations(healthElementId, delegations)
 
-    override fun solveConflicts(limit: Int?): Flow<IdAndRev> = healthElementLogic.solveConflicts(limit)
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = healthElementLogic.solveConflicts(limit, ids)
+
 
     override fun filter(
         paginationOffset: PaginationOffset<Nothing>,

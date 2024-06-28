@@ -142,7 +142,7 @@ class PatientServiceImpl(
 
     override suspend fun getByExternalId(externalId: String): Patient? = patientLogic.getByExternalId(externalId)
 
-    override fun solveConflicts(limit: Int?): Flow<IdAndRev> = patientLogic.solveConflicts(limit)
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = patientLogic.solveConflicts(limit, ids)
 
     @Suppress("DEPRECATION")
     @Deprecated("A DataOwner may now have multiple AES Keys. Use getAesExchangeKeysForDelegate instead")
