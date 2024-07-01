@@ -144,7 +144,8 @@ class ContactServiceImpl(
         filter: FilterChain<Service>
     ): Flow<Service> = contactLogic.filterServices(paginationOffset, filter)
 
-    override fun solveConflicts(limit: Int?): Flow<IdAndRev> = contactLogic.solveConflicts(limit)
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = contactLogic.solveConflicts(limit, ids)
+
     override fun listContactsByOpeningDate(
         hcPartyId: String,
         startOpeningDate: Long,

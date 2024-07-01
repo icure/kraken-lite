@@ -117,7 +117,7 @@ class InvoiceServiceImpl(
 
     override fun listInvoicesHcpsByStatus(status: String, from: Long?, to: Long?, hcpIds: List<String>): Flow<Invoice> = invoiceLogic.listInvoicesHcpsByStatus(status, from, to, hcpIds)
 
-    override fun solveConflicts(limit: Int?): Flow<IdAndRev> = invoiceLogic.solveConflicts(limit)
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = invoiceLogic.solveConflicts(limit, ids)
 
     override suspend fun getTarificationsCodesOccurrences(
         hcPartyId: String,
