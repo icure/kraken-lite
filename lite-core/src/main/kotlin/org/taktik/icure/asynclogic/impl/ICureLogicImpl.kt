@@ -8,6 +8,7 @@ import org.taktik.icure.asyncdao.ICureDAO
 import org.taktik.icure.asyncdao.Partitions
 import org.taktik.icure.asynclogic.VersionLogic
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
+import org.taktik.icure.config.ExternalViewsConfig
 import org.taktik.icure.entities.ReplicationInfo
 import org.taktik.icure.entities.embed.DatabaseSynchronization
 import org.taktik.icure.properties.CouchDbPropertiesImpl
@@ -18,19 +19,30 @@ class ICureLiteLogicImpl(
     private val allDaos: List<GenericDAO<*>>,
     private val datastoreInstanceProvider: DatastoreInstanceProvider,
     private val iCureDAO: ICureDAO,
+    private val externalViewsConfig: ExternalViewsConfig,
     couchDbProperties: CouchDbPropertiesImpl,
     passwordEncoder: PasswordEncoder,
     versionLogic: VersionLogic
 ) : AbstractICureLogic(couchDbProperties, iCureDAO, passwordEncoder, versionLogic, datastoreInstanceProvider) {
+
+
+
     override suspend fun updateDesignDocForCurrentUser(daoEntityName: String, warmup: Boolean) {
         allDaos
             .firstOrNull { dao: GenericDAO<*> -> dao.javaClass.simpleName.startsWith(daoEntityName + "DAO") }
             ?.let { dao: GenericDAO<*> ->
                 val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
                 dao.forceInitStandardDesignDocument(datastoreInformation, true, warmup)
+                val externalDesignDocs = dao.forceInitExternalDesignDocument(
+                    datastoreInformation = datastoreInformation,
+                    partitionsWithRepo = externalViewsConfig.repos,
+                    updateIfExists = true,
+                    dryRun = false
+                )
                 if (warmup) {
                     runCatching {
                         dao.warmupPartition(datastoreInformation, Partitions.All)
+                        dao.warmupExternalDesignDocs(datastoreInformation, externalDesignDocs)
                     }
                 }
             }

@@ -14,6 +14,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.WebApplicationType
@@ -33,6 +34,7 @@ import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.taktik.couchdb.ViewRowWithDoc
+import org.taktik.couchdb.entity.DesignDocument
 import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asyncdao.ICureDAO
 import org.taktik.icure.asyncdao.InternalDAO
@@ -44,6 +46,7 @@ import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorage
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorageMigration
+import org.taktik.icure.config.ExternalViewsConfig
 import org.taktik.icure.constants.Users
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.User
@@ -123,6 +126,7 @@ class ICureBackendApplication {
         allObjectStorageLogic: List<IcureObjectStorage<*>>,
         allObjectStorageMigrationLogic: List<IcureObjectStorageMigration<*>>,
         datastoreInstanceProvider: DatastoreInstanceProvider,
+        externalViewsConfig: ExternalViewsConfig
     ) = ApplicationRunner {
         //Check that core types have corresponding codes
         log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
@@ -134,7 +138,7 @@ class ICureBackendApplication {
             allInternalDaos.forEach { dao ->
                 dao.forceInitStandardDesignDocument(true)
             }
-            deferDataOwnerDesignDocIndexation(allDaos, iCureDAO, datastoreInstanceProvider.getInstanceAndGroup())
+            deferDataOwnerDesignDocIndexation(allDaos, iCureDAO, externalViewsConfig.repos, datastoreInstanceProvider.getInstanceAndGroup())
             allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
             allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
 
@@ -182,6 +186,7 @@ class ICureBackendApplication {
     fun deferDataOwnerDesignDocIndexation(
         genericDAOs: List<GenericDAO<*>>,
         iCureDAO: ICureDAO,
+        externalViewRepositories: Map<String, String>,
         datastoreInformation: IDatastoreInformation
     ) = GlobalScope.launch {
 
@@ -218,6 +223,17 @@ class ICureBackendApplication {
             }
             log.info("Indexation of $partition design docs completed.")
         }
+
+        log.info("Starting indexation of external views")
+        genericDAOs.forEach {
+            while(isIndexingWithDebouncing()) {
+                delay(1L.minutes.inWholeMilliseconds)
+            }
+            log.info("Indexing external design docs for ${it::class.java.simpleName}")
+            it.forceInitExternalDesignDocument(datastoreInformation, externalViewRepositories, updateIfExists = true, dryRun = false, ignoreIfUnchanged = true)
+        }
+
+        log.info("Indexation of external design docs completed")
     }
 
     @Component

@@ -19,8 +19,10 @@ import org.taktik.couchdb.entity.Indexer
 import org.taktik.couchdb.entity.View
 import org.taktik.couchdb.entity.ViewQuery
 import org.taktik.couchdb.queryView
-import org.taktik.couchdb.support.StdDesignDocumentFactory
+import org.taktik.couchdb.support.DesignDocumentFactory
 import org.taktik.icure.asyncdao.Partitions
+import org.taktik.icure.asyncdao.components.ExternalViewsLoader
+import org.taktik.icure.config.ExternalViewsConfig
 import org.taktik.icure.properties.CouchDbLiteProperties
 import java.time.Duration
 import java.util.concurrent.TimeUnit
@@ -28,7 +30,9 @@ import java.util.concurrent.TimeUnit
 @Service
 @OptIn(DelicateCoroutinesApi::class)
 class LiteDesignDocumentProvider(
-    private val couchDbProperties: CouchDbLiteProperties
+    private val couchDbProperties: CouchDbLiteProperties,
+    private val externalViewsLoader: ExternalViewsLoader?,
+    private val externalViewsConfig: ExternalViewsConfig
 ) : DesignDocumentProvider {
     private data class DesignDocInfo(val metaDataSource: Any, val entityClass: Class<*>, val partition: String?)
 
@@ -91,8 +95,11 @@ class LiteDesignDocumentProvider(
 
     override suspend fun currentDesignDocumentId(entityClass: Class<*>, metaDataSource: Any, secondaryPartition: String?): String =
         baseDesignDocumentId(entityClass, secondaryPartition).let { baseId ->
-            generateDesignDocuments(entityClass, metaDataSource).find { it.id.startsWith(baseId) }
-                ?: throw IllegalStateException("No design doc for $baseId can be found at this time")
+            if(secondaryPartition == null || Partitions.valueOfOrNull(secondaryPartition) != null) {
+                generateDesignDocuments(entityClass, metaDataSource).find { it.id.startsWith(baseId) }
+            } else {
+                generateExternalDesignDocuments(entityClass, externalViewsConfig.repos).find { it.id.startsWith(baseId) }
+            } ?: throw IllegalStateException("No design doc for $baseId can be found at this time")
         }.id
 
     private fun View.normalizedMap() = map
@@ -120,6 +127,19 @@ class LiteDesignDocumentProvider(
             } ?: false
         }
 
+    private suspend fun Iterable<DesignDocument>.ignoreUnchangedDesignDocs(
+        existingIds: Set<String>,
+        client: Client?,
+        ignoreIfUnchanged: Boolean
+    ): Set<DesignDocument> = mapNotNull { dd ->
+        val (name, _) = dd.id.lastIndexOf('_').let { dd.id.substring(0, it) to dd.id.substring(it + 1) }
+        val currentDocument = existingIds.firstOrNull { it.substring(0, it.lastIndexOf('_')) == name }?.let { id ->
+            client?.get(id, DesignDocument::class.java)
+        }
+        dd.takeIf { currentDocument == null || !(dd equipollent currentDocument) || !ignoreIfUnchanged}
+    }.toSet()
+
+
     override suspend fun generateDesignDocuments(
         entityClass: Class<*>,
         metaDataSource: Any,
@@ -128,19 +148,28 @@ class LiteDesignDocumentProvider(
         ignoreIfUnchanged: Boolean
     ): Set<DesignDocument> {
         val existingIds = client?.designDocumentsIds() ?: emptySet()
-        return StdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).filter { dd ->
+        return DesignDocumentFactory.getStdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).filter { dd ->
             when(partition) {
                 Partitions.All -> true
                 Partitions.Main -> "^_design/${entityClass.simpleName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
                 else -> "^_design/${entityClass.simpleName}-${partition.partitionName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
             }
-        }.mapNotNull { dd ->
-            val (name, _) = dd.id.lastIndexOf('_').let { dd.id.substring(0, it) to dd.id.substring(it + 1) }
-            val currentDocument = existingIds.firstOrNull { it.substring(0, it.lastIndexOf('_')) == name }?.let { id ->
-                client?.get(id, DesignDocument::class.java)
-            }
-            dd.takeIf { currentDocument == null || !(dd equipollent currentDocument) || !ignoreIfUnchanged}
-        }.toSet()
+        }.ignoreUnchangedDesignDocs(existingIds, client, ignoreIfUnchanged)
+    }
+
+    override suspend fun generateExternalDesignDocuments(
+        entityClass: Class<*>,
+        partitionsWithRepo: Map<String, String>,
+        client: Client?,
+        ignoreIfUnchanged: Boolean
+    ): Set<DesignDocument> {
+        val externalDocsFactory = DesignDocumentFactory.getExternalDesignDocumentFactory()
+        return partitionsWithRepo.entries.fold(emptySet()) { acc, (partition, repoUrl) ->
+            externalViewsLoader?.loadExternalViews(entityClass = entityClass, repoUrl = repoUrl, partition = partition)?.let {
+                acc + externalDocsFactory.generateFrom(baseDesignDocumentId(entityClass), it, useVersioning = true)
+                    .ignoreUnchangedDesignDocs(client?.designDocumentsIds() ?: emptySet(), client, ignoreIfUnchanged)
+            } ?: acc
+        }
     }
 
 }
