@@ -21,8 +21,8 @@ class PluginsManager(
 	}
 
 	private val loadedClasses = sourceFolder?.let { folderPath ->
-		log.info("Loading kraken plugins")
 		val pluginsFolder = File(folderPath)
+		log.info("Loading kraken plugins from ${pluginsFolder.absolutePath}")
 		if (pluginsFolder.exists()) {
 			val jarFiles = pluginsFolder
 				.walk()
