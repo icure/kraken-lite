@@ -19,8 +19,7 @@ import org.taktik.couchdb.entity.Indexer
 import org.taktik.couchdb.entity.View
 import org.taktik.couchdb.entity.ViewQuery
 import org.taktik.couchdb.queryView
-import org.taktik.couchdb.support.ExternalDesignDocumentFactory
-import org.taktik.couchdb.support.StdDesignDocumentFactory
+import org.taktik.couchdb.support.DesignDocumentFactory
 import org.taktik.icure.asyncdao.Partitions
 import org.taktik.icure.asyncdao.components.ExternalViewsLoader
 import org.taktik.icure.config.ExternalViewsConfig
@@ -149,7 +148,7 @@ class LiteDesignDocumentProvider(
         ignoreIfUnchanged: Boolean
     ): Set<DesignDocument> {
         val existingIds = client?.designDocumentsIds() ?: emptySet()
-        return StdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).filter { dd ->
+        return DesignDocumentFactory.getStdDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), metaDataSource, useVersioning = true).filter { dd ->
             when(partition) {
                 Partitions.All -> true
                 Partitions.Main -> "^_design/${entityClass.simpleName}(_[a-z0-9]+)?".toRegex().matches(dd.id)
@@ -163,11 +162,14 @@ class LiteDesignDocumentProvider(
         partitionsWithRepo: Map<String, String>,
         client: Client?,
         ignoreIfUnchanged: Boolean
-    ): Set<DesignDocument> = partitionsWithRepo.entries.fold(emptySet()) { acc, (partition, repoUrl) ->
-        externalViewsLoader?.loadExternalViews(entityClass = entityClass, repoUrl = repoUrl, partition = partition)?.let {
-            acc + ExternalDesignDocumentFactory().generateFrom(baseDesignDocumentId(entityClass), it, useVersioning = true)
-                .ignoreUnchangedDesignDocs(client?.designDocumentsIds() ?: emptySet(), client, ignoreIfUnchanged)
-        } ?: acc
+    ): Set<DesignDocument> {
+        val externalDocsFactory = DesignDocumentFactory.getExternalDesignDocumentFactory()
+        return partitionsWithRepo.entries.fold(emptySet()) { acc, (partition, repoUrl) ->
+            externalViewsLoader?.loadExternalViews(entityClass = entityClass, repoUrl = repoUrl, partition = partition)?.let {
+                acc + externalDocsFactory.generateFrom(baseDesignDocumentId(entityClass), it, useVersioning = true)
+                    .ignoreUnchangedDesignDocs(client?.designDocumentsIds() ?: emptySet(), client, ignoreIfUnchanged)
+            } ?: acc
+        }
     }
 
 }

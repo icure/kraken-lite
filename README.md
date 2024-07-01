@@ -34,7 +34,7 @@ In order to use external design documents, two steps are required:
 All the external views must be signed, as specified in the [external views template repository](https://github.com/icure/external-design-doc-template). 
 To add the public key to verify the signature, the following property must be set in the `application-app.properties` file:
 ```bash
-icure.couchdb.external.publicSigningKey=<THE_PUBLIC_KEY>
+icure.couchdb.external.loading.publicSigningKey=<THE_PUBLIC_KEY>
 ```
 
 ### Set up the external views repositories

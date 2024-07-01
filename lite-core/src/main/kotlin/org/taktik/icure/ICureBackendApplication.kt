@@ -225,25 +225,12 @@ class ICureBackendApplication {
         }
 
         log.info("Starting indexation of external views")
-
-        suspend fun warmupExternalPartitionAndCheckForCompletion(
-            dao: GenericDAO<*>,
-            datastoreInformation: IDatastoreInformation,
-            designDocs: List<DesignDocument>
-        ): Boolean = runCatching {
-            dao.warmupExternalDesignDocs(datastoreInformation, designDocs)
-            true
-        }.getOrDefault(false)
-
         genericDAOs.forEach {
             while(isIndexingWithDebouncing()) {
                 delay(1L.minutes.inWholeMilliseconds)
             }
             log.info("Indexing external design docs for ${it::class.java.simpleName}")
-            val designDocs = it.forceInitExternalDesignDocument(datastoreInformation, externalViewRepositories, updateIfExists = true, dryRun = false, ignoreIfUnchanged = true)
-            while(!warmupExternalPartitionAndCheckForCompletion(it, datastoreInformation, designDocs)) {
-                delay(1L.seconds.inWholeMilliseconds)
-            }
+            it.forceInitExternalDesignDocument(datastoreInformation, externalViewRepositories, updateIfExists = true, dryRun = false, ignoreIfUnchanged = true)
         }
 
         log.info("Indexation of external design docs completed")
