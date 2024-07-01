@@ -124,7 +124,7 @@ class MessageServiceImpl(
 
     override fun listMessagesByExternalRefs(hcPartyId: String, externalRefs: List<String>): Flow<Message> = messageLogic.listMessagesByExternalRefs(hcPartyId, externalRefs)
 
-    override fun solveConflicts(limit: Int?): Flow<IdAndRev> = messageLogic.solveConflicts(limit)
+    override fun solveConflicts(limit: Int?, ids: List<String>?) = messageLogic.solveConflicts(limit, ids)
 
     override fun filterMessages(
         paginationOffset: PaginationOffset<Nothing>,

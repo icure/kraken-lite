@@ -16,10 +16,6 @@ class PluginsManager(
 
 	class InvalidPluginException(className: String) : IllegalArgumentException("Invalid plugin $className")
 
-	init {
-		println(sourceFolder)
-	}
-
 	private val loadedClasses = sourceFolder?.let { folderPath ->
 		val pluginsFolder = File(folderPath)
 		log.info("Loading kraken plugins from ${pluginsFolder.absolutePath}")

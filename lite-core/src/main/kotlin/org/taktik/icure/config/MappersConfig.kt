@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.taktik.icure.asynclogic.UserLogic
+import org.taktik.icure.entities.utils.ExternalFilterKey
 import org.taktik.icure.services.external.rest.v1.mapper.SecureUserV1Mapper
 import org.taktik.icure.services.external.rest.v1.mapper.SecureUserV1MapperImpl
 import org.taktik.icure.services.external.rest.v1.mapper.UnsecureUserMapper
@@ -21,6 +22,7 @@ import org.taktik.icure.services.external.rest.v2.mapper.filter.FilterChainV2Map
 import org.taktik.icure.services.external.rest.v2.mapper.filter.FilterV2Mapper
 import org.taktik.icure.services.external.rest.v2.mapper.filter.FilterV2MapperImpl
 import org.taktik.icure.services.external.rest.v2.mapper.security.UnsecureAuthenticationTokenV2Mapper
+import org.taktik.icure.services.external.rest.v2.mapper.utils.ExternalFilterKeyV2Mapper
 
 @Configuration
 class MappersConfig {
@@ -47,9 +49,10 @@ class MappersConfig {
     @Bean
     fun filterV2Mapper(
         identifierV2Mapper: IdentifierV2Mapper,
-        genderV2Mapper: GenderV2Mapper
+        genderV2Mapper: GenderV2Mapper,
+        externalFilterKeyMapper: ExternalFilterKeyV2Mapper
     ): FilterV2Mapper =
-        FilterV2MapperImpl(identifierV2Mapper, genderV2Mapper)
+        FilterV2MapperImpl(identifierV2Mapper, genderV2Mapper, externalFilterKeyMapper)
 
     @Bean
     fun filterChainV2Mapper(filterV2Mapper: FilterV2Mapper): FilterChainV2Mapper =
