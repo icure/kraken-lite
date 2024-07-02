@@ -11,6 +11,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.codec.json.Jackson2JsonEncoder
+import org.springframework.util.MimeType
 import org.springframework.web.reactive.config.EnableWebFlux
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.services.external.http.WebSocketOperationLiteHandler
@@ -33,14 +34,25 @@ class LiteWebConfig {
 
 @Configuration
 @EnableWebFlux
-class LiteWebFluxConfigurer : SharedWebFluxConfiguration() {
-	override fun getJackson2JsonEncoder(): Jackson2JsonEncoder =
-		PaginatedCollectingJackson2JsonEncoder(
-			ObjectMapper().registerModule(
-				KotlinModule.Builder()
-					.configure(KotlinFeature.NullIsSameAsDefault, true)
-					.build()
-			).apply { setSerializationInclusion(JsonInclude.Include.NON_NULL) }
-		)
+class LiteWebFluxConfigurer(
+	private val pluginsManager: PluginsManager
+) : SharedWebFluxConfiguration() {
+
+	override fun getJackson2JsonEncoder(): Jackson2JsonEncoder {
+		val objectMapper = ObjectMapper().registerModule(
+			KotlinModule.Builder()
+				.configure(KotlinFeature.NullIsSameAsDefault, true)
+				.build()
+		).apply { setSerializationInclusion(JsonInclude.Include.NON_NULL) }
+		return try {
+			pluginsManager.newInstance<Jackson2JsonEncoder>(
+				"org.taktik.icure.spring.encoder.PaginatedJackson2JsonEncoder",
+				objectMapper, arrayOf<MimeType>()
+			)
+		} catch (e: PluginsManager.InvalidPluginException) {
+			PaginatedCollectingJackson2JsonEncoder(objectMapper)
+		}
+	}
+
 
 }
