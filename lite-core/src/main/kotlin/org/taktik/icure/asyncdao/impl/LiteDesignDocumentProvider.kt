@@ -1,5 +1,6 @@
 package org.taktik.icure.asyncdao.impl
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import kotlinx.coroutines.Deferred
@@ -18,6 +19,7 @@ import org.taktik.couchdb.entity.DesignDocument
 import org.taktik.couchdb.entity.Indexer
 import org.taktik.couchdb.entity.View
 import org.taktik.couchdb.entity.ViewQuery
+import org.taktik.couchdb.get
 import org.taktik.couchdb.queryView
 import org.taktik.couchdb.support.DesignDocumentFactory
 import org.taktik.icure.asyncdao.Partitions
@@ -57,11 +59,11 @@ class LiteDesignDocumentProvider(
 
                     return@async if (relatedDesignDocs.size == 1) {
                         relatedDesignDocs.first()
-                    } else if (relatedDesignDocs.contains(generatedDesignDocumentId) && isReadyDesignDoc(client, generatedDesignDocumentId)) {
+                    } else if (relatedDesignDocs.contains(generatedDesignDocumentId) && isReadyDesignDoc(client, generatedDesignDocumentId, designDocInfo.partition)) {
                         deleteStaleDesignDocuments(client, relatedDesignDocs.filter { it != generatedDesignDocumentId })
                         generatedDesignDocumentId
                     } else {
-                        relatedDesignDocs.filter { it != generatedDesignDocumentId }.firstOrNull { isReadyDesignDoc(client, it) }
+                        relatedDesignDocs.filter { it != generatedDesignDocumentId }.firstOrNull { isReadyDesignDoc(client, it, designDocInfo.partition) }
                             ?: throw IllegalStateException("No design doc for $baseId can be found at this time")
                     }
                 }
@@ -78,13 +80,18 @@ class LiteDesignDocumentProvider(
             }
         })
 
-    private suspend fun isReadyDesignDoc(client: Client, designDocumentId: String): Boolean =
+    private suspend fun isReadyDesignDoc(client: Client, designDocumentId: String, partition: String?): Boolean =
         viewsBeingIndexed.get(client).await().takeIf { it.contains(designDocumentId) }?.let { false }
-            ?: client.queryView<String, String>(ViewQuery().designDocId(designDocumentId).viewName("all").limit(1), Duration.ofMillis(couchDbProperties.designDocumentStatusCheckTimeoutMilliseconds))
-                .map { true }
-                .catch { emit(false) }
-                .firstOrNull() ?: true
+            ?: getFirstAvailableViewOrNull(client, designDocumentId, partition)?.let { view ->
+                client.queryView<JsonNode, JsonNode>(ViewQuery().designDocId(designDocumentId).viewName(view).limit(1), Duration.ofMillis(couchDbProperties.designDocumentStatusCheckTimeoutMilliseconds))
+                    .map { true }
+                    .catch { emit(false) }
+                    .firstOrNull() ?: true
+            } ?: false
 
+    private suspend fun getFirstAvailableViewOrNull(client: Client, designDocumentId: String, partition: String?): String? =
+        if(partition == null || partition == "") "all"
+        else client.get<DesignDocument>(designDocumentId)?.views?.keys?.firstOrNull()
 
     override fun baseDesignDocumentId(entityClass: Class<*>, secondaryPartition: String?): String =
         designDocName(entityClass.simpleName, secondaryPartition)
