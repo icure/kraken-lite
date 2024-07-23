@@ -51,3 +51,6 @@ To add plugin jars, put them into a single folder. Then, set the following prope
 ```bash
 -Dicure.lite.plugins.sourceFolder=/path/to/plugin/folder
 ```
+:warning:
+Kraken-lite will try to load the plugins from all the JARs in the provided folder. To prevent errors, pass as parameter
+a folder where no other JAR file is present (e.g. the kraken-lite jar itself).

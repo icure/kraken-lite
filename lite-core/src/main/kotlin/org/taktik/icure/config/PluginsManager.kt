@@ -25,8 +25,8 @@ class PluginsManager(
 				.filter { it.isFile && it.name.endsWith(".jar") }
 				.associate { pluginFile ->
 					log.info("Loading ${pluginFile.name} plugin")
-					log.info("URI: jar:${pluginFile.toURI()}!/)}")
-					URI.create("jar:${pluginFile.toURI()}!/") to JarFile(pluginFile)
+					val normalizedFileUri = File(pluginFile.absolutePath).toURI().toASCIIString()
+					URI.create("jar:$normalizedFileUri!/") to JarFile(pluginFile)
 				}
 
 			val parentClassLoader = this::class.java.classLoader
