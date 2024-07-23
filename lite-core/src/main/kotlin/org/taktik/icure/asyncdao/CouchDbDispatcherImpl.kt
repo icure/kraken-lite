@@ -44,7 +44,7 @@ class CouchDbDispatcherImpl (
                     return ClientImpl(httpClient, URIBuilder((datastoreInformation as LocalDatastoreInformation).dbInstanceUrl).setPath("$prefix-$dbFamily").build(), username, password, objectMapper).also {
                         if (createdReplicasIfNotExists != null) {
                             if (!it.exists()) {
-                                it.create(3, createdReplicasIfNotExists)
+                                it.create(8, createdReplicasIfNotExists)
                             }
                         }
                     }
