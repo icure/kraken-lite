@@ -49,6 +49,7 @@ class MaintenanceTaskServiceImpl(
     ): Flow<ViewQueryResultEvent> = maintenanceTaskLogic.filter(paginationOffset, filter)
 
     override suspend fun getMaintenanceTask(id: String): MaintenanceTask? = maintenanceTaskLogic.getEntity(id)
+    override fun getMaintenanceTasks(ids: List<String>): Flow<MaintenanceTask> = maintenanceTaskLogic.getEntities(ids)
 
     override fun createMaintenanceTasks(entities: Collection<MaintenanceTask>): Flow<MaintenanceTask> = maintenanceTaskLogic.createEntities(entities)
 
