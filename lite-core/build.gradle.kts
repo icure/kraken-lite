@@ -210,7 +210,6 @@ dependencies {
     implementation(coreLibs.gcpAuthProvider)
     implementation(coreLibs.taktikBoot)
     implementation(coreLibs.caffeine)
-    implementation(coreLibs.jboss)
     implementation(coreLibs.mapstruct)
     implementation(coreLibs.libRecur)
     implementation("io.netty:netty-resolver-dns-native-macos:4.1.72.Final:osx-aarch_64")
