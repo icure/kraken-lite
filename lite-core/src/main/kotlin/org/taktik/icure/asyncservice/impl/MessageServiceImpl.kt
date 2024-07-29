@@ -96,7 +96,7 @@ class MessageServiceImpl(
         )
     }
 
-    override fun setReadStatus(messageIds: List<String>, userId: String, status: Boolean, time: Long): Flow<Message> = flow {
+    override fun setReadStatus(messageIds: List<String>, userId: String?, status: Boolean, time: Long?): Flow<Message> = flow {
         emitAll(
             messageLogic.getEntities(messageIds).let {
                 messageLogic.setReadStatus(it.toList(), userId, status, time)
