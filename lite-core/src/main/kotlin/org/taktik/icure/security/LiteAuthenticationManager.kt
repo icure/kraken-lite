@@ -111,7 +111,8 @@ class LiteAuthenticationManager(
 
     override fun authenticateWithUsernameAndPassword(
         authentication: Authentication,
-        groupId: String?
+        groupId: String?,
+        applicationId: String?
     ): Mono<Authentication> = mono {
         val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 
