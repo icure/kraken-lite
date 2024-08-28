@@ -7,7 +7,6 @@ package org.taktik.icure.config
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.taktik.couchdb.id.UUIDGenerator
 import org.taktik.icure.asyncdao.CodeDAO
 import org.taktik.icure.asyncdao.ContactDAO
@@ -42,7 +41,6 @@ import org.taktik.icure.asynclogic.impl.UserLogicImpl
 import org.taktik.icure.asynclogic.impl.filter.Filters
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentLoader
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentModificationLogic
-import org.taktik.icure.properties.CouchDbPropertiesImpl
 import org.taktik.icure.security.SessionAccessControlKeysProvider
 import org.taktik.icure.security.credentials.SecretValidator
 import org.taktik.icure.security.user.UserEnhancer
@@ -80,10 +78,12 @@ class LiteLogicConfig {
         insuranceDAO: InsuranceDAO,
         datastoreInstanceProvider: DatastoreInstanceProvider,
         fixer: Fixer,
+        filters: Filters
     ) = InsuranceLogicImpl(
         insuranceDAO,
         datastoreInstanceProvider,
-        fixer
+        fixer,
+        filters
     )
 
     @Bean
@@ -103,11 +103,13 @@ class LiteLogicConfig {
     fun tarificationLogic(
         tarificationDAO: TarificationDAO,
         fixer: Fixer,
-        datastoreInstanceProvider: DatastoreInstanceProvider
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        filters: Filters
     ) = TarificationLogicImpl(
         tarificationDAO,
         datastoreInstanceProvider,
-        fixer
+        fixer,
+        filters
     )
 
     @Bean
@@ -128,8 +130,18 @@ class LiteLogicConfig {
         exchangeDataMapLogic: ExchangeDataMapLogic,
         attachmentModificationLogic: DocumentDataAttachmentModificationLogic,
         @Qualifier("documentDataAttachmentLoader") attachmentLoader: DocumentDataAttachmentLoader,
-        fixer: Fixer
-    ) = DocumentLogicImpl(documentDAO, sessionLogic, datastoreInstanceProvider, exchangeDataMapLogic, attachmentModificationLogic, attachmentLoader, fixer)
+        fixer: Fixer,
+        filters: Filters,
+    ) = DocumentLogicImpl(
+        documentDAO,
+        sessionLogic,
+        datastoreInstanceProvider,
+        exchangeDataMapLogic,
+        attachmentModificationLogic,
+        attachmentLoader,
+        fixer,
+        filters
+    )
 
     @Bean
     fun formLogic(
@@ -137,8 +149,9 @@ class LiteLogicConfig {
         exchangeDataMapLogic: ExchangeDataMapLogic,
         sessionLogic: SessionInformationProvider,
         datastoreInstanceProvider: DatastoreInstanceProvider,
-        fixer: Fixer
-    ) = FormLogicImpl(formDAO, exchangeDataMapLogic, sessionLogic, datastoreInstanceProvider, fixer)
+        fixer: Fixer,
+        filters: Filters,
+    ) = FormLogicImpl(formDAO, exchangeDataMapLogic, sessionLogic, datastoreInstanceProvider, fixer, filters)
 
     @Bean
     fun healthElementLogic(
@@ -183,7 +196,7 @@ class LiteLogicConfig {
         userLogic: UserLogic,
         filters: Filters,
         exchangeDataMapLogic: ExchangeDataMapLogic,
-        datastoreInstanceProvider: org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
         fixer: Fixer
     ) = PatientLogicImpl(sessionLogic, patientDAO, userLogic, filters, exchangeDataMapLogic, datastoreInstanceProvider, fixer)
 }

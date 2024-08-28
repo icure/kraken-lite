@@ -227,8 +227,6 @@ dependencies {
 
     testImplementation(coreLibs.bundles.kotestLibs)
     testImplementation(coreLibs.bundles.hibernateValidatorLibs)
-    testImplementation(coreLibs.bundles.ktorServerLibs)
-    testImplementation(coreLibs.bundles.ktorClientLibs)
 }
 
 fun DependencyHandlerScope.injectOptionalJars() {

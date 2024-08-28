@@ -7,14 +7,13 @@ import kotlinx.coroutines.flow.singleOrNull
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
-import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.HealthElementLogic
 import org.taktik.icure.asyncservice.HealthElementService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.HealthElement
 import org.taktik.icure.entities.embed.Delegation
-import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
 
@@ -47,39 +46,11 @@ class HealthElementServiceImpl(
         descending: Boolean
     ): Flow<String> = healthElementLogic.listHealthElementIdsByDataOwnerPatientOpeningDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
-    override fun listHealthElementIdsByHcPartyAndSecretPatientKeys(
-        hcPartyId: String,
-        secretPatientKeys: List<String>
-    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
-
-    override fun listHealthElementIdsByHcParty(hcpId: String): Flow<String> =
-        healthElementLogic.listHealthElementIdsByHcParty(hcpId)
-
     override suspend fun listLatestHealthElementsByHcPartyAndSecretPatientKeys(
         hcPartyId: String,
         secretPatientKeys: List<String>
     ): List<HealthElement> =
         healthElementLogic.listLatestHealthElementsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
-
-    override fun listHealthElementIdsByHcPartyAndCodes(
-        hcPartyId: String,
-        codeType: String,
-        codeNumber: String
-    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndCodes(hcPartyId, codeType, codeNumber)
-
-    override fun listHealthElementIdsByHcPartyAndTags(
-        hcPartyId: String,
-        tagType: String,
-        tagCode: String
-    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndTags(hcPartyId, tagType, tagCode)
-
-    override fun listHealthElementsIdsByHcPartyAndIdentifiers(
-        hcPartyId: String,
-        identifiers: List<Identifier>
-    ): Flow<String> = healthElementLogic.listHealthElementsIdsByHcPartyAndIdentifiers(hcPartyId, identifiers)
-
-    override fun listHealthElementIdsByHcPartyAndStatus(hcPartyId: String, status: Int): Flow<String> =
-        healthElementLogic.listHealthElementIdsByHcPartyAndStatus(hcPartyId, status)
 
     override fun deleteHealthElements(ids: Set<String>): Flow<DocIdentifier> = healthElementLogic.deleteEntities(ids)
 
@@ -103,6 +74,8 @@ class HealthElementServiceImpl(
         paginationOffset: PaginationOffset<Nothing>,
         filter: FilterChain<HealthElement>
     ): Flow<ViewQueryResultEvent> = healthElementLogic.filter(paginationOffset, filter)
+
+    override fun matchHealthElementsBy(filter: AbstractFilter<HealthElement>): Flow<String> = healthElementLogic.matchEntitiesBy(filter)
 
     override fun modifyEntities(entities: Flow<HealthElement>): Flow<HealthElement> =
         healthElementLogic.modifyEntities(entities)

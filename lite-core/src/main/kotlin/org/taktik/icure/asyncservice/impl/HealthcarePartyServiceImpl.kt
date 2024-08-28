@@ -9,9 +9,9 @@ import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.icure.asynclogic.HealthcarePartyLogic
 import org.taktik.icure.asyncservice.HealthcarePartyService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.HealthcareParty
-import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.pagination.PaginationElement
 
 @Service
@@ -84,11 +84,6 @@ class HealthcarePartyServiceImpl(
         filter: FilterChain<HealthcareParty>
     ): Flow<ViewQueryResultEvent> = healthcarePartyLogic.filterHealthcareParties(paginationOffset, filter)
 
-    override fun listHealthcarePartyIdsByIdentifiers(hcpIdentifiers: List<Identifier>): Flow<String> = healthcarePartyLogic.listHealthcarePartyIdsByIdentifiers(hcpIdentifiers)
-
-    override fun listHealthcarePartyIdsByCode(codeType: String, codeCode: String?): Flow<String> = healthcarePartyLogic.listHealthcarePartyIdsByCode(codeType, codeCode)
-
-    override fun listHealthcarePartyIdsByTag(tagType: String, tagCode: String?): Flow<String> = healthcarePartyLogic.listHealthcarePartyIdsByTag(tagType, tagCode)
-
     override fun modifyHealthcareParties(entities: Collection<HealthcareParty>): Flow<HealthcareParty> = healthcarePartyLogic.modifyEntities(entities)
+    override fun matchHealthcarePartiesBy(filter: AbstractFilter<HealthcareParty>): Flow<String> = healthcarePartyLogic.matchEntitiesBy(filter)
 }

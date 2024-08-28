@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.ComplexKey
-import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.MessageLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.asyncservice.MessageService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Message
 import org.taktik.icure.entities.embed.Delegation
@@ -116,13 +116,11 @@ class MessageServiceImpl(
 
     override fun getMessageChildren(messageId: String): Flow<Message> = messageLogic.getMessageChildren(messageId)
 
-    override fun getMessagesChildren(parentIds: List<String>): Flow<List<Message>> = messageLogic.getMessagesChildren(parentIds)
+    override fun getMessagesChildren(parentIds: List<String>): Flow<Message> = messageLogic.getMessagesChildren(parentIds)
 
     override fun getMessagesByTransportGuids(hcpId: String, transportGuids: Set<String>): Flow<Message> = messageLogic.getMessagesByTransportGuids(hcpId, transportGuids)
 
     override fun listMessagesByInvoiceIds(ids: List<String>): Flow<Message> = messageLogic.listMessagesByInvoiceIds(ids)
-
-    override fun listMessagesByExternalRefs(hcPartyId: String, externalRefs: List<String>): Flow<Message> = messageLogic.listMessagesByExternalRefs(hcPartyId, externalRefs)
 
     override fun solveConflicts(limit: Int?, ids: List<String>?) = messageLogic.solveConflicts(limit, ids)
 
@@ -134,6 +132,7 @@ class MessageServiceImpl(
     override fun deleteMessages(identifiers: Collection<String>): Flow<DocIdentifier> = messageLogic.deleteEntities(identifiers)
 
     override suspend fun deleteMessage(id: String): DocIdentifier = messageLogic.deleteEntities(flowOf(id)).single()
+    override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Message>> = messageLogic.bulkShareOrUpdateMetadata(requests)
 }

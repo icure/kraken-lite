@@ -9,6 +9,7 @@ import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.icure.asynclogic.AccessLogLogic
 import org.taktik.icure.asyncservice.AccessLogService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.result.AggregatedAccessLogs
 import org.taktik.icure.entities.AccessLog
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
@@ -68,6 +69,8 @@ class AccessLogServiceImpl(
         endDate: Long?,
         descending: Boolean
     ): Flow<String> = accessLogLogic.listAccessLogIdsByDataOwnerPatientDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
+
+    override fun matchAccessLogsBy(filter: AbstractFilter<AccessLog>): Flow<String> = accessLogLogic.matchEntitiesBy(filter)
 
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<AccessLog>> = accessLogLogic.bulkShareOrUpdateMetadata(requests)

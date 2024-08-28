@@ -5,10 +5,10 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.ComplexKey
-import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.InvoiceLogic
 import org.taktik.icure.asyncservice.InvoiceService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Invoice
 import org.taktik.icure.entities.data.LabelledOccurence
@@ -131,13 +131,6 @@ class InvoiceServiceImpl(
         endValueDate: Long
     ): Flow<String> = invoiceLogic.listInvoicesIdsByTarificationsByCode(hcPartyId, codeCode, startValueDate, endValueDate)
 
-    override fun listInvoiceIdsByTarificationsByCode(
-        hcPartyId: String,
-        codeCode: String?,
-        startValueDate: Long?,
-        endValueDate: Long?
-    ): Flow<String> = invoiceLogic.listInvoiceIdsByTarificationsByCode(hcPartyId, codeCode, startValueDate, endValueDate)
-
     override fun filter(filter: FilterChain<Invoice>): Flow<Invoice> = invoiceLogic.filter(filter)
 
     override fun getInvoicesForUsersAndInsuranceIds(userIds: List<String>?): Flow<Invoice> = invoiceLogic.getInvoicesForUsersAndInsuranceIds(userIds)
@@ -145,6 +138,7 @@ class InvoiceServiceImpl(
     override fun getUnsentInvoicesForUsersAndInsuranceIds(userIds: List<String>?): Flow<Invoice> = invoiceLogic.getUnsentInvoicesForUsersAndInsuranceIds(userIds)
 
     override fun createInvoices(invoices: Collection<Invoice>): Flow<Invoice> = invoiceLogic.createEntities(invoices)
+    override fun matchInvoicesBy(filter: AbstractFilter<Invoice>): Flow<String> = invoiceLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Invoice>> = invoiceLogic.bulkShareOrUpdateMetadata(requests)
 }

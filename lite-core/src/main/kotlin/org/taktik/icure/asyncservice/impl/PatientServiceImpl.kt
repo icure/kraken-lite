@@ -6,16 +6,14 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.ComplexKey
-import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.PatientLogic
 import org.taktik.icure.asyncservice.PatientService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.db.Sorting
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Patient
 import org.taktik.icure.entities.embed.Delegation
-import org.taktik.icure.entities.embed.Gender
-import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
 import org.taktik.icure.pagination.PaginationElement
@@ -26,39 +24,6 @@ class PatientServiceImpl(
     private val patientLogic: PatientLogic
 ) : PatientService {
     override suspend fun countByHcParty(healthcarePartyId: String): Int = patientLogic.countByHcParty(healthcarePartyId)
-
-    override fun listByHcPartyIdsOnly(healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyIdsOnly(healthcarePartyId)
-
-    override fun listByHcPartyAndSsinIdsOnly(ssin: String, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyAndSsinIdsOnly(ssin, healthcarePartyId)
-
-    override fun listByHcPartyAndSsinsIdsOnly(ssins: Collection<String>, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyAndSsinsIdsOnly(ssins, healthcarePartyId)
-
-    override fun listByHcPartyDateOfBirthIdsOnly(date: Int, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyDateOfBirthIdsOnly(date, healthcarePartyId)
-
-    override fun listByHcPartyGenderEducationProfessionIdsOnly(
-        healthcarePartyId: String,
-        gender: Gender?,
-        education: String?,
-        profession: String?
-    ): Flow<String> = patientLogic.listByHcPartyGenderEducationProfessionIdsOnly(healthcarePartyId, gender, education, profession)
-
-    override fun listByHcPartyDateOfBirthIdsOnly(
-        startDate: Int?,
-        endDate: Int?,
-        healthcarePartyId: String
-    ): Flow<String> = patientLogic.listByHcPartyDateOfBirthIdsOnly(startDate, endDate, healthcarePartyId)
-
-    override fun listByHcPartyNameContainsFuzzyIdsOnly(searchString: String?, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyNameContainsFuzzyIdsOnly(searchString, healthcarePartyId)
-
-    override fun listByHcPartyName(searchString: String?, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyName(searchString, healthcarePartyId)
-
-    override fun listByHcPartyAndExternalIdsOnly(externalId: String?, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyAndExternalIdsOnly(externalId, healthcarePartyId)
-
-    override fun listPatientIdsByHcPartyAndTelecomOnly(searchString: String?, healthcarePartyId: String): Flow<String> = patientLogic.listPatientIdsByHcPartyAndTelecomOnly(searchString, healthcarePartyId)
-
-    override fun listPatientIdsByHcPartyAndAddressOnly(searchString: String?, healthcarePartyId: String): Flow<String> = patientLogic.listPatientIdsByHcPartyAndAddressOnly(searchString, healthcarePartyId)
-
-    override fun listByHcPartyAndActiveIdsOnly(active: Boolean, healthcarePartyId: String): Flow<String> = patientLogic.listByHcPartyAndActiveIdsOnly(active, healthcarePartyId)
 
     override fun listOfMergesAfter(date: Long?): Flow<Patient> = patientLogic.listOfMergesAfter(date)
     override fun findByHcPartyIdsOnly(
@@ -104,14 +69,6 @@ class PatientServiceImpl(
         healthcarePartyId: String,
         paginationOffset: PaginationOffset<List<String>>
     ): Flow<ViewQueryResultEvent> = patientLogic.findByHcPartyDateOfBirth(date, healthcarePartyId, paginationOffset)
-
-    override fun findByHcPartyModificationDate(
-        start: Long?,
-        end: Long?,
-        healthcarePartyId: String,
-        descending: Boolean,
-        paginationOffset: PaginationOffset<List<String>>
-    ): Flow<ViewQueryResultEvent> = patientLogic.findByHcPartyModificationDate(start, end, healthcarePartyId, descending, paginationOffset)
 
     override suspend fun findByUserId(id: String): Patient? = patientLogic.findByUserId(id)
 
@@ -186,14 +143,10 @@ class PatientServiceImpl(
 
     override fun undeletePatients(ids: Set<String>): Flow<DocIdentifier> = patientLogic.undeletePatients(ids)
 
-    override fun listPatientIdsByHcpartyAndIdentifiers(
-        healthcarePartyId: String,
-        identifiers: List<Identifier>
-    ): Flow<String> = patientLogic.listPatientIdsByHcpartyAndIdentifiers(healthcarePartyId, identifiers)
-
     override fun getEntityIds(): Flow<String> = patientLogic.getEntityIds()
 
     override suspend fun mergePatients(fromId: String, expectedFromRev: String, updatedInto: Patient): Patient = patientLogic.mergePatients(fromId, expectedFromRev, updatedInto)
+    override fun matchPatientsBy(filter: AbstractFilter<Patient>): Flow<String> = patientLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Patient>> = patientLogic.bulkShareOrUpdateMetadata(requests)
 }

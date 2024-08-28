@@ -4,10 +4,10 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
-import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.UserLogic
 import org.taktik.icure.asyncservice.UserService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.User
 import org.taktik.icure.entities.base.PropertyStub
@@ -42,8 +42,6 @@ class UserServiceImpl(
 
     override fun getUsersByLogin(login: String): Flow<User> = userLogic.getUsersByLogin(login)
 
-    override fun listUserIdsByNameEmailPhone(searchString: String): Flow<String> = userLogic.listUserIdsByNameEmailPhone(searchString)
-
     override fun listUsers(
         paginationOffset: PaginationOffset<String>,
         skipPatients: Boolean
@@ -53,6 +51,10 @@ class UserServiceImpl(
         paginationOffset: PaginationOffset<Nothing>,
         filter: FilterChain<User>
     ): Flow<ViewQueryResultEvent> = userLogic.filterUsers(paginationOffset, filter)
+
+    override fun matchUsersBy(filter: AbstractFilter<User>): Flow<String> {
+        TODO("Not yet implemented")
+    }
 
     override suspend fun modifyUser(modifiedUser: User): User? = userLogic.modifyUser(modifiedUser)
 
