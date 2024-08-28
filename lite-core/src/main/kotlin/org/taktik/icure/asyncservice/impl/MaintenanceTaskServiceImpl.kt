@@ -8,9 +8,9 @@ import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.icure.asynclogic.MaintenanceTaskLogic
 import org.taktik.icure.asyncservice.MaintenanceTaskService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.MaintenanceTask
-import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
 
@@ -18,20 +18,6 @@ import org.taktik.icure.entities.requests.EntityBulkShareResult
 class MaintenanceTaskServiceImpl(
     private val maintenanceTaskLogic: MaintenanceTaskLogic
 ) : MaintenanceTaskService {
-    override fun listMaintenanceTasksByHcPartyAndIdentifier(
-        healthcarePartyId: String,
-        identifiers: List<Identifier>
-    ): Flow<String> = maintenanceTaskLogic.listMaintenanceTasksByHcPartyAndIdentifier(healthcarePartyId, identifiers)
-
-    override fun listMaintenanceTasksByHcPartyAndType(
-        healthcarePartyId: String,
-        type: String,
-        startDate: Long?,
-        endDate: Long?
-    ): Flow<String> = maintenanceTaskLogic.listMaintenanceTasksByHcPartyAndType(healthcarePartyId, type, startDate, endDate)
-
-    override fun listMaintenanceTasksAfterDate(healthcarePartyId: String, date: Long): Flow<String> = maintenanceTaskLogic.listMaintenanceTasksAfterDate(healthcarePartyId, date)
-
     override fun deleteMaintenanceTasks(ids: Collection<String>): Flow<DocIdentifier> = maintenanceTaskLogic.deleteEntities(ids)
 
     override suspend fun deleteMaintenanceTask(maintenanceTaskId: String): DocIdentifier = maintenanceTaskLogic.deleteEntities(
@@ -52,6 +38,7 @@ class MaintenanceTaskServiceImpl(
     override fun getMaintenanceTasks(ids: List<String>): Flow<MaintenanceTask> = maintenanceTaskLogic.getEntities(ids)
 
     override fun createMaintenanceTasks(entities: Collection<MaintenanceTask>): Flow<MaintenanceTask> = maintenanceTaskLogic.createEntities(entities)
+    override fun matchMaintenanceTasksBy(filter: AbstractFilter<MaintenanceTask>): Flow<String> = maintenanceTaskLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<MaintenanceTask>> = maintenanceTaskLogic.bulkShareOrUpdateMetadata(requests)
 }

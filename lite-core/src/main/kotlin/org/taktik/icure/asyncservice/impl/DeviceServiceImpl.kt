@@ -6,6 +6,7 @@ import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.icure.asynclogic.DeviceLogic
 import org.taktik.icure.asyncservice.DeviceService
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Device
 
@@ -25,6 +26,8 @@ class DeviceServiceImpl(
 
     override fun getDevices(deviceIds: List<String>): Flow<Device> = deviceLogic.getDevices(deviceIds)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("A DataOwner may now have multiple AES Keys. Use getAesExchangeKeysForDelegate instead")
     override suspend fun getHcPartyKeysForDelegate(deviceId: String): Map<String, String> = deviceLogic.getHcPartyKeysForDelegate(deviceId)
 
     override suspend fun getAesExchangeKeysForDelegate(healthcarePartyId: String): Map<String, Map<String, Map<String, String>>> = deviceLogic.getAesExchangeKeysForDelegate(healthcarePartyId)
@@ -33,8 +36,6 @@ class DeviceServiceImpl(
 
     override fun deleteDevices(ids: Collection<String>): Flow<DocIdentifier> = deviceLogic.deleteDevices(ids)
 
-    override fun listDeviceIdsByResponsible(hcpId: String): Flow<String> = deviceLogic.listDeviceIdsByResponsible(hcpId)
-
     override fun filterDevices(
         filter: FilterChain<Device>,
         limit: Int,
@@ -42,4 +43,5 @@ class DeviceServiceImpl(
     ): Flow<ViewQueryResultEvent> = deviceLogic.filterDevices(filter, limit, startDocumentId)
 
     override fun getEntityIds(): Flow<String> = deviceLogic.getEntityIds()
+    override fun matchDevicesBy(filter: AbstractFilter<Device>): Flow<String> = deviceLogic.matchEntitiesBy(filter)
 }

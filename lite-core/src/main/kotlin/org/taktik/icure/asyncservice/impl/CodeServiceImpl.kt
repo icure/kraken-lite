@@ -3,10 +3,10 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.ViewQueryResultEvent
-import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.CodeLogic
 import org.taktik.icure.asyncservice.CodeService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.base.Code
 import org.taktik.icure.entities.base.CodeStub
@@ -66,13 +66,10 @@ class CodeServiceImpl(
     ): Flow<String> = codeLogic.listCodeIdsByTypeCodeVersionInterval(startType, startCode, startVersion, endType, endCode, endVersion)
 
     override fun findCodesByQualifiedLinkId(
-        region: String?,
         linkType: String,
         linkedId: String?,
         pagination: PaginationOffset<List<String>>
-    ): Flow<PaginationElement> = codeLogic.findCodesByQualifiedLinkId(region, linkType, linkedId, pagination)
-
-    override fun listCodeIdsByQualifiedLinkId(linkType: String, linkedId: String?): Flow<String> = codeLogic.listCodeIdsByQualifiedLinkId(linkType, linkedId)
+    ): Flow<PaginationElement> = codeLogic.findCodesByQualifiedLinkId(linkType, linkedId, pagination)
 
     override suspend fun <T : Enum<*>> importCodesFromEnum(e: Class<T>) = codeLogic.importCodesFromEnum(e)
 
@@ -96,6 +93,7 @@ class CodeServiceImpl(
     override suspend fun isValid(code: CodeStub, ofType: String?): Boolean = codeLogic.isValid(code, ofType)
 
     override suspend fun getCodeByLabel(region: String?, label: String, type: String, languages: List<String>): Code? = codeLogic.getCodeByLabel(region, label, type, languages)
+    override fun matchCodesBy(filter: AbstractFilter<Code>): Flow<String> = codeLogic.matchEntitiesBy(filter)
 
     override fun solveConflicts(limit: Int?, ids: List<String>?) = codeLogic.solveConflicts(limit, ids)
 }

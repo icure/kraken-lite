@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.icure.asynclogic.ClassificationLogic
 import org.taktik.icure.asyncservice.ClassificationService
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.Classification
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
@@ -54,6 +55,7 @@ class ClassificationServiceImpl(
     override fun getClassifications(ids: List<String>): Flow<Classification> = classificationLogic.getClassifications(ids)
 
     override fun modifyEntities(entities: Collection<Classification>): Flow<Classification> = classificationLogic.modifyEntities(entities)
+    override fun matchClassificationsBy(filter: AbstractFilter<Classification>): Flow<String> = classificationLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Classification>> = classificationLogic.bulkShareOrUpdateMetadata(requests)
 }

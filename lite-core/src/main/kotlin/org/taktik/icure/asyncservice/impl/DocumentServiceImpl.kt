@@ -10,6 +10,7 @@ import org.taktik.icure.asynclogic.DocumentLogic
 import org.taktik.icure.asynclogic.objectstorage.DataAttachmentChange
 import org.taktik.icure.asyncservice.DocumentService
 import org.taktik.icure.domain.BatchUpdateDocumentInfo
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.Document
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -75,6 +76,7 @@ class DocumentServiceImpl(
     override suspend fun deleteDocument(id: String): DocIdentifier = documentLogic.deleteEntities(listOf(id)).single()
 
     override suspend fun modifyDocuments(documents: Collection<Document>): Flow<Document> = documentLogic.modifyEntities(documents)
+    override fun matchDocumentsBy(filter: AbstractFilter<Document>): Flow<String> = documentLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Document>> = documentLogic.bulkShareOrUpdateMetadata(requests)
 }
