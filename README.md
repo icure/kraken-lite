@@ -15,6 +15,15 @@ git submodule update
 
 After that, if the operation completes successfully, the repository and all its submodules will be correctly initialized. 
 
+## Migration steps (for SDK version >=8)
+If you are migrating from a version of the sdk that is less than 8 to the SDK v8 or greater, there are some properties that need to be added for the kraken-lite to work correctly.
+
+### Enabling the new views
+By default, the new CouchDB views required by the SDK v8 are not enabled. To enable them, add this property when running the kraken-lite:
+```bash
+-Dicure.dao.useDataOwnerPartition=true
+```
+
 ## How to enable SAM and Kmehr modules
 To include SAM and Kmehr module, two steps are needed:  
 When building the `-Dicure.optional.regions=be` option should be set:
