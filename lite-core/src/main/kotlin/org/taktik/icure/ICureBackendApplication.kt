@@ -37,6 +37,7 @@ import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asyncdao.ICureDAO
 import org.taktik.icure.asyncdao.InternalDAO
 import org.taktik.icure.asyncdao.Partitions
+import org.taktik.icure.asyncdao.impl.ICureLiteDAOImpl
 import org.taktik.icure.asynclogic.CodeLogic
 import org.taktik.icure.asynclogic.ICureLogic
 import org.taktik.icure.asynclogic.UserLogic
@@ -45,6 +46,7 @@ import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorage
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorageMigration
 import org.taktik.icure.config.ExternalViewsConfig
+import org.taktik.icure.config.LiteDAOConfig
 import org.taktik.icure.constants.Users
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.User
@@ -115,7 +117,7 @@ class ICureBackendApplication {
         userLogic: UserLogic,
         iCureLogic: ICureLogic,
         codeLogic: CodeLogic,
-        iCureDAO: ICureDAO,
+        iCureDAO: ICureLiteDAOImpl,
         allDaos: List<GenericDAO<*>>,
         allInternalDaos: List<InternalDAO<*>>,
         couchDbProperties: CouchDbLiteProperties,
@@ -124,7 +126,8 @@ class ICureBackendApplication {
         allObjectStorageLogic: List<IcureObjectStorage<*>>,
         allObjectStorageMigrationLogic: List<IcureObjectStorageMigration<*>>,
         datastoreInstanceProvider: DatastoreInstanceProvider,
-        externalViewsConfig: ExternalViewsConfig
+        externalViewsConfig: ExternalViewsConfig,
+        daoConfig: LiteDAOConfig
     ) = ApplicationRunner {
         //Check that core types have corresponding codes
         log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
@@ -136,7 +139,7 @@ class ICureBackendApplication {
             allInternalDaos.forEach { dao ->
                 dao.forceInitStandardDesignDocument(true)
             }
-            deferDataOwnerDesignDocIndexation(allDaos, iCureDAO, externalViewsConfig.repos, datastoreInstanceProvider.getInstanceAndGroup())
+            deferDataOwnerDesignDocIndexation(allDaos, iCureDAO, externalViewsConfig.repos, datastoreInstanceProvider.getInstanceAndGroup(), daoConfig)
             allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
             allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
 
@@ -183,9 +186,10 @@ class ICureBackendApplication {
     @OptIn(DelicateCoroutinesApi::class)
     fun deferDataOwnerDesignDocIndexation(
         genericDAOs: List<GenericDAO<*>>,
-        iCureDAO: ICureDAO,
+        iCureDAO: ICureLiteDAOImpl,
         externalViewRepositories: Map<String, String>,
-        datastoreInformation: IDatastoreInformation
+        datastoreInformation: IDatastoreInformation,
+        daoConfig: LiteDAOConfig
     ) = GlobalScope.launch {
 
         suspend fun isIndexingWithDebouncing(): Boolean {
@@ -206,6 +210,7 @@ class ICureBackendApplication {
             true
         }.getOrDefault(false)
 
+        iCureDAO.setCouchDbConfigProperty(datastoreInformation, "ken", "batch_channels", "${daoConfig.backgroundIndexationWorkers}")
         // It is important to index All Maurice partition before the DataOwner ones
         listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
             log.info("Deferring indexation of $partition design docs.")
@@ -215,7 +220,7 @@ class ICureBackendApplication {
                 }
                 log.info("Indexing design docs for ${it::class.java.simpleName}")
                 it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
-                while(!warmupPartitionAndCheckForCompletion(it, datastoreInformation, partition)) {
+                while(daoConfig.forceForegroundIndexation && !warmupPartitionAndCheckForCompletion(it, datastoreInformation, partition)) {
                     delay(1L.seconds.inWholeMilliseconds)
                 }
             }
