@@ -38,7 +38,7 @@ curl -v -u USERNAME:PASSWORD http://localhost:16043/rest/v2/icure/couchdb/config
 :warning: Increasing the number of workers will immediately start more indexation processes but reducing it will not stop
 them: the active process will have to complete before their number is actually reduced.
 
-:warning: Querying the view before the indexation completes will make the indexation to pass from a background state to a
+:warning: Querying the view before the indexation completes will make the indexation pass from a background state to a
 foreground state (see below).
 
 ### Foreground view indexation
