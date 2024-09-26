@@ -24,6 +24,33 @@ By default, the new CouchDB views required by the SDK v8 are not enabled. To ena
 -Dicure.dao.useDataOwnerPartition=true
 ```
 
+### Configuring background indexation workers
+When a new view is created, CouchDB will start the indexation process in background. You can control the number of workers
+allocated to indexation by setting the following property (default is 1):
+```bash
+-Dicure.dao.backgroundIndexationWorkers=<ANY_NUMBER>
+```
+The more workers, the faster the views will index but also more resources will be used.
+You can change the number of workers for indexation at any time, by calling the following endpoint:
+```bash
+curl -v -u USERNAME:PASSWORD http://localhost:16043/rest/v2/icure/couchdb/config/ken/batch_channels?value=<ANY_NUMBER>
+```
+:warning: Increasing the number of workers will immediately start more indexation processes but reducing it will not stop
+them: the active process will have to complete before their number is actually reduced.
+
+:warning: Querying the view before the indexation completes will make the indexation to pass from a background state to a
+foreground state (see below).
+
+### Foreground view indexation
+If you are using an old couchdb version, then the indexation of the views will not happen in background. In this case,
+you can force the indexation of the views at startup by setting the following option to `true`:
+```bash
+-Dicure.dao.forceForegroundIndexation=true
+```
+:warning: While in the background indexation is possible to control the number of workers, this is not possible with the 
+foreground indexation. The foreground indexation will try and use all the resources available on the system, and this can
+be detrimental for the execution of the other processes on the machine.
+
 ## How to enable SAM and Kmehr modules
 To include SAM and Kmehr module, two steps are needed:  
 When building the `-Dicure.optional.regions=be` option should be set:
@@ -43,7 +70,7 @@ In order to use external design documents, two steps are required:
 All the external views must be signed, as specified in the [external views template repository](https://github.com/icure/external-design-doc-template). 
 To add the public key to verify the signature, the following property must be set in the `application-app.properties` file:
 ```bash
-icure.couchdb.external.loading.publicSigningKey=<THE_PUBLIC_KEY>
+-Dicure.couchdb.external.loading.publicSigningKey=<THE_PUBLIC_KEY>
 ```
 
 ### Set up the external views repositories

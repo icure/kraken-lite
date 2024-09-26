@@ -41,7 +41,7 @@ class CouchDbDispatcherImpl (
             CouchDbConnectorReference(datastoreInformation),
             object : AsyncSafeCache.AsyncValueProvider<CouchDbConnectorReference, Client> {
                 override suspend fun getValue(key: CouchDbConnectorReference): Client {
-                    return ClientImpl(httpClient, URIBuilder((datastoreInformation as LocalDatastoreInformation).dbInstanceUrl).setPath("$prefix-$dbFamily").build(), username, password, objectMapper).also {
+                    return ClientImpl(httpClient, (datastoreInformation as LocalDatastoreInformation).dbInstanceUrl, "$prefix-$dbFamily", username, password, objectMapper).also {
                         if (createdReplicasIfNotExists != null) {
                             if (!it.exists()) {
                                 it.create(8, createdReplicasIfNotExists)
