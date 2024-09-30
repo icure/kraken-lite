@@ -1,11 +1,11 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.singleOrNull
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.ComplexKey
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.AccessLogLogic
 import org.taktik.icure.asyncservice.AccessLogService
 import org.taktik.icure.db.PaginationOffset
@@ -21,10 +21,10 @@ class AccessLogServiceImpl(
     private val accessLogLogic: AccessLogLogic
 ) : AccessLogService {
     override suspend fun createAccessLog(accessLog: AccessLog): AccessLog? = accessLogLogic.createAccessLog(accessLog)
-
-    override fun deleteAccessLogs(ids: List<String>): Flow<DocIdentifier> = accessLogLogic.deleteAccessLogs(ids)
-
-    override suspend fun deleteAccessLog(id: String): DocIdentifier = accessLogLogic.deleteAccessLogs(listOf(id)).single()
+    override fun deleteAccessLogs(ids: List<IdAndRev>): Flow<DocIdentifier> = accessLogLogic.deleteEntities(ids)
+    override suspend fun deleteAccessLog(id: String, rev: String?): DocIdentifier = accessLogLogic.deleteEntity(id, rev)
+    override suspend fun purgeAccessLog(id: String, rev: String): DocIdentifier = accessLogLogic.purgeEntity(id, rev)
+    override suspend fun undeleteAccessLog(id: String, rev: String): AccessLog = accessLogLogic.undeleteEntity(id, rev)
 
     override fun listAccessLogsByHCPartyAndSecretPatientKeys(
         hcPartyId: String,

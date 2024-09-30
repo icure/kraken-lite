@@ -3,6 +3,7 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.FormTemplateLogic
 import org.taktik.icure.asyncservice.FormTemplateService
 import org.taktik.icure.entities.FormTemplate
@@ -32,5 +33,5 @@ class FormTemplateServiceImpl(
 
     override suspend fun modifyFormTemplate(formTemplate: FormTemplate): FormTemplate? = formTemplateLogic.modifyFormTemplate(formTemplate)
 
-    override fun deleteFormTemplates(ids: Set<String>): Flow<DocIdentifier> = formTemplateLogic.deleteEntities(ids)
+    override fun deleteFormTemplates(ids: Set<String>): Flow<DocIdentifier> = formTemplateLogic.deleteEntities(ids.map { IdAndRev(it, null) })
 }

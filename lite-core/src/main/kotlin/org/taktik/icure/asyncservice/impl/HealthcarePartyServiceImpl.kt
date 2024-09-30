@@ -1,11 +1,11 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.ComplexKey
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.HealthcarePartyLogic
 import org.taktik.icure.asyncservice.HealthcarePartyService
 import org.taktik.icure.db.PaginationOffset
@@ -34,14 +34,10 @@ class HealthcarePartyServiceImpl(
     override suspend fun modifyHealthcareParty(healthcareParty: HealthcareParty): HealthcareParty? =
         healthcarePartyLogic.modifyHealthcareParty(healthcareParty)
 
-    override fun deleteHealthcareParties(healthcarePartyIds: List<String>): Flow<DocIdentifier> =
-        healthcarePartyLogic.deleteHealthcareParties(healthcarePartyIds)
-
-    override suspend fun deleteHealthcareParty(healthcarePartyId: String): DocIdentifier =
-        healthcarePartyLogic.deleteHealthcareParties(
-            listOf(healthcarePartyId)
-        ).single()
-
+    override fun deleteHealthcareParties(ids: List<IdAndRev>): Flow<DocIdentifier> = healthcarePartyLogic.deleteEntities(ids)
+    override suspend fun deleteHealthcareParty(id: String, rev: String?): DocIdentifier = healthcarePartyLogic.deleteEntity(id, rev)
+    override suspend fun purgeHealthcareParty(id: String, rev: String): DocIdentifier = healthcarePartyLogic.purgeEntity(id, rev)
+    override suspend fun undeleteHealthcareParty(id: String, rev: String): HealthcareParty = healthcarePartyLogic.undeleteEntity(id, rev)
     override suspend fun createHealthcareParty(healthcareParty: HealthcareParty): HealthcareParty? = healthcarePartyLogic.createHealthcareParty(healthcareParty)
 
     override fun findHealthcarePartiesBy(offset: PaginationOffset<String>, desc: Boolean?): Flow<PaginationElement> = healthcarePartyLogic.findHealthcarePartiesBy(offset, desc)

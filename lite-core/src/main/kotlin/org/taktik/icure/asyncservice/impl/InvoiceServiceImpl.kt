@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.ComplexKey
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.InvoiceLogic
 import org.taktik.icure.asyncservice.InvoiceService
 import org.taktik.icure.db.PaginationOffset
@@ -25,8 +26,6 @@ class InvoiceServiceImpl(
     private val invoiceLogic: InvoiceLogic
 ) : InvoiceService {
     override suspend fun createInvoice(invoice: Invoice): Invoice? = invoiceLogic.createInvoice(invoice)
-
-    override suspend fun deleteInvoice(invoiceId: String): DocIdentifier? = invoiceLogic.deleteInvoice(invoiceId)
 
     override suspend fun getInvoice(invoiceId: String): Invoice? = invoiceLogic.getInvoice(invoiceId)
 
@@ -139,6 +138,9 @@ class InvoiceServiceImpl(
 
     override fun createInvoices(invoices: Collection<Invoice>): Flow<Invoice> = invoiceLogic.createEntities(invoices)
     override fun matchInvoicesBy(filter: AbstractFilter<Invoice>): Flow<String> = invoiceLogic.matchEntitiesBy(filter)
-
+    override fun deleteInvoices(ids: List<IdAndRev>): Flow<DocIdentifier> = invoiceLogic.deleteEntities(ids)
+    override suspend fun deleteInvoice(id: String, rev: String?): DocIdentifier = invoiceLogic.deleteEntity(id, rev)
+    override suspend fun purgeInvoice(id: String, rev: String): DocIdentifier = invoiceLogic.purgeEntity(id, rev)
+    override suspend fun undeleteInvoice(id: String, rev: String): Invoice = invoiceLogic.undeleteEntity(id, rev)
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Invoice>> = invoiceLogic.bulkShareOrUpdateMetadata(requests)
 }

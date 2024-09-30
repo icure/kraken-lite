@@ -1,9 +1,9 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.FormLogic
 import org.taktik.icure.asyncservice.FormService
 import org.taktik.icure.domain.filter.AbstractFilter
@@ -39,11 +39,10 @@ class FormServiceImpl(
     override suspend fun addDelegation(formId: String, delegation: Delegation): Form? = formLogic.addDelegation(formId, delegation)
 
     override suspend fun createForm(form: Form): Form? = formLogic.createForm(form)
-
-    override fun deleteForms(ids: Set<String>): Flow<DocIdentifier> = formLogic.deleteForms(ids)
-
-    override suspend fun deleteForm(id: String): DocIdentifier = deleteForms(setOf(id)).single()
-
+    override fun deleteForms(ids: List<IdAndRev>): Flow<DocIdentifier> = formLogic.deleteEntities(ids)
+    override suspend fun deleteForm(id: String, rev: String?): DocIdentifier = formLogic.deleteEntity(id, rev)
+    override suspend fun purgeForm(id: String, rev: String): DocIdentifier = formLogic.purgeEntity(id, rev)
+    override suspend fun undeleteForm(id: String, rev: String): Form = formLogic.undeleteEntity(id, rev)
     override suspend fun modifyForm(form: Form): Form? = formLogic.modifyForm(form)
 
     override fun listByHcPartyAndParentId(hcPartyId: String, formId: String): Flow<Form> = formLogic.listByHcPartyAndParentId(hcPartyId, formId)

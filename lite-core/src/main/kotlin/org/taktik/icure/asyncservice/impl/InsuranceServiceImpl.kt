@@ -14,8 +14,7 @@ class InsuranceServiceImpl(
     private val insuranceLogic: InsuranceLogic
 ) : InsuranceService {
     override suspend fun createInsurance(insurance: Insurance): Insurance? = insuranceLogic.createInsurance(insurance)
-
-    override suspend fun deleteInsurance(insuranceId: String): DocIdentifier? = insuranceLogic.deleteInsurance(insuranceId)
+    override suspend fun deleteInsurance(insuranceId: String, rev: String?): DocIdentifier = insuranceLogic.deleteEntity(insuranceId, rev)
 
     override suspend fun getInsurance(insuranceId: String): Insurance? = insuranceLogic.getInsurance(insuranceId)
 

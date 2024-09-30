@@ -1,7 +1,6 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.single
 import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
@@ -70,10 +69,13 @@ class DocumentServiceImpl(
     override fun solveConflicts(limit: Int?, ids: List<String>?): Flow<IdAndRev> = documentLogic.solveConflicts(limit, ids)
 
     override suspend fun getDocumentsByExternalUuid(documentId: String): List<Document> = documentLogic.getDocumentsByExternalUuid(documentId)
+    override fun deleteDocuments(ids: List<IdAndRev>): Flow<DocIdentifier> = documentLogic.deleteEntities(ids)
 
-    override fun deleteDocuments(identifiers: Collection<String>): Flow<DocIdentifier> = documentLogic.deleteEntities(identifiers)
+    override suspend fun deleteDocument(id: String, rev: String?): DocIdentifier = documentLogic.deleteEntity(id, rev)
 
-    override suspend fun deleteDocument(id: String): DocIdentifier = documentLogic.deleteEntities(listOf(id)).single()
+    override suspend fun purgeDocument(id: String, rev: String): DocIdentifier = documentLogic.purgeEntity(id, rev)
+
+    override suspend fun undeleteDocument(id: String, rev: String): Document = documentLogic.undeleteEntity(id, rev)
 
     override suspend fun modifyDocuments(documents: Collection<Document>): Flow<Document> = documentLogic.modifyEntities(documents)
     override fun matchDocumentsBy(filter: AbstractFilter<Document>): Flow<String> = documentLogic.matchEntitiesBy(filter)
