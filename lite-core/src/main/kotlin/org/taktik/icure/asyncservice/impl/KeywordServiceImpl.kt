@@ -3,6 +3,7 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.KeywordLogic
 import org.taktik.icure.asyncservice.KeywordService
 import org.taktik.icure.db.PaginationOffset
@@ -18,7 +19,7 @@ class KeywordServiceImpl(
     override fun getAllKeywords(): Flow<Keyword> = keywordLogic.getEntities()
     override suspend fun getKeyword(keywordId: String): Keyword? = keywordLogic.getEntity(keywordId)
 
-    override fun deleteKeywords(ids: Set<String>): Flow<DocIdentifier> = keywordLogic.deleteEntities(ids)
+    override fun deleteKeywords(ids: Set<String>): Flow<DocIdentifier> = keywordLogic.deleteEntities(ids.map { IdAndRev(it, null) })
 
     override suspend fun modifyKeyword(keyword: Keyword): Keyword? = keywordLogic.modifyKeyword(keyword)
 

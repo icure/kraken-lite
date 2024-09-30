@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.ClassificationLogic
 import org.taktik.icure.asyncservice.ClassificationService
 import org.taktik.icure.domain.filter.AbstractFilter
@@ -33,11 +34,10 @@ class ClassificationServiceImpl(
         descending: Boolean
     ): Flow<String> = classificationLogic.listClassificationIdsByDataOwnerPatientCreated(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
-
-    override fun deleteClassifications(ids: Set<String>): Flow<DocIdentifier> = classificationLogic.deleteClassifications(ids)
-
-    override suspend fun deleteClassification(classificationId: String): DocIdentifier = classificationLogic.deleteClassifications(setOf(classificationId)).single()
-
+    override fun deleteClassifications(ids: List<IdAndRev>): Flow<DocIdentifier> = classificationLogic.deleteEntities(ids)
+    override suspend fun deleteClassification(id: String, rev: String?): DocIdentifier = classificationLogic.deleteEntity(id, rev)
+    override suspend fun purgeClassification(id: String, rev: String): DocIdentifier = classificationLogic.purgeEntity(id, rev)
+    override suspend fun undeleteClassification(id: String, rev: String): Classification = classificationLogic.undeleteEntity(id, rev)
     override suspend fun modifyClassification(classification: Classification): Classification? = classificationLogic.modifyEntities(setOf(classification)).single()
 
     override suspend fun addDelegation(

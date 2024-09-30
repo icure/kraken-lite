@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.ReceiptLogic
 import org.taktik.icure.asyncservice.ReceiptService
 import org.taktik.icure.entities.Receipt
@@ -31,11 +32,10 @@ class ReceiptServiceImpl(
     ): Receipt = receiptLogic.addReceiptAttachment(receipt, blobType, payload)
 
     override fun createReceipts(receipts: Collection<Receipt>): Flow<Receipt> = receiptLogic.createEntities(receipts)
-
-    override fun deleteReceipts(identifiers: Collection<String>): Flow<DocIdentifier> = receiptLogic.deleteEntities(identifiers)
-
-    override suspend fun deleteReceipt(receiptId: String): DocIdentifier = receiptLogic.deleteEntities(listOf(receiptId)).single()
-
+    override fun deleteReceipts(ids: List<IdAndRev>): Flow<DocIdentifier> = receiptLogic.deleteEntities(ids)
+    override suspend fun deleteReceipt(id: String, rev: String?): DocIdentifier = receiptLogic.deleteEntity(id, rev)
+    override suspend fun purgeReceipt(id: String, rev: String): DocIdentifier = receiptLogic.purgeEntity(id, rev)
+    override suspend fun undeleteReceipt(id: String, rev: String): Receipt = receiptLogic.undeleteEntity(id, rev)
     override suspend fun getReceipt(id: String): Receipt? = receiptLogic.getEntity(id)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Receipt>> = receiptLogic.bulkShareOrUpdateMetadata(requests)

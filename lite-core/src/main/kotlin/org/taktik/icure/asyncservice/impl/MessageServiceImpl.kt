@@ -4,13 +4,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.ComplexKey
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.MessageLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.asyncservice.MessageService
@@ -129,9 +129,10 @@ class MessageServiceImpl(
         filter: FilterChain<Message>
     ): Flow<ViewQueryResultEvent> = messageLogic.filterMessages(paginationOffset, filter)
 
-    override fun deleteMessages(identifiers: Collection<String>): Flow<DocIdentifier> = messageLogic.deleteEntities(identifiers)
-
-    override suspend fun deleteMessage(id: String): DocIdentifier = messageLogic.deleteEntities(flowOf(id)).single()
+    override fun deleteMessages(ids: List<IdAndRev>): Flow<DocIdentifier> = messageLogic.deleteEntities(ids)
+    override suspend fun deleteMessage(id: String, rev: String?): DocIdentifier = messageLogic.deleteEntity(id, rev)
+    override suspend fun purgeMessage(id: String, rev: String): DocIdentifier = messageLogic.purgeEntity(id, rev)
+    override suspend fun undeleteMessage(id: String, rev: String): Message = messageLogic.undeleteEntity(id, rev)
     override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Message>> = messageLogic.bulkShareOrUpdateMetadata(requests)

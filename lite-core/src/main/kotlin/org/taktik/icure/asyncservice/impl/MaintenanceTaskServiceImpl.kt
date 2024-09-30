@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.MaintenanceTaskLogic
 import org.taktik.icure.asyncservice.MaintenanceTaskService
 import org.taktik.icure.db.PaginationOffset
@@ -18,11 +19,10 @@ import org.taktik.icure.entities.requests.EntityBulkShareResult
 class MaintenanceTaskServiceImpl(
     private val maintenanceTaskLogic: MaintenanceTaskLogic
 ) : MaintenanceTaskService {
-    override fun deleteMaintenanceTasks(ids: Collection<String>): Flow<DocIdentifier> = maintenanceTaskLogic.deleteEntities(ids)
-
-    override suspend fun deleteMaintenanceTask(maintenanceTaskId: String): DocIdentifier = maintenanceTaskLogic.deleteEntities(
-        listOf(maintenanceTaskId)).single()
-
+    override fun deleteMaintenanceTasks(ids: List<IdAndRev>): Flow<DocIdentifier> = maintenanceTaskLogic.deleteEntities(ids)
+    override suspend fun deleteMaintenanceTask(id: String, rev: String?): DocIdentifier = maintenanceTaskLogic.deleteEntity(id, rev)
+    override suspend fun purgeMaintenanceTask(id: String, rev: String): DocIdentifier = maintenanceTaskLogic.purgeEntity(id, rev)
+    override suspend fun undeleteMaintenanceTask(id: String, rev: String): MaintenanceTask = maintenanceTaskLogic.undeleteEntity(id, rev)
     override suspend fun modifyMaintenanceTask(entity: MaintenanceTask): MaintenanceTask? = maintenanceTaskLogic.modifyEntities(listOf(entity)).single()
 
     override suspend fun createMaintenanceTask(entity: MaintenanceTask): MaintenanceTask? = maintenanceTaskLogic.createEntities(listOf(entity)).single()

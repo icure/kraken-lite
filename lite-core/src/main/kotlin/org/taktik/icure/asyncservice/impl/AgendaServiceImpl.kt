@@ -1,10 +1,10 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.singleOrNull
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.AgendaLogic
 import org.taktik.icure.asyncservice.AgendaService
 import org.taktik.icure.db.PaginationOffset
@@ -17,10 +17,10 @@ class AgendaServiceImpl(
     private val agendaLogic: AgendaLogic
 ) : AgendaService {
     override suspend fun createAgenda(agenda: Agenda): Agenda? = agendaLogic.createAgenda(agenda)
-
-    override fun deleteAgendas(ids: Set<String>): Flow<DocIdentifier> = agendaLogic.deleteAgendas(ids)
-
-    override suspend fun deleteAgenda(agendaId: String): DocIdentifier = agendaLogic.deleteAgendas(setOf(agendaId)).single()
+    override fun deleteAgendas(ids: List<IdAndRev>): Flow<DocIdentifier> = agendaLogic.deleteEntities(ids)
+    override suspend fun deleteAgenda(id: String, rev: String?): DocIdentifier = agendaLogic.deleteEntity(id, rev)
+    override suspend fun purgeAgenda(id: String, rev: String): DocIdentifier = agendaLogic.purgeEntity(id, rev)
+    override suspend fun undeleteAgenda(id: String, rev: String): Agenda = agendaLogic.undeleteEntity(id, rev)
 
     override suspend fun getAgenda(agendaId: String): Agenda? = agendaLogic.getAgenda(agendaId)
     override fun getAgendas(agendaIds: List<String>): Flow<Agenda> = agendaLogic.getEntities(agendaIds)

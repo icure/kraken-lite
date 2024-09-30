@@ -3,6 +3,7 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.MedicalLocationLogic
 import org.taktik.icure.asyncservice.MedicalLocationService
 import org.taktik.icure.db.PaginationOffset
@@ -15,9 +16,7 @@ class MedicalLocationServiceImpl(
     private val medicalLocationLogic: MedicalLocationLogic
 ) : MedicalLocationService {
     override suspend fun createMedicalLocation(medicalLocation: MedicalLocation): MedicalLocation? = medicalLocationLogic.createMedicalLocation(medicalLocation)
-
-    override fun deleteMedicalLocations(ids: List<String>): Flow<DocIdentifier> = medicalLocationLogic.deleteEntities(ids)
-
+    override fun deleteMedicalLocations(ids: List<IdAndRev>): Flow<DocIdentifier> = medicalLocationLogic.deleteEntities(ids)
     override suspend fun getMedicalLocation(medicalLocation: String): MedicalLocation? = medicalLocationLogic.getEntity(medicalLocation)
     override fun getMedicalLocations(medicalLocationIds: List<String>): Flow<MedicalLocation> = medicalLocationLogic.getEntities(medicalLocationIds)
 

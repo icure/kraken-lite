@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.DeviceLogic
 import org.taktik.icure.asyncservice.DeviceService
 import org.taktik.icure.domain.filter.AbstractFilter
@@ -31,11 +32,10 @@ class DeviceServiceImpl(
     override suspend fun getHcPartyKeysForDelegate(deviceId: String): Map<String, String> = deviceLogic.getHcPartyKeysForDelegate(deviceId)
 
     override suspend fun getAesExchangeKeysForDelegate(healthcarePartyId: String): Map<String, Map<String, Map<String, String>>> = deviceLogic.getAesExchangeKeysForDelegate(healthcarePartyId)
-
-    override suspend fun deleteDevice(id: String): DocIdentifier? = deviceLogic.deleteDevice(id)
-
-    override fun deleteDevices(ids: Collection<String>): Flow<DocIdentifier> = deviceLogic.deleteDevices(ids)
-
+    override fun deleteDevices(ids: List<IdAndRev>): Flow<DocIdentifier> = deviceLogic.deleteEntities(ids)
+    override suspend fun deleteDevice(id: String, rev: String?): DocIdentifier = deviceLogic.deleteEntity(id, rev)
+    override suspend fun purgeDevice(id: String, rev: String): DocIdentifier = deviceLogic.purgeEntity(id, rev)
+    override suspend fun undeleteDevice(id: String, rev: String): Device = deviceLogic.undeleteEntity(id, rev)
     override fun filterDevices(
         filter: FilterChain<Device>,
         limit: Int,

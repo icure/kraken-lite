@@ -1,11 +1,11 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.ComplexKey
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.PatientLogic
 import org.taktik.icure.asyncservice.PatientService
 import org.taktik.icure.db.PaginationOffset
@@ -128,9 +128,13 @@ class PatientServiceImpl(
         healthcarePartyId: String?
     ): Flow<Patient> = patientLogic.fuzzySearchPatients(firstName, lastName, dateOfBirth, healthcarePartyId)
 
-    override fun deletePatients(ids: Set<String>): Flow<DocIdentifier> = patientLogic.deletePatients(ids)
+    override fun deletePatients(ids: List<IdAndRev>): Flow<DocIdentifier> = patientLogic.deleteEntities(ids)
 
-    override suspend fun deletePatient(id: String): DocIdentifier = patientLogic.deletePatients(setOf(id)).single()
+    override suspend fun deletePatient(id: String, rev: String?): DocIdentifier = patientLogic.deleteEntity(id, rev)
+
+    override suspend fun purgePatient(id: String, rev: String): DocIdentifier = patientLogic.purgeEntity(id, rev)
+
+    override suspend fun undeletePatient(id: String, rev: String): Patient = patientLogic.undeleteEntity(id, rev)
 
     override fun findDeletedPatientsByDeleteDate(
         start: Long,
@@ -140,8 +144,7 @@ class PatientServiceImpl(
     ): Flow<PaginationElement> = patientLogic.findDeletedPatientsByDeleteDate(start, end, descending, paginationOffset)
 
     override fun listDeletedPatientsByNames(firstName: String?, lastName: String?): Flow<Patient> = patientLogic.listDeletedPatientsByNames(firstName, lastName)
-
-    override fun undeletePatients(ids: Set<String>): Flow<DocIdentifier> = patientLogic.undeletePatients(ids)
+    override fun undeletePatients(ids: List<IdAndRev>): Flow<Patient> = patientLogic.undeleteEntities(ids)
 
     override fun getEntityIds(): Flow<String> = patientLogic.getEntityIds()
 

@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.singleOrNull
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.HealthElementLogic
 import org.taktik.icure.asyncservice.HealthElementService
 import org.taktik.icure.db.PaginationOffset
@@ -52,13 +53,10 @@ class HealthElementServiceImpl(
     ): List<HealthElement> =
         healthElementLogic.listLatestHealthElementsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
 
-    override fun deleteHealthElements(ids: Set<String>): Flow<DocIdentifier> = healthElementLogic.deleteEntities(ids)
-
-    override suspend fun deleteHealthElement(id: String): DocIdentifier =
-        checkNotNull(deleteHealthElements(setOf(id)).single()) {
-            "HealthElement delete returned null from logic"
-        }
-
+    override fun deleteHealthElements(ids: List<IdAndRev>): Flow<DocIdentifier> = healthElementLogic.deleteEntities(ids)
+    override suspend fun deleteHealthElement(id: String, rev: String?): DocIdentifier = healthElementLogic.deleteEntity(id, rev)
+    override suspend fun purgeHealthElement(id: String, rev: String): DocIdentifier = healthElementLogic.purgeEntity(id, rev)
+    override suspend fun undeleteHealthElement(id: String, rev: String): HealthElement = healthElementLogic.undeleteEntity(id, rev)
     override suspend fun modifyHealthElement(healthElement: HealthElement): HealthElement? =
         checkNotNull(healthElementLogic.modifyEntities(flowOf(healthElement)).singleOrNull()) {
             "HealthElement modify returned null from logic"

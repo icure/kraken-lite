@@ -52,9 +52,7 @@ class UserServiceImpl(
         filter: FilterChain<User>
     ): Flow<ViewQueryResultEvent> = userLogic.filterUsers(paginationOffset, filter)
 
-    override fun matchUsersBy(filter: AbstractFilter<User>): Flow<String> {
-        TODO("Not yet implemented")
-    }
+    override fun matchUsersBy(filter: AbstractFilter<User>): Flow<String> = userLogic.matchEntitiesBy(filter)
 
     override suspend fun modifyUser(modifiedUser: User): User? = userLogic.modifyUser(modifiedUser)
 
@@ -72,9 +70,11 @@ class UserServiceImpl(
         useShortToken: Boolean
     ): String = userLogic.createOrUpdateToken(userIdentifier, key, tokenValidity, token, useShortToken)
 
-    override suspend fun deleteUser(userId: String): DocIdentifier? = userLogic.deleteUser(userId)
+    override suspend fun deleteUser(id: String, rev: String?): DocIdentifier = userLogic.deleteEntity(id, rev)
 
-    override suspend fun undeleteUser(userId: String) = userLogic.undeleteUser(userId)
+    override suspend fun purgeUser(id: String, rev: String): DocIdentifier = userLogic.purgeEntity(id, rev)
+
+    override suspend fun undeleteUser(id: String, rev: String): User = userLogic.undeleteEntity(id, rev)
 
     override fun solveConflicts(limit: Int?, ids: List<String>?) = userLogic.solveConflicts(limit, ids)
 }

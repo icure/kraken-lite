@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.TimeTableLogic
 import org.taktik.icure.asyncservice.TimeTableService
 import org.taktik.icure.domain.filter.AbstractFilter
@@ -16,10 +17,13 @@ class TimeTableServiceImpl(
     private val timeTableLogic: TimeTableLogic
 ) : TimeTableService {
     override suspend fun createTimeTable(timeTable: TimeTable): TimeTable? = timeTableLogic.createTimeTable(timeTable)
+    override fun deleteTimeTables(ids: List<IdAndRev>): Flow<DocIdentifier> = timeTableLogic.deleteEntities(ids)
 
-    override fun deleteTimeTables(ids: List<String>): Flow<DocIdentifier> = timeTableLogic.deleteTimeTables(ids)
+    override suspend fun deleteTimeTable(id: String, rev: String?): DocIdentifier = timeTableLogic.deleteEntity(id, rev)
 
-    override suspend fun deleteTimeTable(timeTableId: String): DocIdentifier = timeTableLogic.deleteTimeTables(listOf(timeTableId)).single()
+    override suspend fun purgeTimeTable(id: String, rev: String): DocIdentifier = timeTableLogic.purgeEntity(id, rev)
+
+    override suspend fun undeleteTimeTable(id: String, rev: String): TimeTable = timeTableLogic.undeleteEntity(id, rev)
 
     override suspend fun getTimeTable(timeTableId: String): TimeTable? = timeTableLogic.getTimeTable(timeTableId)
 

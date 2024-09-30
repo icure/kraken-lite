@@ -16,7 +16,6 @@ import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Contact
 import org.taktik.icure.entities.data.LabelledOccurence
 import org.taktik.icure.entities.embed.Delegation
-import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.embed.Service
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -45,10 +44,10 @@ class ContactServiceImpl(
     override suspend fun addDelegation(contactId: String, delegation: Delegation): Contact? = contactLogic.addDelegation(contactId, delegation)
 
     override suspend fun createContact(contact: Contact): Contact? = contactLogic.createContact(contact)
-
-    override fun deleteContacts(ids: Set<String>): Flow<DocIdentifier> = contactLogic.deleteEntities(ids)
-
-    override suspend fun deleteContact(id: String): DocIdentifier = contactLogic.deleteEntities(setOf(id)).single()
+    override fun deleteContacts(ids: List<IdAndRev>): Flow<DocIdentifier> = contactLogic.deleteEntities(ids)
+    override suspend fun deleteContact(id: String, rev: String?): DocIdentifier = contactLogic.deleteEntity(id, rev)
+    override suspend fun purgeContact(id: String, rev: String): DocIdentifier = contactLogic.purgeEntity(id, rev)
+    override suspend fun undeleteContact(id: String, rev: String): Contact = contactLogic.undeleteEntity(id, rev)
 
     override suspend fun modifyContact(contact: Contact): Contact? = contactLogic.modifyEntities(setOf(contact)).single()
 
