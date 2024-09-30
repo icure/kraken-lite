@@ -29,6 +29,9 @@ class LiteDAOConfig : DaoConfig {
     @Value("\${icure.dao.useDataOwnerPartition:false}")
     override var useDataOwnerPartition: Boolean = false
 
+    @Value("\${icure.dao.useObsoleteViews:false}")
+    override var useObsoleteViews: Boolean = false
+
     @Value("\${icure.dao.forceForegroundIndexation:false}")
     var forceForegroundIndexation: Boolean = false
 
