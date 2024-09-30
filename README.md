@@ -24,6 +24,15 @@ By default, the new CouchDB views required by the SDK v8 are not enabled. To ena
 -Dicure.dao.useDataOwnerPartition=true
 ```
 
+### Disable compatibility mode for views
+Some views were moved to the Maurice partition, and so they will not be usable until the partitioned design Docs finish
+indexing.
+However, the old views are kept in the default design document for compatibility. If you don't want to force the indexation
+of the Maurice views, you can enable the redirection to the compatibility views by setting the following property:
+```bash
+-Dicure.dao.useObsoleteViews=true
+```
+
 ### Configuring background indexation workers
 When a new view is created, CouchDB will start the indexation process in background. You can control the number of workers
 allocated to indexation by setting the following property (default is 1):
@@ -33,7 +42,7 @@ allocated to indexation by setting the following property (default is 1):
 The more workers, the faster the views will index but also more resources will be used.
 You can change the number of workers for indexation at any time, by calling the following endpoint:
 ```bash
-curl -v -u USERNAME:PASSWORD http://localhost:16043/rest/v2/icure/couchdb/config/ken/batch_channels?value=<ANY_NUMBER>
+curl -v http://localhost:16043/rest/v2/icure/couchdb/config/ken/batch_channels?value=<ANY_NUMBER>
 ```
 :warning: Increasing the number of workers will immediately start more indexation processes but reducing it will not stop
 them: the active process will have to complete before their number is actually reduced.
