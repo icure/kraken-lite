@@ -10,12 +10,14 @@ import org.springframework.context.annotation.Configuration
 import org.taktik.couchdb.id.UUIDGenerator
 import org.taktik.icure.asyncdao.CodeDAO
 import org.taktik.icure.asyncdao.ContactDAO
+import org.taktik.icure.asyncdao.DeviceDAO
 import org.taktik.icure.asyncdao.DocumentDAO
 import org.taktik.icure.asyncdao.FormDAO
 import org.taktik.icure.asyncdao.HealthElementDAO
 import org.taktik.icure.asyncdao.HealthcarePartyDAO
 import org.taktik.icure.asyncdao.InsuranceDAO
 import org.taktik.icure.asyncdao.InvoiceDAO
+import org.taktik.icure.asyncdao.MedicalLocationDAO
 import org.taktik.icure.asyncdao.MessageDAO
 import org.taktik.icure.asyncdao.PatientDAO
 import org.taktik.icure.asyncdao.TarificationDAO
@@ -28,11 +30,14 @@ import org.taktik.icure.asynclogic.UserLogic
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 import org.taktik.icure.asynclogic.impl.CodeLogicImpl
 import org.taktik.icure.asynclogic.impl.ContactLogicImpl
+import org.taktik.icure.asynclogic.impl.DeviceLogicImpl
 import org.taktik.icure.asynclogic.impl.DocumentLogicImpl
 import org.taktik.icure.asynclogic.impl.FormLogicImpl
 import org.taktik.icure.asynclogic.impl.HealthElementLogicImpl
+import org.taktik.icure.asynclogic.impl.HealthcarePartyLogicImpl
 import org.taktik.icure.asynclogic.impl.InsuranceLogicImpl
 import org.taktik.icure.asynclogic.impl.InvoiceLogicImpl
+import org.taktik.icure.asynclogic.impl.MedicalLocationLogicImpl
 import org.taktik.icure.asynclogic.impl.MessageLogicImpl
 import org.taktik.icure.asynclogic.impl.PatientLogicImpl
 import org.taktik.icure.asynclogic.impl.SessionInformationProviderImpl
@@ -199,4 +204,43 @@ class LiteLogicConfig {
         datastoreInstanceProvider: DatastoreInstanceProvider,
         fixer: Fixer
     ) = PatientLogicImpl(sessionLogic, patientDAO, userLogic, filters, exchangeDataMapLogic, datastoreInstanceProvider, fixer)
+
+    @Bean
+    fun healthcarePartyLogic(
+        filters: Filters,
+        healthcarePartyDAO: HealthcarePartyDAO,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        fixer: Fixer
+    ) = HealthcarePartyLogicImpl(
+        filters = filters,
+        healthcarePartyDAO = healthcarePartyDAO,
+        datastoreInstanceProvider = datastoreInstanceProvider,
+        fixer = fixer
+    )
+
+    @Bean
+    fun deviceLogic(
+        filters: Filters,
+        deviceDAO: DeviceDAO,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        fixer: Fixer
+    ) = DeviceLogicImpl(
+        filters = filters,
+        deviceDAO = deviceDAO,
+        datastoreInstanceProvider = datastoreInstanceProvider,
+        fixer = fixer
+    )
+
+    @Bean
+    fun medicalLocationLogic(
+        filters: Filters,
+        medicalLocationDAO: MedicalLocationDAO,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        fixer: Fixer
+    ) = MedicalLocationLogicImpl(
+        filters = filters,
+        medicalLocationDAO = medicalLocationDAO,
+        datastoreInstanceProvider = datastoreInstanceProvider,
+        fixer = fixer
+    )
 }
