@@ -33,6 +33,7 @@ class HealthElementServiceImpl(
     override fun getHealthElements(healthElementIds: Collection<String>): Flow<HealthElement> =
         healthElementLogic.getHealthElements(healthElementIds)
 
+    @Deprecated("This method cannot include results with secure delegations, use listHealthElementIdsByDataOwnerPatientOpeningDate instead")
     override fun listHealthElementsByHcPartyAndSecretPatientKeys(
         hcPartyId: String,
         secretPatientKeys: List<String>

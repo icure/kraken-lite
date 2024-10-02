@@ -45,6 +45,8 @@ class InvoiceServiceImpl(
     override fun listInvoicesByHcPartyContacts(hcPartyId: String, contactIds: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyContacts(hcPartyId, contactIds)
 
     override fun listInvoicesByHcPartyAndRecipientIds(hcPartyId: String, recipientIds: Set<String?>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndRecipientIds(hcPartyId, recipientIds)
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listInvoiceIdsByDataOwnerPatientInvoiceDate instead")
     override fun listInvoicesByHcPartyAndPatientSfks(hcPartyId: String, secretPatientKeys: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndPatientSfks(hcPartyId, secretPatientKeys)
     override fun listInvoiceIdsByDataOwnerPatientInvoiceDate(
         dataOwnerId: String,
