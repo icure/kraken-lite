@@ -26,6 +26,8 @@ class AccessLogServiceImpl(
     override suspend fun purgeAccessLog(id: String, rev: String): DocIdentifier = accessLogLogic.purgeEntity(id, rev)
     override suspend fun undeleteAccessLog(id: String, rev: String): AccessLog = accessLogLogic.undeleteEntity(id, rev)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listAccessLogIdsByDataOwnerPatientDate instead")
     override fun listAccessLogsByHCPartyAndSecretPatientKeys(
         hcPartyId: String,
         secretForeignKeys: List<String>

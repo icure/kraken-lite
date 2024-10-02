@@ -74,6 +74,8 @@ class MessageServiceImpl(
 
     override suspend fun modifyMessage(message: Message): Message? = messageLogic.modifyEntities(flowOf(message)).singleOrNull()
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listMessageIdsByDataOwnerPatientSentDate instead")
     override fun listMessagesByCurrentHCPartySecretPatientKeys(secretPatientKeys: List<String>): Flow<Message> = flow {
         emitAll(
             messageLogic.listMessagesByHCPartySecretPatientKeys(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKeys)

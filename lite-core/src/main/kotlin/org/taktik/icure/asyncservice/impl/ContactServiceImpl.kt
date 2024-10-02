@@ -31,6 +31,8 @@ class ContactServiceImpl(
 
     override fun findContactsByIds(selectedIds: Collection<String>): Flow<ViewQueryResultEvent> = contactLogic.findContactsByIds(selectedIds)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listContactIdsByDataOwnerPatientOpeningDate instead")
     override fun listContactsByHCPartyAndPatient(hcPartyId: String, secretPatientKeys: List<String>): Flow<Contact> = contactLogic.listContactsByHCPartyAndPatient(hcPartyId, secretPatientKeys)
 
     override fun listContactIdsByDataOwnerPatientOpeningDate(

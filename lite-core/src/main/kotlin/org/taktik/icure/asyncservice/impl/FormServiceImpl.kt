@@ -20,6 +20,8 @@ class FormServiceImpl(
 
     override fun getForms(selectedIds: Collection<String>): Flow<Form> = formLogic.getForms(selectedIds)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listFormIdsByDataOwnerPatientOpeningDate instead")
     override fun listFormsByHCPartyAndPatient(
         hcPartyId: String,
         secretPatientKeys: List<String>,

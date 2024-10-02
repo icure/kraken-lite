@@ -21,6 +21,8 @@ class ClassificationServiceImpl(
 
     override suspend fun getClassification(classificationId: String): Classification? = classificationLogic.getClassification(classificationId)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listClassificationIdsByDataOwnerPatientCreated instead")
     override fun listClassificationsByHCPartyAndSecretPatientKeys(
         hcPartyId: String,
         secretPatientKeys: List<String>

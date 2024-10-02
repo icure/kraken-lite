@@ -49,6 +49,8 @@ class DocumentServiceImpl(
         secretForeignKeys: List<String>
     ): Flow<Document> = documentLogic.listDocumentsByDocumentTypeHCPartySecretMessageKeys(documentTypeCode, hcPartyId, secretForeignKeys)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listDocumentIdsByDataOwnerPatientCreated instead")
     override fun listDocumentsByHCPartySecretMessageKeys(
         hcPartyId: String,
         secretForeignKeys: List<String>
