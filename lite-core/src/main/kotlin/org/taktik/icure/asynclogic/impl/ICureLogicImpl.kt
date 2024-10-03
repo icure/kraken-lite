@@ -10,6 +10,7 @@ import org.taktik.icure.asynclogic.ICureLiteLogic
 import org.taktik.icure.asynclogic.VersionLogic
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 import org.taktik.icure.config.ExternalViewsConfig
+import org.taktik.icure.config.LiteDAOConfig
 import org.taktik.icure.entities.ReplicationInfo
 import org.taktik.icure.entities.embed.DatabaseSynchronization
 import org.taktik.icure.properties.CouchDbPropertiesImpl
@@ -21,6 +22,7 @@ class ICureLiteLogicImpl(
     private val datastoreInstanceProvider: DatastoreInstanceProvider,
     private val iCureDAO: ICureLiteDAO,
     private val externalViewsConfig: ExternalViewsConfig,
+    private val liteDAOConfig: LiteDAOConfig,
     couchDbProperties: CouchDbPropertiesImpl,
     passwordEncoder: PasswordEncoder,
     versionLogic: VersionLogic
@@ -63,9 +65,14 @@ class ICureLiteLogicImpl(
         val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
         return iCureDAO.getCouchDbConfigProperty(datastoreInformation, section, key)
     }
+
     override suspend fun setCouchDbConfigProperty(section: String, key: String, newValue: String) {
         val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
         iCureDAO.setCouchDbConfigProperty(datastoreInformation, section, key, newValue)
+    }
+
+    override suspend fun setKrakenLiteProperty(propertyName: String, value: Boolean) {
+        liteDAOConfig.setLiteConfig(propertyName, value)
     }
 
 }

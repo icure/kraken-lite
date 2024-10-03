@@ -14,7 +14,7 @@ class RecoveryDataServiceImpl(
 
     override suspend fun getRecoveryData(id: String): RecoveryData? = recoveryDataLogic.getRecoveryData(id)
 
-    override suspend fun deleteRecoveryData(id: String): DocIdentifier = recoveryDataLogic.deleteRecoveryData(id)
+    override suspend fun purgeRecoveryData(id: String): DocIdentifier = recoveryDataLogic.purgeRecoveryData(id)
 
     override suspend fun deleteAllRecoveryDataForRecipient(recipientId: String): Int = recoveryDataLogic.deleteAllRecoveryDataForRecipient(recipientId)
 

@@ -26,10 +26,15 @@ import org.taktik.icure.security.CouchDbCredentialsProvider
 @Profile("app")
 class LiteDAOConfig : DaoConfig {
 
-    @Value("\${icure.dao.useDataOwnerPartition:false}")
+    companion object {
+        private const val USE_DATA_OWNER_PARTITION = "useDataOwnerPartition"
+        private const val USE_OBSOLETE_VIEWS = "useObsoleteViews"
+    }
+
+    @Value("\${icure.dao.$USE_DATA_OWNER_PARTITION:false}")
     override var useDataOwnerPartition: Boolean = false
 
-    @Value("\${icure.dao.useObsoleteViews:false}")
+    @Value("\${icure.dao.$USE_OBSOLETE_VIEWS:false}")
     override var useObsoleteViews: Boolean = false
 
     @Value("\${icure.dao.forceForegroundIndexation:false}")
@@ -37,6 +42,18 @@ class LiteDAOConfig : DaoConfig {
 
     @Value("\${icure.dao.backgroundIndexationWorkers:1}")
     var backgroundIndexationWorkers: Int = 1
+
+    fun setLiteConfig(propertyName: String, value: Boolean) {
+        when(propertyName) {
+            USE_DATA_OWNER_PARTITION -> {
+                useDataOwnerPartition = value
+            }
+            USE_OBSOLETE_VIEWS -> {
+                useObsoleteViews = value
+            }
+            else -> throw IllegalArgumentException("$propertyName property is not a recognized property")
+        }
+    }
 
     @Bean
     @Profile("app")

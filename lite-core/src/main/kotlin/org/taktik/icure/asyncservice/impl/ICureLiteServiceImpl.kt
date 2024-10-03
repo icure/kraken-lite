@@ -28,4 +28,6 @@ class ICureLiteServiceImpl(
 
     override suspend fun setCouchDbConfigProperty(section: String, key: String, newValue: String) = iCureLogic.setCouchDbConfigProperty(section, key, newValue)
 
+    override suspend fun setKrakenLiteProperty(propertyName: String, value: Boolean) = iCureLogic.setKrakenLiteProperty(propertyName, value)
+
 }

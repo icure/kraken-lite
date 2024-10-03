@@ -20,7 +20,7 @@ class ICureController(
 	private val iCureService: ICureLiteService,
 ) {
 
-	@Operation(summary = "Retrieve a value in a section in the CouchDB Config")
+	@Operation(summary = "Retrieve a value in a section in the CouchDB config.")
 	@GetMapping("/couchdb/config/{section}/{key}")
 	fun getCouchDbConfigProperty(
 		@PathVariable section: String,
@@ -29,7 +29,7 @@ class ICureController(
 		iCureService.getCouchDbConfigProperty(section, key)
 	}
 
-	@Operation(summary = "Retrieve a value in a section in the CouchDB Config")
+	@Operation(summary = "Sets a value in a section in the CouchDB config.")
 	@PutMapping("/couchdb/config/{section}/{key}")
 	fun setCouchDbConfigProperty(
 		@PathVariable section: String,
@@ -37,6 +37,17 @@ class ICureController(
 		@RequestParam value: String,
 	) = mono {
 		iCureService.setCouchDbConfigProperty(section, key, value)
+		"ok"
+	}
+
+	@Operation(summary = "Sets a configuration property for Kraken lite.")
+	@PutMapping("/lite/config/{property}/{value}")
+	fun setLiteConfigProperty(
+		@PathVariable property: String,
+		@PathVariable value: Boolean,
+	) = mono {
+		iCureService.setKrakenLiteProperty(property, value)
+		"ok"
 	}
 
 }
