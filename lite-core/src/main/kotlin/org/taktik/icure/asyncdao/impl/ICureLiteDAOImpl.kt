@@ -22,7 +22,7 @@ class ICureLiteDAOImpl(
 
 	private suspend fun checkOnlyLocalNodeExists(client: Client) {
 		val membership = client.membership()
-		if (membership.allNodes.size != 1 || membership.allNodes.first() != COUCHDB_LOCAL_NODE) {
+		if (membership.allNodes.size != 1) {
 			throw IllegalStateException("Multiple nodes found on local installation")
 		}
 	}
