@@ -17,7 +17,7 @@ class ICureLiteDAOImpl(
 ) : ICureLiteDAO, ICureDAOImpl(httpClient, couchDbCredentialsProvider, couchDbDispatcher) {
 
 	companion object {
-		private const val COUCHDB_LOCAL_NODE = "nonode@nohost"
+		private const val COUCHDB_LOCAL_NODE = "_local"
 	}
 
 	private suspend fun checkOnlyLocalNodeExists(client: Client) {
