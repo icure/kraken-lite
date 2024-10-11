@@ -68,6 +68,13 @@ you can force the indexation of the views at startup by setting the following op
 foreground indexation. The foreground indexation will try and use all the resources available on the system, and this can
 be detrimental for the execution of the other processes on the machine.
 
+You can also specify a limited set of Design Documents to index at startup. You can provide them as a comma-separated list
+to the following property
+```bash
+-Dicure.dao.viewsToIndexAtStartup=Code_Maurice,Contact_DataOwner
+```
+The syntax for this property is `{nameOfTheEntity}_{nameOfThePartition}`.
+
 ## How to enable SAM and Kmehr modules
 To include SAM and Kmehr module, two steps are needed:  
 When building the `-Dicure.optional.regions=be` option should be set:

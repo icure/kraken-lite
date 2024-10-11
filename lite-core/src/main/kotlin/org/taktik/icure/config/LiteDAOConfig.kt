@@ -40,6 +40,12 @@ class LiteDAOConfig : DaoConfig {
     @Value("\${icure.dao.forceForegroundIndexation:false}")
     var forceForegroundIndexation: Boolean = false
 
+    @Value("\${icure.dao.viewsToIndexAtStartup:}")
+    private var commaSeparatedViewsToIndexAtStartup: String = ""
+
+    val viewsToIndexAtStartup: List<String>
+        get() = commaSeparatedViewsToIndexAtStartup.split(",")
+
     @Value("\${icure.dao.backgroundIndexationWorkers:1}")
     var backgroundIndexationWorkers: Int = 1
 

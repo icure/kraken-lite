@@ -220,19 +220,18 @@ class ICureBackendApplication {
         }
 
         // Warm up a view will trigger foreground indexation, that will occupy all the resources in the system.
-        if(daoConfig.forceForegroundIndexation) {
-            listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
-                log.info("Warming up of $partition design docs.")
-                genericDAOs.forEach {
-                    while(isIndexingWithDebouncing()) {
-                        delay(1L.minutes.inWholeMilliseconds)
-                    }
-                    log.info("Warming up design docs for ${it::class.java.simpleName}")
-                    while(!warmupPartitionAndCheckForCompletion(it, datastoreInformation, partition)) {
-                        delay(1L.seconds.inWholeMilliseconds)
-                    }
+        listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+            genericDAOs.filter { dao ->
+                daoConfig.forceForegroundIndexation
+                    || daoConfig.viewsToIndexAtStartup.contains("${dao.entityClass.simpleName}_$partition")
+            }.forEach { dao ->
+                while(isIndexingWithDebouncing()) {
+                    delay(1L.minutes.inWholeMilliseconds)
                 }
-                log.info("Indexation of $partition design docs completed.")
+                log.info("Warming up ${dao.entityClass.simpleName}_$partition design doc")
+                while(!warmupPartitionAndCheckForCompletion(dao, datastoreInformation, partition)) {
+                    delay(1L.seconds.inWholeMilliseconds)
+                }
             }
         }
 
