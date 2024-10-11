@@ -231,7 +231,7 @@ dependencies {
 
 fun DependencyHandlerScope.injectOptionalJars() {
     val regions = System.getProperty("icure.optional.regions")?.lowercase()?.split(",") ?: emptyList()
-    if (true || regions.contains("be")) {
+    if (regions.contains("be")) {
         implementation(liteLibs.samModule)
         implementation(liteLibs.kmehrModule)
         implementation(liteLibs.bundles.kmehrDependencies)
