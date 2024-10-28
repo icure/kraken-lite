@@ -96,14 +96,6 @@ configurations.all {
     }
 }
 
-val cleanCouchTask = tasks.register<CleanCouchDockerTask>("cleanCouchTask")
-val startCouchTask = tasks.register<StartCouchDockerTask>("startCouchTask")
-
-tasks.getByName("test") {
-    dependsOn(startCouchTask)
-    finalizedBy(cleanCouchTask)
-}
-
 tasks.withType<Test> {
     useJUnitPlatform()
     minHeapSize = "512m"
@@ -231,7 +223,7 @@ dependencies {
 
 fun DependencyHandlerScope.injectOptionalJars() {
     val regions = System.getProperty("icure.optional.regions")?.lowercase()?.split(",") ?: emptyList()
-    if (regions.contains("be")) {
+    if (regions.contains("be") || true) {
         implementation(liteLibs.samModule)
         implementation(liteLibs.kmehrModule)
         implementation(liteLibs.bundles.kmehrDependencies)

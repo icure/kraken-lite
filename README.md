@@ -28,6 +28,9 @@ You can set this property at any time by calling the following endpoint:
 curl -v -X PUT http://localhost:16043/rest/v2/icure/lite/config/useDataOwnerPartition/false
 ```
 
+:warning: If you set the property value using the HTTP call, this will NOT change the value stored in the property. 
+This means that this value will return to the value set by the property at the next restart.
+
 ### Disable compatibility mode for views
 Some views were moved to the Maurice partition, and so they will not be usable until the partitioned design Docs finish
 indexing.
@@ -58,6 +61,9 @@ them: the active process will have to complete before their number is actually r
 :warning: Querying the view before the indexation completes will make the indexation pass from a background state to a
 foreground state (see below).
 
+:warning: If you set the property value using the HTTP call, this will NOT change the value stored in the property.
+This means that this value will return to the value set by the property at the next restart.
+
 ### Foreground view indexation
 If you are using an old couchdb version, then the indexation of the views will not happen in background. In this case,
 you can force the indexation of the views at startup by setting the following option to `true`:
@@ -75,6 +81,18 @@ to the following property
 ```
 The syntax for this property is `{nameOfTheEntity}_{nameOfThePartition}`.
 
+### How to trigger foreground view indexation for an Entity
+To trigger the foreground view indexation for any entity, you have to make a POST request towards the following endpoint
+`http://localhost:16043/rest/v2/icure/dd/<ENTITY_NAME>?warmup=true` where `<ENTITY_NAME>` is the name of the entity
+which Design Documents you want to index.
+
+For example, if you want to index the Design Documents for the `Contact` entity, you can do so by using the following call
+```bash
+curl -X POST http://localhost:16043/rest/v2/icure/dd/Contact?warmup=true
+```
+This will trigger the indexation and warmup (for older CouchDB versions) for all the Design Documents of the Contact 
+entity of any partition.
+
 ## How to enable SAM and Kmehr modules
 To include SAM and Kmehr module, two steps are needed:  
 When building the `-Dicure.optional.regions=be` option should be set:
@@ -85,6 +103,37 @@ When building the `-Dicure.optional.regions=be` option should be set:
 When running the generated jar, the spring profiles `kmehr` (to include kmehr module) and `sam` (to include the SAM module) should be added:
 ```bash
 -Dspring.profiles.active=app,kmehr,sam
+```
+
+### Running kraken-lite from IntelliJ including SAM and Kmehr modules
+When running the kraken-lite through IntelliJ, it fails to rebuild it before running including the Kmehr and SAM libraries
+even if the properties have been set. 
+To circumvent this problem and run the kraken-lite from IntelliJ, navigate to the `lite-core` subproject and open the 
+`build.gradle.kts` file.
+Inside it, at the very end, you will find this function:
+
+```kotlin
+fun DependencyHandlerScope.injectOptionalJars() {
+    val regions = System.getProperty("icure.optional.regions")?.lowercase()?.split(",") ?: emptyList()
+    if (regions.contains("be")) {
+        implementation(liteLibs.samModule)
+        implementation(liteLibs.kmehrModule)
+        implementation(liteLibs.bundles.kmehrDependencies)
+    }
+}
+```
+
+Update it to bypass the check on the region property to include the dependencies:
+
+```kotlin
+fun DependencyHandlerScope.injectOptionalJars() {
+    val regions = System.getProperty("icure.optional.regions")?.lowercase()?.split(",") ?: emptyList()
+    if (regions.contains("be") || true) {
+        implementation(liteLibs.samModule)
+        implementation(liteLibs.kmehrModule)
+        implementation(liteLibs.bundles.kmehrDependencies)
+    }
+}
 ```
 
 ## How to add External design documents
@@ -114,3 +163,14 @@ To add plugin jars, put them into a single folder. Then, set the following prope
 :warning:
 Kraken-lite will try to load the plugins from all the JARs in the provided folder. To prevent errors, pass as parameter
 a folder where no other JAR file is present (e.g. the kraken-lite jar itself).
+
+## TroubleShooting
+
+### Unresolved Reference: (X)FilterMapperImpl
+If you are getting this issue, this means that kraken-lite is not able to find some classes that are auto-generated upon build.
+To ensure that they exist, run the following commands in the project directory:
+```bash
+./gradlew clean
+./gradlew :kraken-common:mapper:kspKotlin
+```
+If the commands complete successfully, the filter will be generated and you will be able to start the kraken-lite.
