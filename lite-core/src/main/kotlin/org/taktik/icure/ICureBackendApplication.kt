@@ -130,15 +130,27 @@ class ICureBackendApplication {
         log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
 
         runBlocking {
-            allDaos.forEach { dao ->
-                dao.forceInitStandardDesignDocument(datastoreInstanceProvider.getInstanceAndGroup(), true, partition = Partitions.Main, ignoreIfUnchanged = true)
+            if (!couchDbProperties.skipDesignDocumentUpdate) {
+                allDaos.forEach { dao ->
+                    dao.forceInitStandardDesignDocument(
+                        datastoreInstanceProvider.getInstanceAndGroup(),
+                        true,
+                        partition = Partitions.Main,
+                        ignoreIfUnchanged = true
+                    )
+                }
+                allInternalDaos.forEach { dao ->
+                    dao.forceInitStandardDesignDocument(true)
+                }
+                deferDataOwnerDesignDocIndexation(
+                    allDaos,
+                    iCureDAO,
+                    externalViewsConfig.repos,
+                    datastoreInstanceProvider.getInstanceAndGroup()
+                )
+                allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
+                allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
             }
-            allInternalDaos.forEach { dao ->
-                dao.forceInitStandardDesignDocument(true)
-            }
-            deferDataOwnerDesignDocIndexation(allDaos, iCureDAO, externalViewsConfig.repos, datastoreInstanceProvider.getInstanceAndGroup())
-            allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
-            allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
 
             if (authenticationLiteProperties.createAdminUser && suspendRetry(10) { userLogic.listUsers(PaginationOffset(1), true).filterIsInstance<ViewRowWithDoc<String, Nothing, User>>().toList().isEmpty() } ) {
                 val password = UUID.randomUUID().toString().substring(0,13).replace("-","")
