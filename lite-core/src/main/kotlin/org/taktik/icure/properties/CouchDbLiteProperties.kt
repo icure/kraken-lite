@@ -12,7 +12,7 @@ interface CouchDbLiteProperties : CouchDbProperties {
     var cachedDesignDocumentTtlMinutes: Long
     var populateDatabaseFromLocalXmls: Boolean
     var prefix: String
-    var skipDesignDocumentUpdate: Boolean
+    val skipDesignDocumentUpdate: Boolean
 }
 
 @Component
@@ -25,7 +25,8 @@ data class CouchDbPropertiesImpl(
     override var cachedDesignDocumentTtlMinutes: Long = 15,
     override var designDocumentStatusCheckTimeoutMilliseconds: Long = 2000,
     override var populateDatabaseFromLocalXmls: Boolean = true,
-    override var prefix: String = "icure",
-    override var skipDesignDocumentUpdate: Boolean
+    override var prefix: String = "icure"
+) : CouchDbLiteProperties {
+    override val skipDesignDocumentUpdate: Boolean
         get() = url.contains("couch-cluster")
-) : CouchDbLiteProperties
+}
