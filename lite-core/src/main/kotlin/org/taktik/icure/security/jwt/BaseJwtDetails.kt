@@ -13,8 +13,8 @@ data class BaseJwtDetails(
     override val dataOwnerId: String?,
     override val dataOwnerType: DataOwnerType?,
     override val hcpHierarchy: List<String>,
+    override val authorities: Set<GrantedAuthority>
 ) : AbstractUserDetails(), JwtDetails {
-    override val authorities: Set<GrantedAuthority> = setOf(SimpleGrantedAuthority(Roles.GrantedAuthority.ROLE_USER))
     override val principalPermissions: DynamicBitArray = DynamicBitArray.bitVectorOfSize(0)
 
     companion object : JwtConverter<BaseJwtDetails> {
@@ -25,6 +25,9 @@ data class BaseJwtDetails(
                 dataOwnerId = claims[DATA_OWNER_ID] as String?,
                 dataOwnerType = (claims[DATA_OWNER_TYPE] as String?)?.let { DataOwnerType.valueOfOrNullCaseInsensitive(it) },
                 hcpHierarchy = ((claims[HCP_HIERARCHY] ?: emptyList<Any>()) as Collection<Any?>).mapNotNull { it as? String },
+                authorities = ((claims[AUTHORITIES] ?: emptySet<Any>()) as Collection<Any?>).mapNotNull {
+                    it as SimpleGrantedAuthority
+                }.toSet(),
             )
 
     }

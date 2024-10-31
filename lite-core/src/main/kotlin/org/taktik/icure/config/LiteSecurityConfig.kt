@@ -50,6 +50,9 @@ class SecurityConfigAdapter(
 	@Value("\${spring.session.enabled}")
 	override val sessionEnabled: Boolean = false
 
+	@Value("\${icure.security.allowOnlyHcp}")
+	var allowOnlyHcp: Boolean = true
+
 	override val cache: Cache<String, SecurityToken> = asyncCacheManager.getCache("spring.security.tokens")
 
 	val log: Logger = LoggerFactory.getLogger(javaClass)
@@ -58,7 +61,7 @@ class SecurityConfigAdapter(
 	fun securityWebFilterChain(http: ServerHttpSecurity, asyncCacheManager: AsyncCacheManager): SecurityWebFilterChain {
 		return http.authorizeExchange { exchange ->
 			exchange.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-				.pathMatchers("/rest/*/replication/group/**").hasAnyRole("USER", "BOOTSTRAP")
+				.pathMatchers("/rest/*/replication/group/**").hasAnyRole("ROLE_USER")
 				.pathMatchers("/rest/*/auth/login").permitAll()
 				.pathMatchers("/rest/*/auth/refresh").permitAll()
 				.pathMatchers("/rest/*/auth/invalidate").permitAll()
@@ -70,7 +73,7 @@ class SecurityConfigAdapter(
 				.pathMatchers("/").permitAll()
 				.pathMatchers("/ping.json").permitAll()
 				.pathMatchers("/actuator/**").permitAll()
-				.pathMatchers("/**").hasRole("USER")
+				.pathMatchers("/**").hasRole(if (allowOnlyHcp) "ROLE_HCP" else "ROLE_USER")
 		}.csrf {
 			it.disable()
 		}.httpBasic(Customizer.withDefaults())

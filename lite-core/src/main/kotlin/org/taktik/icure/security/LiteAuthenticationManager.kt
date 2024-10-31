@@ -15,6 +15,8 @@ import org.taktik.icure.asyncdao.HealthcarePartyDAO
 import org.taktik.icure.asyncdao.UserDAO
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_ANONYMOUS
+import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_HCP
+import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_PATIENT
 import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_USER
 import org.taktik.icure.constants.Users
 import org.taktik.icure.entities.User
@@ -188,22 +190,25 @@ class LiteAuthenticationManager(
             }
         } ?: emptyList()
 
+        val authorities = setOfNotNull(
+            SimpleGrantedAuthority(ROLE_USER),
+            SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
+        )
+
         val userDetails = BaseJwtDetails(
             userId = user.id,
             dataOwnerId = user.healthcarePartyId
                 ?: user.patientId
                 ?: user.deviceId,
             dataOwnerType = user.getDataOwnerTypeOrNull(),
-            hcpHierarchy = hcpHierarchy
+            hcpHierarchy = hcpHierarchy,
+            authorities = authorities
         )
 
         return UsernamePasswordAuthenticationToken(
             userDetails,
             authentication,
-            mutableSetOf(
-                SimpleGrantedAuthority(ROLE_ANONYMOUS),
-                SimpleGrantedAuthority(ROLE_USER),
-            )
+            authorities
         )
     }
 }
