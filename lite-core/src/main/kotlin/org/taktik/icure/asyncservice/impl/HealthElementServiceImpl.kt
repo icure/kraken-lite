@@ -11,10 +11,10 @@ import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.HealthElementLogic
 import org.taktik.icure.asyncservice.HealthElementService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.HealthElement
 import org.taktik.icure.entities.embed.Delegation
-import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
 
@@ -33,6 +33,7 @@ class HealthElementServiceImpl(
     override fun getHealthElements(healthElementIds: Collection<String>): Flow<HealthElement> =
         healthElementLogic.getHealthElements(healthElementIds)
 
+    @Deprecated("This method cannot include results with secure delegations, use listHealthElementIdsByDataOwnerPatientOpeningDate instead")
     override fun listHealthElementsByHcPartyAndSecretPatientKeys(
         hcPartyId: String,
         secretPatientKeys: List<String>
@@ -47,47 +48,16 @@ class HealthElementServiceImpl(
         descending: Boolean
     ): Flow<String> = healthElementLogic.listHealthElementIdsByDataOwnerPatientOpeningDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
-    override fun listHealthElementIdsByHcPartyAndSecretPatientKeys(
-        hcPartyId: String,
-        secretPatientKeys: List<String>
-    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
-
-    override fun listHealthElementIdsByHcParty(hcpId: String): Flow<String> =
-        healthElementLogic.listHealthElementIdsByHcParty(hcpId)
-
     override suspend fun listLatestHealthElementsByHcPartyAndSecretPatientKeys(
         hcPartyId: String,
         secretPatientKeys: List<String>
     ): List<HealthElement> =
         healthElementLogic.listLatestHealthElementsByHcPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys)
 
-    override fun listHealthElementIdsByHcPartyAndCodes(
-        hcPartyId: String,
-        codeType: String,
-        codeNumber: String
-    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndCodes(hcPartyId, codeType, codeNumber)
-
-    override fun listHealthElementIdsByHcPartyAndTags(
-        hcPartyId: String,
-        tagType: String,
-        tagCode: String
-    ): Flow<String> = healthElementLogic.listHealthElementIdsByHcPartyAndTags(hcPartyId, tagType, tagCode)
-
-    override fun listHealthElementsIdsByHcPartyAndIdentifiers(
-        hcPartyId: String,
-        identifiers: List<Identifier>
-    ): Flow<String> = healthElementLogic.listHealthElementsIdsByHcPartyAndIdentifiers(hcPartyId, identifiers)
-
-    override fun listHealthElementIdsByHcPartyAndStatus(hcPartyId: String, status: Int): Flow<String> =
-        healthElementLogic.listHealthElementIdsByHcPartyAndStatus(hcPartyId, status)
-
-    override fun deleteHealthElements(ids: Set<String>): Flow<DocIdentifier> = healthElementLogic.deleteEntities(ids)
-
-    override suspend fun deleteHealthElement(id: String): DocIdentifier =
-        checkNotNull(deleteHealthElements(setOf(id)).single()) {
-            "HealthElement delete returned null from logic"
-        }
-
+    override fun deleteHealthElements(ids: List<IdAndRev>): Flow<DocIdentifier> = healthElementLogic.deleteEntities(ids)
+    override suspend fun deleteHealthElement(id: String, rev: String?): DocIdentifier = healthElementLogic.deleteEntity(id, rev)
+    override suspend fun purgeHealthElement(id: String, rev: String): DocIdentifier = healthElementLogic.purgeEntity(id, rev)
+    override suspend fun undeleteHealthElement(id: String, rev: String): HealthElement = healthElementLogic.undeleteEntity(id, rev)
     override suspend fun modifyHealthElement(healthElement: HealthElement): HealthElement? =
         checkNotNull(healthElementLogic.modifyEntities(flowOf(healthElement)).singleOrNull()) {
             "HealthElement modify returned null from logic"
@@ -103,6 +73,8 @@ class HealthElementServiceImpl(
         paginationOffset: PaginationOffset<Nothing>,
         filter: FilterChain<HealthElement>
     ): Flow<ViewQueryResultEvent> = healthElementLogic.filter(paginationOffset, filter)
+
+    override fun matchHealthElementsBy(filter: AbstractFilter<HealthElement>): Flow<String> = healthElementLogic.matchEntitiesBy(filter)
 
     override fun modifyEntities(entities: Flow<HealthElement>): Flow<HealthElement> =
         healthElementLogic.modifyEntities(entities)

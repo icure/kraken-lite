@@ -34,9 +34,9 @@ import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.taktik.couchdb.ViewRowWithDoc
 import org.taktik.icure.asyncdao.GenericDAO
-import org.taktik.icure.asyncdao.ICureDAO
 import org.taktik.icure.asyncdao.InternalDAO
 import org.taktik.icure.asyncdao.Partitions
+import org.taktik.icure.asyncdao.impl.ICureLiteDAOImpl
 import org.taktik.icure.asynclogic.CodeLogic
 import org.taktik.icure.asynclogic.ICureLogic
 import org.taktik.icure.asynclogic.UserLogic
@@ -45,6 +45,7 @@ import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorage
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorageMigration
 import org.taktik.icure.config.ExternalViewsConfig
+import org.taktik.icure.config.LiteDAOConfig
 import org.taktik.icure.constants.Users
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.User
@@ -115,7 +116,7 @@ class ICureBackendApplication {
         userLogic: UserLogic,
         iCureLogic: ICureLogic,
         codeLogic: CodeLogic,
-        iCureDAO: ICureDAO,
+        iCureDAO: ICureLiteDAOImpl,
         allDaos: List<GenericDAO<*>>,
         allInternalDaos: List<InternalDAO<*>>,
         couchDbProperties: CouchDbLiteProperties,
@@ -124,13 +125,15 @@ class ICureBackendApplication {
         allObjectStorageLogic: List<IcureObjectStorage<*>>,
         allObjectStorageMigrationLogic: List<IcureObjectStorageMigration<*>>,
         datastoreInstanceProvider: DatastoreInstanceProvider,
-        externalViewsConfig: ExternalViewsConfig
+        externalViewsConfig: ExternalViewsConfig,
+        daoConfig: LiteDAOConfig
     ) = ApplicationRunner {
         //Check that core types have corresponding codes
         log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
 
         runBlocking {
             if (!couchDbProperties.skipDesignDocumentUpdate) {
+	            iCureDAO.setCouchDbConfigProperty(datastoreInstanceProvider.getInstanceAndGroup(), "ken", "batch_channels", "${daoConfig.backgroundIndexationWorkers}")
                 allDaos.forEach { dao ->
                     dao.forceInitStandardDesignDocument(
                         datastoreInstanceProvider.getInstanceAndGroup(),
@@ -142,12 +145,7 @@ class ICureBackendApplication {
                 allInternalDaos.forEach { dao ->
                     dao.forceInitStandardDesignDocument(true)
                 }
-                deferDataOwnerDesignDocIndexation(
-                    allDaos,
-                    iCureDAO,
-                    externalViewsConfig.repos,
-                    datastoreInstanceProvider.getInstanceAndGroup()
-                )
+	            createPartitionedDesignDocAndWarmupIfNeeded(allDaos, iCureDAO, externalViewsConfig.repos, datastoreInstanceProvider.getInstanceAndGroup(), daoConfig)
                 allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
                 allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
             }
@@ -193,11 +191,12 @@ class ICureBackendApplication {
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun deferDataOwnerDesignDocIndexation(
+    fun createPartitionedDesignDocAndWarmupIfNeeded(
         genericDAOs: List<GenericDAO<*>>,
-        iCureDAO: ICureDAO,
+        iCureDAO: ICureLiteDAOImpl,
         externalViewRepositories: Map<String, String>,
-        datastoreInformation: IDatastoreInformation
+        datastoreInformation: IDatastoreInformation,
+        daoConfig: LiteDAOConfig
     ) = GlobalScope.launch {
 
         suspend fun isIndexingWithDebouncing(): Boolean {
@@ -218,20 +217,29 @@ class ICureBackendApplication {
             true
         }.getOrDefault(false)
 
-        // It is important to index All Maurice partition before the DataOwner ones
+        // The design documents need to be created. If they are not warmed up manually, background indexation will be
+        // started by CouchDB
         listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
-            log.info("Deferring indexation of $partition design docs.")
+            log.info("Creating $partition design docs.")
             genericDAOs.forEach {
+                it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
+            }
+        }
+
+        // Warm up a view will trigger foreground indexation, that will occupy all the resources in the system.
+        listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+            genericDAOs.filter { dao ->
+                daoConfig.forceForegroundIndexation
+                    || daoConfig.viewsToIndexAtStartup.contains("${dao.entityClass.simpleName}_$partition")
+            }.forEach { dao ->
                 while(isIndexingWithDebouncing()) {
                     delay(1L.minutes.inWholeMilliseconds)
                 }
-                log.info("Indexing design docs for ${it::class.java.simpleName}")
-                it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
-                while(!warmupPartitionAndCheckForCompletion(it, datastoreInformation, partition)) {
+                log.info("Warming up ${dao.entityClass.simpleName}_$partition design doc")
+                while(!warmupPartitionAndCheckForCompletion(dao, datastoreInformation, partition)) {
                     delay(1L.seconds.inWholeMilliseconds)
                 }
             }
-            log.info("Indexation of $partition design docs completed.")
         }
 
         log.info("Starting indexation of external views")

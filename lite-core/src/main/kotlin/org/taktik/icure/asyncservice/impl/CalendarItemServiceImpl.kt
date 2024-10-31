@@ -5,9 +5,11 @@ import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.ViewQueryResultEvent
+import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.CalendarItemLogic
 import org.taktik.icure.asyncservice.CalendarItemService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.CalendarItem
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -18,11 +20,10 @@ class CalendarItemServiceImpl(
     private val calendarItemLogic: CalendarItemLogic
 ) : CalendarItemService {
     override suspend fun createCalendarItem(calendarItem: CalendarItem): CalendarItem? = calendarItemLogic.createCalendarItem(calendarItem)
-
-    override fun deleteCalendarItems(ids: List<String>): Flow<DocIdentifier> = calendarItemLogic.deleteCalendarItems(ids)
-
-    override suspend fun deleteCalendarItem(calendarItemId: String): DocIdentifier = calendarItemLogic.deleteCalendarItems(listOf(calendarItemId)).single()
-
+    override fun deleteCalendarItems(ids: List<IdAndRev>): Flow<DocIdentifier> = calendarItemLogic.deleteEntities(ids)
+    override suspend fun deleteCalendarItem(id: String, rev: String?): DocIdentifier = calendarItemLogic.deleteEntity(id, rev)
+    override suspend fun purgeCalendarItem(id: String, rev: String): DocIdentifier = calendarItemLogic.purgeEntity(id, rev)
+    override suspend fun undeleteCalendarItem(id: String, rev: String): CalendarItem = calendarItemLogic.undeleteEntity(id, rev)
     override suspend fun getCalendarItem(calendarItemId: String): CalendarItem? = calendarItemLogic.getCalendarItem(calendarItemId)
 
     override fun getCalendarItemByPeriodAndHcPartyId(
@@ -35,7 +36,7 @@ class CalendarItemServiceImpl(
         startDate: Long,
         endDate: Long,
         agendaId: String
-    ): Flow<CalendarItem> = calendarItemLogic.getCalendarItemByPeriodAndAgendaId(startDate, endDate, agendaId)
+    ): Flow<CalendarItem> = calendarItemLogic.getCalendarItemByPeriodAndAgendaId(startDate, endDate, agendaId, false)
 
     override fun findCalendarItemIdsByDataOwnerPatientStartTime(
         dataOwnerId: String,
@@ -68,6 +69,8 @@ class CalendarItemServiceImpl(
         secretPatientKeys: List<String>,
         paginationOffset: PaginationOffset<List<Any>>
     ): Flow<ViewQueryResultEvent> = calendarItemLogic.findCalendarItemsByHCPartyAndSecretPatientKeys(hcPartyId, secretPatientKeys, paginationOffset)
+
+    override fun matchCalendarItemsBy(filter: AbstractFilter<CalendarItem>): Flow<String> = calendarItemLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<CalendarItem>> = calendarItemLogic.bulkShareOrUpdateMetadata(requests)
 }

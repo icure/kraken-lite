@@ -15,6 +15,84 @@ git submodule update
 
 After that, if the operation completes successfully, the repository and all its submodules will be correctly initialized. 
 
+## Migration steps (for SDK version >=8)
+If you are migrating from a version of the sdk that is less than 8 to the SDK v8 or greater, there are some properties that need to be added for the kraken-lite to work correctly.
+
+### Enabling the new views
+By default, the new CouchDB views required by the SDK v8 are not enabled. To enable them, add this property when running the kraken-lite:
+```bash
+-Dicure.dao.useDataOwnerPartition=true
+```
+You can set this property at any time by calling the following endpoint:
+```bash
+curl -v -X PUT http://localhost:16043/rest/v2/icure/lite/config/useDataOwnerPartition/false
+```
+
+:warning: If you set the property value using the HTTP call, this will NOT change the value stored in the property. 
+This means that this value will return to the value set by the property at the next restart.
+
+### Disable compatibility mode for views
+Some views were moved to the Maurice partition, and so they will not be usable until the partitioned design Docs finish
+indexing.
+However, the old views are kept in the default design document for compatibility. If you don't want to force the indexation
+of the Maurice views, you can enable the redirection to the compatibility views by setting the following property:
+```bash
+-Dicure.dao.useObsoleteViews=true
+```
+You can set this property at any time by calling the following endpoint:
+```bash
+curl -v -X PUT http://localhost:16043/rest/v2/icure/lite/config/useObsoleteViews/false
+```
+
+### Configuring background indexation workers
+When a new view is created, CouchDB will start the indexation process in background. You can control the number of workers
+allocated to indexation by setting the following property (default is 1):
+```bash
+-Dicure.dao.backgroundIndexationWorkers=<ANY_NUMBER>
+```
+The more workers, the faster the views will index but also more resources will be used.
+You can change the number of workers for indexation at any time, by calling the following endpoint:
+```bash
+curl -v -X PUT http://localhost:16043/rest/v2/icure/couchdb/config/ken/batch_channels?value=<ANY_NUMBER>
+```
+:warning: Increasing the number of workers will immediately start more indexation processes but reducing it will not stop
+them: the active process will have to complete before their number is actually reduced.
+
+:warning: Querying the view before the indexation completes will make the indexation pass from a background state to a
+foreground state (see below).
+
+:warning: If you set the property value using the HTTP call, this will NOT change the value stored in the property.
+This means that this value will return to the value set by the property at the next restart.
+
+### Foreground view indexation
+If you are using an old couchdb version, then the indexation of the views will not happen in background. In this case,
+you can force the indexation of the views at startup by setting the following option to `true`:
+```bash
+-Dicure.dao.forceForegroundIndexation=true
+```
+:warning: While in the background indexation is possible to control the number of workers, this is not possible with the 
+foreground indexation. The foreground indexation will try and use all the resources available on the system, and this can
+be detrimental for the execution of the other processes on the machine.
+
+You can also specify a limited set of Design Documents to index at startup. You can provide them as a comma-separated list
+to the following property
+```bash
+-Dicure.dao.viewsToIndexAtStartup=Code_Maurice,Contact_DataOwner
+```
+The syntax for this property is `{nameOfTheEntity}_{nameOfThePartition}`.
+
+### How to trigger foreground view indexation for an Entity
+To trigger the foreground view indexation for any entity, you have to make a POST request towards the following endpoint
+`http://localhost:16043/rest/v2/icure/dd/<ENTITY_NAME>?warmup=true` where `<ENTITY_NAME>` is the name of the entity
+which Design Documents you want to index.
+
+For example, if you want to index the Design Documents for the `Contact` entity, you can do so by using the following call
+```bash
+curl -X POST http://localhost:16043/rest/v2/icure/dd/Contact?warmup=true
+```
+This will trigger the indexation and warmup (for older CouchDB versions) for all the Design Documents of the Contact 
+entity of any partition.
+
 ## How to enable SAM and Kmehr modules
 To include SAM and Kmehr module, two steps are needed:  
 When building the `-Dicure.optional.regions=be` option should be set:
@@ -27,6 +105,37 @@ When running the generated jar, the spring profiles `kmehr` (to include kmehr mo
 -Dspring.profiles.active=app,kmehr,sam
 ```
 
+### Running kraken-lite from IntelliJ including SAM and Kmehr modules
+When running the kraken-lite through IntelliJ, it fails to rebuild it before running including the Kmehr and SAM libraries
+even if the properties have been set. 
+To circumvent this problem and run the kraken-lite from IntelliJ, navigate to the `lite-core` subproject and open the 
+`build.gradle.kts` file.
+Inside it, at the very end, you will find this function:
+
+```kotlin
+fun DependencyHandlerScope.injectOptionalJars() {
+    val regions = System.getProperty("icure.optional.regions")?.lowercase()?.split(",") ?: emptyList()
+    if (regions.contains("be")) {
+        implementation(liteLibs.samModule)
+        implementation(liteLibs.kmehrModule)
+        implementation(liteLibs.bundles.kmehrDependencies)
+    }
+}
+```
+
+Update it to bypass the check on the region property to include the dependencies:
+
+```kotlin
+fun DependencyHandlerScope.injectOptionalJars() {
+    val regions = System.getProperty("icure.optional.regions")?.lowercase()?.split(",") ?: emptyList()
+    if (regions.contains("be") || true) {
+        implementation(liteLibs.samModule)
+        implementation(liteLibs.kmehrModule)
+        implementation(liteLibs.bundles.kmehrDependencies)
+    }
+}
+```
+
 ## How to add External design documents
 In order to use external design documents, two steps are required:
 
@@ -34,7 +143,7 @@ In order to use external design documents, two steps are required:
 All the external views must be signed, as specified in the [external views template repository](https://github.com/icure/external-design-doc-template). 
 To add the public key to verify the signature, the following property must be set in the `application-app.properties` file:
 ```bash
-icure.couchdb.external.loading.publicSigningKey=<THE_PUBLIC_KEY>
+-Dicure.couchdb.external.loading.publicSigningKey=<THE_PUBLIC_KEY>
 ```
 
 ### Set up the external views repositories
@@ -54,3 +163,14 @@ To add plugin jars, put them into a single folder. Then, set the following prope
 :warning:
 Kraken-lite will try to load the plugins from all the JARs in the provided folder. To prevent errors, pass as parameter
 a folder where no other JAR file is present (e.g. the kraken-lite jar itself).
+
+## TroubleShooting
+
+### Unresolved Reference: (X)FilterMapperImpl
+If you are getting this issue, this means that kraken-lite is not able to find some classes that are auto-generated upon build.
+To ensure that they exist, run the following commands in the project directory:
+```bash
+./gradlew clean
+./gradlew :kraken-common:mapper:kspKotlin
+```
+If the commands complete successfully, the filter will be generated and you will be able to start the kraken-lite.

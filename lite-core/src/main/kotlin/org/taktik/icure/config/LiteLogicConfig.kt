@@ -7,16 +7,17 @@ package org.taktik.icure.config
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Profile
 import org.taktik.couchdb.id.UUIDGenerator
 import org.taktik.icure.asyncdao.CodeDAO
 import org.taktik.icure.asyncdao.ContactDAO
+import org.taktik.icure.asyncdao.DeviceDAO
 import org.taktik.icure.asyncdao.DocumentDAO
 import org.taktik.icure.asyncdao.FormDAO
 import org.taktik.icure.asyncdao.HealthElementDAO
 import org.taktik.icure.asyncdao.HealthcarePartyDAO
 import org.taktik.icure.asyncdao.InsuranceDAO
 import org.taktik.icure.asyncdao.InvoiceDAO
+import org.taktik.icure.asyncdao.MedicalLocationDAO
 import org.taktik.icure.asyncdao.MessageDAO
 import org.taktik.icure.asyncdao.PatientDAO
 import org.taktik.icure.asyncdao.TarificationDAO
@@ -29,11 +30,14 @@ import org.taktik.icure.asynclogic.UserLogic
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
 import org.taktik.icure.asynclogic.impl.CodeLogicImpl
 import org.taktik.icure.asynclogic.impl.ContactLogicImpl
+import org.taktik.icure.asynclogic.impl.DeviceLogicImpl
 import org.taktik.icure.asynclogic.impl.DocumentLogicImpl
 import org.taktik.icure.asynclogic.impl.FormLogicImpl
 import org.taktik.icure.asynclogic.impl.HealthElementLogicImpl
+import org.taktik.icure.asynclogic.impl.HealthcarePartyLogicImpl
 import org.taktik.icure.asynclogic.impl.InsuranceLogicImpl
 import org.taktik.icure.asynclogic.impl.InvoiceLogicImpl
+import org.taktik.icure.asynclogic.impl.MedicalLocationLogicImpl
 import org.taktik.icure.asynclogic.impl.MessageLogicImpl
 import org.taktik.icure.asynclogic.impl.PatientLogicImpl
 import org.taktik.icure.asynclogic.impl.SessionInformationProviderImpl
@@ -42,7 +46,6 @@ import org.taktik.icure.asynclogic.impl.UserLogicImpl
 import org.taktik.icure.asynclogic.impl.filter.Filters
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentLoader
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentModificationLogic
-import org.taktik.icure.properties.CouchDbPropertiesImpl
 import org.taktik.icure.security.SessionAccessControlKeysProvider
 import org.taktik.icure.security.credentials.SecretValidator
 import org.taktik.icure.security.user.UserEnhancer
@@ -80,10 +83,12 @@ class LiteLogicConfig {
         insuranceDAO: InsuranceDAO,
         datastoreInstanceProvider: DatastoreInstanceProvider,
         fixer: Fixer,
+        filters: Filters
     ) = InsuranceLogicImpl(
         insuranceDAO,
         datastoreInstanceProvider,
-        fixer
+        fixer,
+        filters
     )
 
     @Bean
@@ -103,11 +108,13 @@ class LiteLogicConfig {
     fun tarificationLogic(
         tarificationDAO: TarificationDAO,
         fixer: Fixer,
-        datastoreInstanceProvider: DatastoreInstanceProvider
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        filters: Filters
     ) = TarificationLogicImpl(
         tarificationDAO,
         datastoreInstanceProvider,
-        fixer
+        fixer,
+        filters
     )
 
     @Bean
@@ -128,8 +135,18 @@ class LiteLogicConfig {
         exchangeDataMapLogic: ExchangeDataMapLogic,
         attachmentModificationLogic: DocumentDataAttachmentModificationLogic,
         @Qualifier("documentDataAttachmentLoader") attachmentLoader: DocumentDataAttachmentLoader,
-        fixer: Fixer
-    ) = DocumentLogicImpl(documentDAO, sessionLogic, datastoreInstanceProvider, exchangeDataMapLogic, attachmentModificationLogic, attachmentLoader, fixer)
+        fixer: Fixer,
+        filters: Filters,
+    ) = DocumentLogicImpl(
+        documentDAO,
+        sessionLogic,
+        datastoreInstanceProvider,
+        exchangeDataMapLogic,
+        attachmentModificationLogic,
+        attachmentLoader,
+        fixer,
+        filters
+    )
 
     @Bean
     fun formLogic(
@@ -137,8 +154,9 @@ class LiteLogicConfig {
         exchangeDataMapLogic: ExchangeDataMapLogic,
         sessionLogic: SessionInformationProvider,
         datastoreInstanceProvider: DatastoreInstanceProvider,
-        fixer: Fixer
-    ) = FormLogicImpl(formDAO, exchangeDataMapLogic, sessionLogic, datastoreInstanceProvider, fixer)
+        fixer: Fixer,
+        filters: Filters,
+    ) = FormLogicImpl(formDAO, exchangeDataMapLogic, sessionLogic, datastoreInstanceProvider, fixer, filters)
 
     @Bean
     fun healthElementLogic(
@@ -183,7 +201,46 @@ class LiteLogicConfig {
         userLogic: UserLogic,
         filters: Filters,
         exchangeDataMapLogic: ExchangeDataMapLogic,
-        datastoreInstanceProvider: org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
         fixer: Fixer
     ) = PatientLogicImpl(sessionLogic, patientDAO, userLogic, filters, exchangeDataMapLogic, datastoreInstanceProvider, fixer)
+
+    @Bean
+    fun healthcarePartyLogic(
+        filters: Filters,
+        healthcarePartyDAO: HealthcarePartyDAO,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        fixer: Fixer
+    ) = HealthcarePartyLogicImpl(
+        filters = filters,
+        healthcarePartyDAO = healthcarePartyDAO,
+        datastoreInstanceProvider = datastoreInstanceProvider,
+        fixer = fixer
+    )
+
+    @Bean
+    fun deviceLogic(
+        filters: Filters,
+        deviceDAO: DeviceDAO,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        fixer: Fixer
+    ) = DeviceLogicImpl(
+        filters = filters,
+        deviceDAO = deviceDAO,
+        datastoreInstanceProvider = datastoreInstanceProvider,
+        fixer = fixer
+    )
+
+    @Bean
+    fun medicalLocationLogic(
+        filters: Filters,
+        medicalLocationDAO: MedicalLocationDAO,
+        datastoreInstanceProvider: DatastoreInstanceProvider,
+        fixer: Fixer
+    ) = MedicalLocationLogicImpl(
+        filters = filters,
+        medicalLocationDAO = medicalLocationDAO,
+        datastoreInstanceProvider = datastoreInstanceProvider,
+        fixer = fixer
+    )
 }

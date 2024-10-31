@@ -1,12 +1,12 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.single
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.FormLogic
 import org.taktik.icure.asyncservice.FormService
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.Form
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
@@ -20,6 +20,8 @@ class FormServiceImpl(
 
     override fun getForms(selectedIds: Collection<String>): Flow<Form> = formLogic.getForms(selectedIds)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listFormIdsByDataOwnerPatientOpeningDate instead")
     override fun listFormsByHCPartyAndPatient(
         hcPartyId: String,
         secretPatientKeys: List<String>,
@@ -39,11 +41,10 @@ class FormServiceImpl(
     override suspend fun addDelegation(formId: String, delegation: Delegation): Form? = formLogic.addDelegation(formId, delegation)
 
     override suspend fun createForm(form: Form): Form? = formLogic.createForm(form)
-
-    override fun deleteForms(ids: Set<String>): Flow<DocIdentifier> = formLogic.deleteForms(ids)
-
-    override suspend fun deleteForm(id: String): DocIdentifier = deleteForms(setOf(id)).single()
-
+    override fun deleteForms(ids: List<IdAndRev>): Flow<DocIdentifier> = formLogic.deleteEntities(ids)
+    override suspend fun deleteForm(id: String, rev: String?): DocIdentifier = formLogic.deleteEntity(id, rev)
+    override suspend fun purgeForm(id: String, rev: String): DocIdentifier = formLogic.purgeEntity(id, rev)
+    override suspend fun undeleteForm(id: String, rev: String): Form = formLogic.undeleteEntity(id, rev)
     override suspend fun modifyForm(form: Form): Form? = formLogic.modifyForm(form)
 
     override fun listByHcPartyAndParentId(hcPartyId: String, formId: String): Flow<Form> = formLogic.listByHcPartyAndParentId(hcPartyId, formId)
@@ -51,14 +52,14 @@ class FormServiceImpl(
     override suspend fun addDelegations(formId: String, delegations: List<Delegation>): Form? = formLogic.addDelegations(formId, delegations)
 
     override fun solveConflicts(limit: Int?, ids: List<String>?) = formLogic.solveConflicts(limit, ids)
+    override fun listFormsByLogicalUuid(formUuid: String, descending: Boolean): Flow<Form> = formLogic.listFormsByLogicalUuid(formUuid, descending)
 
-    override suspend fun getAllByLogicalUuid(formUuid: String): List<Form> = formLogic.getAllByLogicalUuid(formUuid)
-
-    override suspend fun getAllByUniqueId(lid: String): List<Form> = formLogic.getAllByUniqueId(lid)
+    override fun listFormsByUniqueId(lid: String, descending: Boolean): Flow<Form> = formLogic.listFormsByUniqueId(lid, descending)
 
     override fun modifyForms(forms: Collection<Form>): Flow<Form> = formLogic.modifyEntities(forms)
 
     override fun createForms(forms: Collection<Form>): Flow<Form> = formLogic.createEntities(forms)
+    override fun matchFormsBy(filter: AbstractFilter<Form>): Flow<String> = formLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Form>> = formLogic.bulkShareOrUpdateMetadata(requests)
 }

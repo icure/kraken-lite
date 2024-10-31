@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.single
 import kotlinx.coroutines.flow.singleOrNull
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
@@ -16,6 +15,7 @@ import org.taktik.icure.asynclogic.MessageLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.asyncservice.MessageService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Message
 import org.taktik.icure.entities.embed.Delegation
@@ -74,6 +74,8 @@ class MessageServiceImpl(
 
     override suspend fun modifyMessage(message: Message): Message? = messageLogic.modifyEntities(flowOf(message)).singleOrNull()
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listMessageIdsByDataOwnerPatientSentDate instead")
     override fun listMessagesByCurrentHCPartySecretPatientKeys(secretPatientKeys: List<String>): Flow<Message> = flow {
         emitAll(
             messageLogic.listMessagesByHCPartySecretPatientKeys(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKeys)
@@ -116,13 +118,11 @@ class MessageServiceImpl(
 
     override fun getMessageChildren(messageId: String): Flow<Message> = messageLogic.getMessageChildren(messageId)
 
-    override fun getMessagesChildren(parentIds: List<String>): Flow<List<Message>> = messageLogic.getMessagesChildren(parentIds)
+    override fun getMessagesChildren(parentIds: List<String>): Flow<Message> = messageLogic.getMessagesChildren(parentIds)
 
     override fun getMessagesByTransportGuids(hcpId: String, transportGuids: Set<String>): Flow<Message> = messageLogic.getMessagesByTransportGuids(hcpId, transportGuids)
 
     override fun listMessagesByInvoiceIds(ids: List<String>): Flow<Message> = messageLogic.listMessagesByInvoiceIds(ids)
-
-    override fun listMessagesByExternalRefs(hcPartyId: String, externalRefs: List<String>): Flow<Message> = messageLogic.listMessagesByExternalRefs(hcPartyId, externalRefs)
 
     override fun solveConflicts(limit: Int?, ids: List<String>?) = messageLogic.solveConflicts(limit, ids)
 
@@ -131,9 +131,11 @@ class MessageServiceImpl(
         filter: FilterChain<Message>
     ): Flow<ViewQueryResultEvent> = messageLogic.filterMessages(paginationOffset, filter)
 
-    override fun deleteMessages(identifiers: Collection<String>): Flow<DocIdentifier> = messageLogic.deleteEntities(identifiers)
-
-    override suspend fun deleteMessage(id: String): DocIdentifier = messageLogic.deleteEntities(flowOf(id)).single()
+    override fun deleteMessages(ids: List<IdAndRev>): Flow<DocIdentifier> = messageLogic.deleteEntities(ids)
+    override suspend fun deleteMessage(id: String, rev: String?): DocIdentifier = messageLogic.deleteEntity(id, rev)
+    override suspend fun purgeMessage(id: String, rev: String): DocIdentifier = messageLogic.purgeEntity(id, rev)
+    override suspend fun undeleteMessage(id: String, rev: String): Message = messageLogic.undeleteEntity(id, rev)
+    override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Message>> = messageLogic.bulkShareOrUpdateMetadata(requests)
 }

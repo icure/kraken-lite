@@ -11,11 +11,11 @@ import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.ContactLogic
 import org.taktik.icure.asyncservice.ContactService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Contact
 import org.taktik.icure.entities.data.LabelledOccurence
 import org.taktik.icure.entities.embed.Delegation
-import org.taktik.icure.entities.embed.Identifier
 import org.taktik.icure.entities.embed.Service
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -31,6 +31,8 @@ class ContactServiceImpl(
 
     override fun findContactsByIds(selectedIds: Collection<String>): Flow<ViewQueryResultEvent> = contactLogic.findContactsByIds(selectedIds)
 
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listContactIdsByDataOwnerPatientOpeningDate instead")
     override fun listContactsByHCPartyAndPatient(hcPartyId: String, secretPatientKeys: List<String>): Flow<Contact> = contactLogic.listContactsByHCPartyAndPatient(hcPartyId, secretPatientKeys)
 
     override fun listContactIdsByDataOwnerPatientOpeningDate(
@@ -41,15 +43,13 @@ class ContactServiceImpl(
         descending: Boolean
     ): Flow<String> = contactLogic.listContactIdsByDataOwnerPatientOpeningDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
-    override fun listContactIdsByHCPartyAndPatient(hcPartyId: String, secretPatientKeys: List<String>): Flow<String> = contactLogic.listContactIdsByHCPartyAndPatient(hcPartyId, secretPatientKeys)
-
     override suspend fun addDelegation(contactId: String, delegation: Delegation): Contact? = contactLogic.addDelegation(contactId, delegation)
 
     override suspend fun createContact(contact: Contact): Contact? = contactLogic.createContact(contact)
-
-    override fun deleteContacts(ids: Set<String>): Flow<DocIdentifier> = contactLogic.deleteEntities(ids)
-
-    override suspend fun deleteContact(id: String): DocIdentifier = contactLogic.deleteEntities(setOf(id)).single()
+    override fun deleteContacts(ids: List<IdAndRev>): Flow<DocIdentifier> = contactLogic.deleteEntities(ids)
+    override suspend fun deleteContact(id: String, rev: String?): DocIdentifier = contactLogic.deleteEntity(id, rev)
+    override suspend fun purgeContact(id: String, rev: String): DocIdentifier = contactLogic.purgeEntity(id, rev)
+    override suspend fun undeleteContact(id: String, rev: String): Contact = contactLogic.undeleteEntity(id, rev)
 
     override suspend fun modifyContact(contact: Contact): Contact? = contactLogic.modifyEntities(setOf(contact)).single()
 
@@ -61,55 +61,6 @@ class ContactServiceImpl(
 
     override fun listServicesByAssociationId(associationId: String): Flow<Service> = contactLogic.listServicesByAssociationId(associationId)
 
-    override fun listServiceIdsByHcParty(hcPartyId: String): Flow<String> = contactLogic.listServiceIdsByHcParty(hcPartyId)
-
-    override fun listServiceIdsByTag(
-        hcPartyId: String,
-        patientSecretForeignKeys: List<String>?,
-        tagType: String,
-        tagCode: String,
-        startValueDate: Long?,
-        endValueDate: Long?
-    ): Flow<String> = contactLogic.listServiceIdsByTag(hcPartyId, patientSecretForeignKeys, tagType, tagCode, startValueDate, endValueDate)
-
-    override fun listServiceIdsByCode(
-        hcPartyId: String,
-        patientSecretForeignKeys: List<String>?,
-        codeType: String,
-        codeCode: String,
-        startValueDate: Long?,
-        endValueDate: Long?
-    ): Flow<String> = contactLogic.listServiceIdsByCode(hcPartyId, patientSecretForeignKeys, codeType, codeCode, startValueDate, endValueDate)
-
-    override fun listContactIdsByTag(
-        hcPartyId: String,
-        tagType: String,
-        tagCode: String,
-        startValueDate: Long?,
-        endValueDate: Long?
-    ): Flow<String> = contactLogic.listContactIdsByTag(hcPartyId, tagType, tagCode, startValueDate, endValueDate)
-
-    override fun listServiceIdsByHcPartyAndIdentifiers(hcPartyId: String, identifiers: List<Identifier>): Flow<String> = contactLogic.listServiceIdsByHcPartyAndIdentifiers(hcPartyId, identifiers)
-
-    override fun listContactIdsByHcPartyAndIdentifiers(hcPartyId: String, identifiers: List<Identifier>): Flow<String> = contactLogic.listContactIdsByHcPartyAndIdentifiers(hcPartyId, identifiers)
-
-    override fun listContactIdsByCode(
-        hcPartyId: String,
-        codeType: String,
-        codeCode: String,
-        startValueDate: Long?,
-        endValueDate: Long?
-    ): Flow<String> = contactLogic.listContactIdsByCode(hcPartyId, codeType, codeCode, startValueDate, endValueDate)
-
-    override fun listContactIds(hcPartyId: String): Flow<String> = contactLogic.listContactIds(hcPartyId)
-
-    override fun listIdsByServices(services: Collection<String>): Flow<String> = contactLogic.listIdsByServices(services)
-
-    override fun listServicesByHcPartyAndSecretForeignKeys(
-        hcPartyId: String,
-        patientSecretForeignKeys: Set<String>
-    ): Flow<String> = contactLogic.listServicesByHcPartyAndSecretForeignKeys(hcPartyId, patientSecretForeignKeys)
-
     override fun listContactsByHcPartyAndFormId(hcPartyId: String, formId: String): Flow<Contact> = contactLogic.listContactsByHcPartyAndFormId(hcPartyId, formId)
 
     override fun listContactsByHcPartyServiceId(hcPartyId: String, formId: String): Flow<Contact> = contactLogic.listContactsByHcPartyServiceId(hcPartyId, formId)
@@ -120,11 +71,6 @@ class ContactServiceImpl(
         hcPartyId: String,
         healthElementIds: List<String>
     ): Flow<Service> = contactLogic.listServicesByHcPartyAndHealthElementIds(hcPartyId, healthElementIds)
-
-    override fun listServiceIdsByHcPartyAndHealthElementIds(
-        hcPartyId: String,
-        healthElementIds: List<String>
-    ): Flow<String> = contactLogic.listServiceIdsByHcPartyAndHealthElementIds(hcPartyId, healthElementIds)
 
     override suspend fun getServiceCodesOccurences(
         hcPartyId: String,
@@ -160,6 +106,9 @@ class ContactServiceImpl(
     override fun createContacts(contacts: Flow<Contact>): Flow<Contact> = contactLogic.createContacts(contacts)
 
     override fun modifyContacts(contacts: Collection<Contact>): Flow<Contact> = contactLogic.modifyEntities(contacts)
+    override fun matchContactsBy(filter: AbstractFilter<Contact>): Flow<String> = contactLogic.matchEntitiesBy(filter)
+
+    override fun matchServicesBy(filter: AbstractFilter<Service>): Flow<String> = contactLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Contact>> = contactLogic.bulkShareOrUpdateMetadata(requests)
 }

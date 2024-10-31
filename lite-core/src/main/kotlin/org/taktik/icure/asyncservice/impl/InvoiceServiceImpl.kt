@@ -9,6 +9,7 @@ import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.InvoiceLogic
 import org.taktik.icure.asyncservice.InvoiceService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Invoice
 import org.taktik.icure.entities.data.LabelledOccurence
@@ -25,8 +26,6 @@ class InvoiceServiceImpl(
     private val invoiceLogic: InvoiceLogic
 ) : InvoiceService {
     override suspend fun createInvoice(invoice: Invoice): Invoice? = invoiceLogic.createInvoice(invoice)
-
-    override suspend fun deleteInvoice(invoiceId: String): DocIdentifier? = invoiceLogic.deleteInvoice(invoiceId)
 
     override suspend fun getInvoice(invoiceId: String): Invoice? = invoiceLogic.getInvoice(invoiceId)
 
@@ -46,6 +45,8 @@ class InvoiceServiceImpl(
     override fun listInvoicesByHcPartyContacts(hcPartyId: String, contactIds: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyContacts(hcPartyId, contactIds)
 
     override fun listInvoicesByHcPartyAndRecipientIds(hcPartyId: String, recipientIds: Set<String?>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndRecipientIds(hcPartyId, recipientIds)
+    @Suppress("DEPRECATION")
+    @Deprecated("This method cannot include results with secure delegations, use listInvoiceIdsByDataOwnerPatientInvoiceDate instead")
     override fun listInvoicesByHcPartyAndPatientSfks(hcPartyId: String, secretPatientKeys: Set<String>): Flow<Invoice> = invoiceLogic.listInvoicesByHcPartyAndPatientSfks(hcPartyId, secretPatientKeys)
     override fun listInvoiceIdsByDataOwnerPatientInvoiceDate(
         dataOwnerId: String,
@@ -131,13 +132,6 @@ class InvoiceServiceImpl(
         endValueDate: Long
     ): Flow<String> = invoiceLogic.listInvoicesIdsByTarificationsByCode(hcPartyId, codeCode, startValueDate, endValueDate)
 
-    override fun listInvoiceIdsByTarificationsByCode(
-        hcPartyId: String,
-        codeCode: String?,
-        startValueDate: Long?,
-        endValueDate: Long?
-    ): Flow<String> = invoiceLogic.listInvoiceIdsByTarificationsByCode(hcPartyId, codeCode, startValueDate, endValueDate)
-
     override fun filter(filter: FilterChain<Invoice>): Flow<Invoice> = invoiceLogic.filter(filter)
 
     override fun getInvoicesForUsersAndInsuranceIds(userIds: List<String>?): Flow<Invoice> = invoiceLogic.getInvoicesForUsersAndInsuranceIds(userIds)
@@ -145,6 +139,10 @@ class InvoiceServiceImpl(
     override fun getUnsentInvoicesForUsersAndInsuranceIds(userIds: List<String>?): Flow<Invoice> = invoiceLogic.getUnsentInvoicesForUsersAndInsuranceIds(userIds)
 
     override fun createInvoices(invoices: Collection<Invoice>): Flow<Invoice> = invoiceLogic.createEntities(invoices)
-
+    override fun matchInvoicesBy(filter: AbstractFilter<Invoice>): Flow<String> = invoiceLogic.matchEntitiesBy(filter)
+    override fun deleteInvoices(ids: List<IdAndRev>): Flow<DocIdentifier> = invoiceLogic.deleteEntities(ids)
+    override suspend fun deleteInvoice(id: String, rev: String?): DocIdentifier = invoiceLogic.deleteEntity(id, rev)
+    override suspend fun purgeInvoice(id: String, rev: String): DocIdentifier = invoiceLogic.purgeEntity(id, rev)
+    override suspend fun undeleteInvoice(id: String, rev: String): Invoice = invoiceLogic.undeleteEntity(id, rev)
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Invoice>> = invoiceLogic.bulkShareOrUpdateMetadata(requests)
 }
