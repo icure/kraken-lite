@@ -31,7 +31,7 @@ class UserController (
 	@GetMapping("/matches")
 	fun getMatchingUsers() = flow {
 		if (groupProperties.id != null) {
-			val user = userService.getUser(sessionInfo.getCurrentUserId())
+			val user = userService.getUser(sessionInfo.getCurrentUserId(), false)
 			emit(UserGroupDto(
 				groupId = groupProperties.id,
 				groupName = groupProperties.name,

@@ -19,7 +19,7 @@ class UserServiceImpl(
 ) : UserService {
     override suspend fun createUser(user: User): User? = userLogic.createUser(user)
 
-    override suspend fun getUser(id: String, includeMetadataFromGlobalUser: Boolean): User? = userLogic.getUser(id, includeMetadataFromGlobalUser)
+    override suspend fun getUser(id: String, includeMetadataFromGlobalUser: Boolean): User? = userLogic.getUser(id, false)
 
     override suspend fun getUserByEmail(email: String): User? = userLogic.getUserByEmail(email)
 
