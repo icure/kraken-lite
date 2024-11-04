@@ -9,3 +9,6 @@ out
 .java-version
 
 .DS_Store
+
+## IntelliJ profiles
+.run

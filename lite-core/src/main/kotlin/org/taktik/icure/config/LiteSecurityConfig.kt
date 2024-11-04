@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
@@ -32,6 +33,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter
 import org.springframework.security.web.server.authentication.ServerAuthenticationEntryPointFailureHandler
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository
+import org.taktik.icure.constants.Roles
 import org.taktik.icure.security.LiteAuthenticationManager
 import org.taktik.icure.security.SecurityToken
 import org.taktik.icure.security.UnauthorizedEntryPoint
@@ -42,35 +44,51 @@ import org.taktik.icure.spring.asynccache.Cache
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
 class SecurityConfigAdapter(
-    private val authenticationManager: LiteAuthenticationManager,
-    asyncCacheManager: AsyncCacheManager
+	private val authenticationManager: LiteAuthenticationManager,
+	asyncCacheManager: AsyncCacheManager
 ) : AbstractSecurityConfigAdapter() {
 
-    @Value("\${spring.session.enabled}")
-    override val sessionEnabled: Boolean = false
+	@Value("\${spring.session.enabled}")
+	override val sessionEnabled: Boolean = false
 
-    override val cache: Cache<String, SecurityToken> = asyncCacheManager.getCache("spring.security.tokens")
+	@Value("\${icure.security.allowOnlyHcp:true}")
+	var allowOnlyHcp: Boolean = true
 
-    val log: Logger = LoggerFactory.getLogger(javaClass)
+	override val cache: Cache<String, SecurityToken> = asyncCacheManager.getCache("spring.security.tokens")
 
-    @Bean
-    fun securityWebFilterChain(http: ServerHttpSecurity, asyncCacheManager: AsyncCacheManager): SecurityWebFilterChain {
-        return http.authorizeExchange { exchange ->
-            exchange.pathMatchers("/**").permitAll()
-        }.csrf {
-            it.disable()
-        }.httpBasic(Customizer.withDefaults())
-        .addFilterAfter(
-            AuthenticationWebFilter(authenticationManager).apply {
-                this.setAuthenticationFailureHandler(ServerAuthenticationEntryPointFailureHandler(UnauthorizedEntryPoint()))
-                if (sessionEnabled) {
-                    this.setSecurityContextRepository(sessionLessSecurityContextRepository)
-                } else {
-                    this.setSecurityContextRepository(NoOpServerSecurityContextRepository.getInstance())
-                }
-                this.setServerAuthenticationConverter(multiTokenAuthConverter)
-            },
-            SecurityWebFiltersOrder.REACTOR_CONTEXT
-        ).build()
-    }
+	val log: Logger = LoggerFactory.getLogger(javaClass)
+
+	@Bean
+	fun securityWebFilterChain(http: ServerHttpSecurity, asyncCacheManager: AsyncCacheManager): SecurityWebFilterChain {
+		return http.authorizeExchange { exchange ->
+			exchange.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+				.pathMatchers("/rest/*/replication/group/**").hasAuthority(if (allowOnlyHcp) Roles.GrantedAuthority.ROLE_HCP else Roles.GrantedAuthority.ROLE_USER)
+				.pathMatchers("/rest/*/auth/login").permitAll()
+				.pathMatchers("/rest/*/auth/refresh").permitAll()
+				.pathMatchers("/rest/*/auth/invalidate").permitAll()
+				.pathMatchers("/rest/*/user/forgottenPassword/*").permitAll()
+				.pathMatchers("/rest/*/icure/v").permitAll()
+				.pathMatchers("/rest/*/icure/p").permitAll()
+				.pathMatchers("/rest/*/icure/check").permitAll()
+				.pathMatchers("/rest/*/icure/ok").permitAll()
+				.pathMatchers("/").permitAll()
+				.pathMatchers("/ping.json").permitAll()
+				.pathMatchers("/actuator/**").permitAll()
+				.pathMatchers("/**").hasAuthority(if (allowOnlyHcp) Roles.GrantedAuthority.ROLE_HCP else Roles.GrantedAuthority.ROLE_USER)
+		}.csrf {
+			it.disable()
+		}.httpBasic(Customizer.withDefaults())
+			.addFilterAfter(
+				AuthenticationWebFilter(authenticationManager).apply {
+					this.setAuthenticationFailureHandler(ServerAuthenticationEntryPointFailureHandler(UnauthorizedEntryPoint()))
+					if (sessionEnabled) {
+						this.setSecurityContextRepository(sessionLessSecurityContextRepository)
+					} else {
+						this.setSecurityContextRepository(NoOpServerSecurityContextRepository.getInstance())
+					}
+					this.setServerAuthenticationConverter(multiTokenAuthConverter)
+				},
+				SecurityWebFiltersOrder.REACTOR_CONTEXT
+			).build()
+	}
 }
