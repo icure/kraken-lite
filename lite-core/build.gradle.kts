@@ -96,6 +96,14 @@ configurations.all {
     }
 }
 
+val cleanCouchTask = tasks.register<CleanCouchDockerTask>("cleanCouchTask")
+val startCouchTask = tasks.register<StartCouchDockerTask>("startCouchTask")
+
+tasks.getByName("test") {
+    dependsOn(startCouchTask)
+    finalizedBy(cleanCouchTask)
+}
+
 tasks.withType<Test> {
     useJUnitPlatform()
     minHeapSize = "512m"

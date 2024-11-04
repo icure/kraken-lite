@@ -2,6 +2,7 @@ package org.taktik.icure.security
 
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.mono
+import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -13,7 +14,7 @@ import org.springframework.util.Assert
 import org.taktik.icure.asyncdao.HealthcarePartyDAO
 import org.taktik.icure.asyncdao.UserDAO
 import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
-import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_HCP
+import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_ANONYMOUS
 import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_USER
 import org.taktik.icure.constants.Users
 import org.taktik.icure.entities.User
@@ -50,14 +51,18 @@ class LiteAuthenticationManager(
     private val messageSourceAccessor = SpringSecurityMessageSource.getAccessor()
 
     override fun encodedJwtToAuthentication(encodedJwt: String): JwtAuthenticationToken<BaseJwtDetails> =
-        jwtUtils.decodeAndGetDetails(BaseJwtDetails, encodedJwt).let { jwtDetails ->
-            JwtAuthenticationToken(
-                claims = jwtDetails,
-                authorities = jwtDetails.authorities.toMutableSet(),
-                encodedJwt = encodedJwt,
-                authenticated = true
-            )
-        }
+        jwtUtils.decodeAndGetDetails(BaseJwtDetails, encodedJwt)
+            .let { jwtDetails ->
+                JwtAuthenticationToken(
+                    claims = jwtDetails,
+                    authorities = mutableSetOf(
+                        SimpleGrantedAuthority(ROLE_ANONYMOUS),
+                        SimpleGrantedAuthority(ROLE_USER),
+                    ),
+                    encodedJwt = encodedJwt,
+                    authenticated = true
+                )
+            }
 
     override suspend fun regenerateJwtDetails(
         encodedRefreshToken: String,
@@ -82,10 +87,6 @@ class LiteAuthenticationManager(
                 ?: user.deviceId,
             dataOwnerType = user.getDataOwnerTypeOrNull(),
             hcpHierarchy = hcpHierarchy,
-            authorities = setOfNotNull(
-                SimpleGrantedAuthority(ROLE_USER),
-                SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
-            )
         )
     }
 
@@ -183,14 +184,9 @@ class LiteAuthenticationManager(
 
         val hcpHierarchy = user.healthcarePartyId?.let {
             healthcarePartyDAO.get(datastoreInformation, it)?.let { baseHcp ->
-                getHcpHierarchy(baseHcp, datastoreInformation).map { hcp ->  hcp.id }
+                getHcpHierarchy(baseHcp, datastoreInformation).map { it.id }
             }
         } ?: emptyList()
-
-        val authorities = setOfNotNull(
-            SimpleGrantedAuthority(ROLE_USER),
-            SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
-        )
 
         val userDetails = BaseJwtDetails(
             userId = user.id,
@@ -198,14 +194,16 @@ class LiteAuthenticationManager(
                 ?: user.patientId
                 ?: user.deviceId,
             dataOwnerType = user.getDataOwnerTypeOrNull(),
-            hcpHierarchy = hcpHierarchy,
-            authorities = authorities
+            hcpHierarchy = hcpHierarchy
         )
 
         return UsernamePasswordAuthenticationToken(
             userDetails,
             authentication,
-            authorities
+            mutableSetOf(
+                SimpleGrantedAuthority(ROLE_ANONYMOUS),
+                SimpleGrantedAuthority(ROLE_USER),
+            )
         )
     }
 }
