@@ -33,6 +33,7 @@ import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter
 import org.springframework.security.web.server.authentication.ServerAuthenticationEntryPointFailureHandler
 import org.springframework.security.web.server.context.NoOpServerSecurityContextRepository
+import org.taktik.icure.constants.Roles
 import org.taktik.icure.security.LiteAuthenticationManager
 import org.taktik.icure.security.SecurityToken
 import org.taktik.icure.security.UnauthorizedEntryPoint
@@ -50,7 +51,7 @@ class SecurityConfigAdapter(
 	@Value("\${spring.session.enabled}")
 	override val sessionEnabled: Boolean = false
 
-	@Value("\${icure.security.allowOnlyHcp}")
+	@Value("\${icure.security.allowOnlyHcp:true}")
 	var allowOnlyHcp: Boolean = true
 
 	override val cache: Cache<String, SecurityToken> = asyncCacheManager.getCache("spring.security.tokens")
@@ -61,7 +62,7 @@ class SecurityConfigAdapter(
 	fun securityWebFilterChain(http: ServerHttpSecurity, asyncCacheManager: AsyncCacheManager): SecurityWebFilterChain {
 		return http.authorizeExchange { exchange ->
 			exchange.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-				.pathMatchers("/rest/*/replication/group/**").hasAnyRole(if (allowOnlyHcp) "ROLE_HCP" else "ROLE_USER")
+				.pathMatchers("/rest/*/replication/group/**").hasAuthority(if (allowOnlyHcp) Roles.GrantedAuthority.ROLE_HCP else Roles.GrantedAuthority.ROLE_USER)
 				.pathMatchers("/rest/*/auth/login").permitAll()
 				.pathMatchers("/rest/*/auth/refresh").permitAll()
 				.pathMatchers("/rest/*/auth/invalidate").permitAll()
@@ -73,7 +74,7 @@ class SecurityConfigAdapter(
 				.pathMatchers("/").permitAll()
 				.pathMatchers("/ping.json").permitAll()
 				.pathMatchers("/actuator/**").permitAll()
-				.pathMatchers("/**").hasRole(if (allowOnlyHcp) "ROLE_HCP" else "ROLE_USER")
+				.pathMatchers("/**").hasAuthority(if (allowOnlyHcp) Roles.GrantedAuthority.ROLE_HCP else Roles.GrantedAuthority.ROLE_USER)
 		}.csrf {
 			it.disable()
 		}.httpBasic(Customizer.withDefaults())

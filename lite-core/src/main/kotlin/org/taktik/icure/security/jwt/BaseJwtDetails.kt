@@ -25,9 +25,9 @@ data class BaseJwtDetails(
                 dataOwnerId = claims[DATA_OWNER_ID] as String?,
                 dataOwnerType = (claims[DATA_OWNER_TYPE] as String?)?.let { DataOwnerType.valueOfOrNullCaseInsensitive(it) },
                 hcpHierarchy = ((claims[HCP_HIERARCHY] ?: emptyList<Any>()) as Collection<Any?>).mapNotNull { it as? String },
-                authorities = ((claims[AUTHORITIES] ?: emptySet<Any>()) as Collection<Any?>).mapNotNull {
-                    it as SimpleGrantedAuthority
-                }.toSet(),
+                authorities = (claims[AUTHORITIES] as Collection<Any?>)
+                    .filterIsInstance<String>()
+                    .fold(setOf<GrantedAuthority>()) { acc, x -> acc + SimpleGrantedAuthority(x) }.toSet(),
             )
 
     }
@@ -37,6 +37,7 @@ data class BaseJwtDetails(
         DATA_OWNER_ID to dataOwnerId,
         DATA_OWNER_TYPE to dataOwnerType,
         HCP_HIERARCHY to hcpHierarchy,
+        AUTHORITIES to authorities.map { it.authority }
     ).filterValues { it != null }
 
 }
