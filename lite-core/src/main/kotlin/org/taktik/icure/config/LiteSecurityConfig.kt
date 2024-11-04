@@ -61,7 +61,7 @@ class SecurityConfigAdapter(
 	fun securityWebFilterChain(http: ServerHttpSecurity, asyncCacheManager: AsyncCacheManager): SecurityWebFilterChain {
 		return http.authorizeExchange { exchange ->
 			exchange.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-				.pathMatchers("/rest/*/replication/group/**").hasAnyRole("ROLE_USER")
+				.pathMatchers("/rest/*/replication/group/**").hasAnyRole(if (allowOnlyHcp) "ROLE_HCP" else "ROLE_USER")
 				.pathMatchers("/rest/*/auth/login").permitAll()
 				.pathMatchers("/rest/*/auth/refresh").permitAll()
 				.pathMatchers("/rest/*/auth/invalidate").permitAll()

@@ -79,7 +79,7 @@ to the following property
 ```bash
 -Dicure.dao.viewsToIndexAtStartup=Code_Maurice,Contact_DataOwner
 ```
-The syntax for this property is `{nameOfTheEntity}_{nameOfThePartition}`.
+The syntax for each element in the property is `{nameOfTheEntity}_{nameOfThePartition}`.
 
 ### How to trigger foreground view indexation for an Entity
 To trigger the foreground view indexation for any entity, you have to make a POST request towards the following endpoint
@@ -92,6 +92,28 @@ curl -X POST http://localhost:16043/rest/v2/icure/dd/Contact?warmup=true
 ```
 This will trigger the indexation and warmup (for older CouchDB versions) for all the Design Documents of the Contact 
 entity of any partition.
+
+### Kraken-lite authentication
+
+All the endpoints on kraken-lite needs authentication. The only endpoints that can be accessed without authentication are:
+
+```bash
+/rest/*/auth/login
+/rest/*/auth/refresh
+/rest/*/auth/invalidate
+/rest/*/user/forgottenPassword/*
+/rest/*/icure/v
+/rest/*/icure/p
+/rest/*/icure/check
+/rest/*/icure/ok
+```
+
+By default, only HCP users can use the authenticated endpoints. To allow also other types of users (e.g. patients, devices)
+to authenticate, you have to set the following property to true:
+
+```bash
+-Dicure.security.allowOnlyHcp=true
+```
 
 ## How to enable SAM and Kmehr modules
 To include SAM and Kmehr module, two steps are needed:  
@@ -136,7 +158,7 @@ fun DependencyHandlerScope.injectOptionalJars() {
 }
 ```
 
-## How to add External design documents
+## How to add external design documents
 In order to use external design documents, two steps are required:
 
 ### Set up the signing public key
@@ -164,6 +186,18 @@ To add plugin jars, put them into a single folder. Then, set the following prope
 Kraken-lite will try to load the plugins from all the JARs in the provided folder. To prevent errors, pass as parameter
 a folder where no other JAR file is present (e.g. the kraken-lite jar itself).
 
+## How to connect to kraken cloud CouchDB
+
+To use kraken-lite with a kraken cloud CouchDB database, you have to start it with the following options:
+```bash
+-Dicure.couchdb.username=<YOUR_GROUP_USERNAME>
+-Dicure.couchdb.password=<YOUR_GROUP_PASSWORD>
+-Dicure.couchdb.prefix=icure-<YOUR_GROUP_NAME> # Notice the `icure-` prefix before the group name
+-Dicure.couchdb.url=<REMOTE_COUCHDB_URL>
+-Dicure.couchdb.populateDatabaseFromLocalXmls=false
+-Dicure.objectstorage.icureCloudUrl=http://127.0.0.1:16043
+```
+
 ## TroubleShooting
 
 ### Unresolved Reference: (X)FilterMapperImpl
@@ -173,4 +207,4 @@ To ensure that they exist, run the following commands in the project directory:
 ./gradlew clean
 ./gradlew :kraken-common:mapper:kspKotlin
 ```
-If the commands complete successfully, the filter will be generated and you will be able to start the kraken-lite.
+If the commands complete successfully, the filter will be generated, and you will be able to start the kraken-lite.
