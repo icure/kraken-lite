@@ -10,7 +10,7 @@ services:
             - ./couchdb/logs:/opt/couchdb/logs
 
     cardinal:
-        image: docker.taktik.be/icure/kraken-lite:0.1.159-g4498e7c7c2
+        image: icureio/cardinal:latest
         restart: always
         ports:
             - "16043:16043"
