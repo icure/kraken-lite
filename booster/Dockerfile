@@ -1,4 +1,4 @@
-FROM docker.taktik.be/icure/kraken-lite:0.1.159-g4498e7c7c2
+FROM icureio/cardinal:latest
 COPY booster.jar /opt/plugins/booster.jar
 RUN apt update -y && apt install curl -y
 ENTRYPOINT ["/usr/bin/tini", "--", "bash", "-c", "java $JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError -XX:+ExitOnOutOfMemoryError -Dfile.encoding=UTF-8 -Djava.net.preferIPv4Stack=true -Djava.awt.headless=true -Dicure.lite.plugins.sourceFolder=/opt/plugins -Djava.security.egd=file:/dev/./urandom --add-modules java.se --add-exports java.base/jdk.internal.ref=ALL-UNNAMED --add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.base/java.nio=ALL-UNNAMED --add-opens java.base/sun.nio.ch=ALL-UNNAMED --add-opens java.management/sun.management=ALL-UNNAMED --add-opens jdk.management/com.sun.management.internal=ALL-UNNAMED -jar ./lite-core-*.jar $@"]

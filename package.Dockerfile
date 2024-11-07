@@ -1,5 +1,5 @@
 ARG version
-FROM --platform=$BUILDPLATFORM docker.taktik.be/icure/kraken-lite:$version as builder
+FROM --platform=$BUILDPLATFORM icureio/cardinal:$version as builder
 
 FROM docker.taktik.be/ubuntu-graalvm:21.0.1
 ARG version
