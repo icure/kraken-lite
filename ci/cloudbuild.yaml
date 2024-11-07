@@ -8,8 +8,8 @@ steps:
 
   -   name: 'docker:24-git'
       entrypoint: 'sh'
-      args: [ '-c', 'echo $$REPO_PASSWORD | docker login --username=$$REPO_USERNAME --password-stdin' ]
-      secretEnv: [ 'REPO_USERNAME', 'REPO_PASSWORD' ]
+      args: [ '-c', 'echo $$_DOCKER_PASSWORD | docker login --username=$$_DOCKER_USERNAME --password-stdin' ]
+      secretEnv: [ '_DOCKER_USERNAME', '_DOCKER_PASSWORD' ]
 
   -   name: 'docker:24-git'
       entrypoint: 'sh'
@@ -17,8 +17,8 @@ steps:
 
   -   name: 'docker:24-git'
       entrypoint: 'sh'
-      args: [ '-c', 'docker build --progress=plain -f build.Dockerfile --push -t "icureio/cardinal:$(cat git.version)" --build-arg "repoUsername=$$REPO_USERNAME" --build-arg "repoPassword=$$REPO_PASSWORD" .' ]
-      secretEnv: [ 'REPO_USERNAME', 'REPO_PASSWORD' ]
+      args: [ '-c', 'docker build --progress=plain -f build.Dockerfile --push -t "icureio/cardinal:$(cat git.version)" --build-arg "repoUsername=$$_DOCKER_PASSWORD" --build-arg "repoPassword=$$_DOCKER_PASSWORD" .' ]
+      secretEnv: [ '_DOCKER_USERNAME', '_DOCKER_PASSWORD' ]
 
   - name: 'docker:24-git'
     entrypoint: 'sh'
