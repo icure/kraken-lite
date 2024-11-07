@@ -9,7 +9,6 @@ steps:
   -   name: 'docker:24-git'
       entrypoint: 'sh'
       args: [ '-c', 'echo $$_DOCKER_PASSWORD | docker login --username=$$_DOCKER_USERNAME --password-stdin' ]
-      secretEnv: [ '_DOCKER_USERNAME', '_DOCKER_PASSWORD' ]
 
   -   name: 'docker:24-git'
       entrypoint: 'sh'
@@ -18,17 +17,9 @@ steps:
   -   name: 'docker:24-git'
       entrypoint: 'sh'
       args: [ '-c', 'docker build --progress=plain -f build.Dockerfile --push -t "icureio/cardinal:$(cat git.version)" --build-arg "repoUsername=$$_DOCKER_PASSWORD" --build-arg "repoPassword=$$_DOCKER_PASSWORD" .' ]
-      secretEnv: [ '_DOCKER_USERNAME', '_DOCKER_PASSWORD' ]
 
   - name: 'docker:24-git'
     entrypoint: 'sh'
     args: [ '-c', 'docker build --builder multiarch --progress=plain -f package.Dockerfile --push --platform linux/amd64,linux/arm64 -t icureio/cardinal:latest -t icureio/cardinal:$(cat ./git.version) --build-arg "version=$(cat ./git.version)" .' ]
-
-availableSecrets:
-  secretManager:
-    - versionName: projects/taktik-dev/secrets/ci-repo-username/versions/1
-      env: 'REPO_USERNAME'
-    - versionName: projects/taktik-dev/secrets/ci-repo-password/versions/1
-      env: 'REPO_PASSWORD'
 
 timeout: 2700s
