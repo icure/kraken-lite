@@ -1,0 +1,24 @@
+services:
+    couchdb:
+        image: couchdb:3.4.2
+        restart: always
+        environment:
+            COUCHDB_USER: "icure"
+            COUCHDB_PASSWORD: "S3clud3dM@x1m@"
+        volumes:
+            - ./couchdb/data:/opt/couchdb/data
+            - ./couchdb/logs:/opt/couchdb/logs
+
+    cardinal:
+        image: docker.taktik.be/icure/kraken-lite:0.1.159-g4498e7c7c2
+        restart: always
+        ports:
+            - "16043:16043"
+        environment:
+            ICURE_COUCHDB_USERNAME: "icure"
+            ICURE_COUCHDB_PASSWORD: "icure"
+            ICURE_COUCHDB_URL: "http://couchdb:5984"
+            ICURE_OBJECTSTORAGE_ICURECLOUDURL: "https://api.icure.cloud"
+            ICURE_OBJECTSTORAGE_CACHELOCATION: "/opt/cardinal/cache"
+        volumes:
+            - ./cardinal/cache/:/opt/cardinal/cache/
