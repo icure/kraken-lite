@@ -1,7 +1,4 @@
 on:
-  push:
-    branches:
-      - "ci/bump-common-and-kmehr-1.0.84-g97d4441b0a-202411081142"
   pull_request:
     types:
       - closed
