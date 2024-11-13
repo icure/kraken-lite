@@ -14,6 +14,7 @@ class ExchangeDataServiceImpl(
     private val exchangeDataLogic: ExchangeDataLogic
 ) : ExchangeDataService {
     override suspend fun getExchangeDataById(id: String): ExchangeData? = exchangeDataLogic.getExchangeDataById(id)
+    override fun getExchangeDataByIds(ids: List<String>): Flow<ExchangeData> = exchangeDataLogic.getExchangeDataByIds(ids)
 
     override fun findExchangeDataByParticipant(
         dataOwnerId: String,
