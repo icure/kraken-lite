@@ -21,7 +21,7 @@ steps:
 
   - name: 'docker:24-git'
     entrypoint: 'sh'
-    args: [ '-c', 'docker build --builder multiarch --progress=plain -f package.Dockerfile --platform linux/amd64,linux/arm64 -t icureio/cardinal:latest -t icureio/cardinal:$(cat ./git.version) --build-arg "version=$(cat ./git.version)" --load . && docker push icureio/cardinal:$(cat ./git.version)' ]
+    args: [ '-c', 'docker build --builder multiarch --progress=plain -f package.Dockerfile --platform linux/amd64,linux/arm64 -t icureio/cardinal:latest -t icureio/cardinal:$(cat ./git.version) --build-arg "version=$(cat ./git.version)" . && docker push icureio/cardinal:$(cat ./git.version)' ]
 
 availableSecrets:
   secretManager:
