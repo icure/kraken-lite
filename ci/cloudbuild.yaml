@@ -16,12 +16,12 @@ steps:
 
   -   name: 'docker:24-git'
       entrypoint: 'sh'
-      args: [ '-c', 'docker build --progress=plain -f build.Dockerfile --push -t "docker.io/icureio/cardinal:$(cat git.version)" --build-arg "repoUsername=$$REPO_USERNAME" --build-arg "repoPassword=$$REPO_PASSWORD" .' ]
+      args: [ '-c', 'cat /etc/docker/daemon.json && docker build --progress=plain -f build.Dockerfile --push -t "icureio/cardinal:$(cat git.version)" --build-arg "repoUsername=$$REPO_USERNAME" --build-arg "repoPassword=$$REPO_PASSWORD" .' ]
       secretEnv: [ 'REPO_USERNAME', 'REPO_PASSWORD' ]
 
   - name: 'docker:24-git'
     entrypoint: 'sh'
-    args: [ '-c', 'docker build --builder multiarch --progress=plain -f package.Dockerfile --push --platform linux/amd64,linux/arm64 -t docker.io/icureio/cardinal:latest -t docker.io/icureio/cardinal:$(cat ./git.version) --build-arg "version=$(cat ./git.version)" .' ]
+    args: [ '-c', 'docker build --builder multiarch --progress=plain -f package.Dockerfile --push --platform linux/amd64,linux/arm64 -t icureio/cardinal:latest -t icureio/cardinal:$(cat ./git.version) --build-arg "version=$(cat ./git.version)" .' ]
 
 availableSecrets:
   secretManager:
