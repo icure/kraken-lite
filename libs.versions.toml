@@ -1,6 +1,6 @@
 [versions]
 sonarqube = "3.3"
-kmehr = "1.0.84-g97d4441b0a"
+kmehr = "1.0.86-g4b53c4d652"
 
 [libraries]
 reactorCore = { group = "io.projectreactor", name = "reactor-core" }
