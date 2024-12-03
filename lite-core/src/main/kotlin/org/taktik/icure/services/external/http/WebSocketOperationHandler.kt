@@ -10,31 +10,22 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.mono
-import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
 import org.springframework.http.server.PathContainer
-import org.springframework.security.authentication.AuthenticationServiceException
-import org.springframework.web.reactive.socket.CloseStatus
 import org.springframework.web.reactive.socket.WebSocketSession
-import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.services.external.http.websocket.annotation.WSMessage
 import org.taktik.icure.services.external.http.websocket.annotation.WSParam
 import org.taktik.icure.services.external.http.websocket.factory.DefaultWebSocketOperationFactoryImpl
 import org.taktik.icure.services.external.http.websocket.operation.WebSocketOperationFactory
 import reactor.core.publisher.Mono
-import java.net.URI
 
 class WebSocketOperationLiteHandler(
     wsControllers: List<WsController>,
     objectMapper: ObjectMapper,
-    sessionInformationProvider: SessionInformationProvider,
     operationFactories: List<WebSocketOperationFactory>,
     defaultFactory: DefaultWebSocketOperationFactoryImpl,
 ) : WebSocketOperationHandler(
     wsControllers,
     objectMapper,
-    sessionInformationProvider,
     operationFactories,
     defaultFactory
 ) {

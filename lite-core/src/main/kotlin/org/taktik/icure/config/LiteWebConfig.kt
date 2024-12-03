@@ -13,7 +13,6 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.codec.json.Jackson2JsonEncoder
 import org.springframework.util.MimeType
 import org.springframework.web.reactive.config.EnableWebFlux
-import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.services.external.http.WebSocketOperationLiteHandler
 import org.taktik.icure.services.external.http.WsController
 import org.taktik.icure.services.external.http.websocket.factory.DefaultWebSocketOperationFactoryImpl
@@ -25,11 +24,10 @@ class LiteWebConfig {
 	@Bean
 	fun webSocketHandler(
 		wsControllers: List<WsController>,
-		sessionInformationProvider: SessionInformationProvider,
 		objectMapper: ObjectMapper,
 		operationFactories: List<WebSocketOperationFactory>,
 		defaultFactory: DefaultWebSocketOperationFactoryImpl
-	) = WebSocketOperationLiteHandler(wsControllers, objectMapper, sessionInformationProvider, operationFactories, defaultFactory)
+	) = WebSocketOperationLiteHandler(wsControllers, objectMapper, operationFactories, defaultFactory)
 }
 
 @Configuration
