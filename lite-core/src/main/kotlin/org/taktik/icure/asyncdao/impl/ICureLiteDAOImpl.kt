@@ -5,6 +5,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.taktik.couchdb.Client
 import org.taktik.icure.asyncdao.CouchDbDispatcher
 import org.taktik.icure.asyncdao.ICureLiteDAO
+import org.taktik.icure.asyncdao.components.ActiveTasksProvider
 import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
 import org.taktik.icure.security.CouchDbCredentialsProvider
 
@@ -13,8 +14,9 @@ import org.taktik.icure.security.CouchDbCredentialsProvider
 class ICureLiteDAOImpl(
 	httpClient: WebClient,
 	couchDbCredentialsProvider: CouchDbCredentialsProvider,
-	couchDbDispatcher: CouchDbDispatcher
-) : ICureLiteDAO, ICureDAOImpl(httpClient, couchDbCredentialsProvider, couchDbDispatcher) {
+	couchDbDispatcher: CouchDbDispatcher,
+	activeTasksProvider: ActiveTasksProvider
+) : ICureLiteDAO, ICureDAOImpl(httpClient, couchDbCredentialsProvider, couchDbDispatcher, activeTasksProvider) {
 
 	companion object {
 		private const val COUCHDB_LOCAL_NODE = "_local"

@@ -14,6 +14,7 @@ import org.taktik.icure.asyncdao.ICureLiteDAO
 import org.taktik.icure.asyncdao.MedicalLocationDAO
 import org.taktik.icure.asyncdao.MessageDAO
 import org.taktik.icure.asyncdao.UserDAO
+import org.taktik.icure.asyncdao.components.ActiveTasksProvider
 import org.taktik.icure.asyncdao.impl.ICureLiteDAOImpl
 import org.taktik.icure.asyncdao.impl.MedicalLocationDAOImpl
 import org.taktik.icure.asyncdao.impl.MessageDAOImpl
@@ -112,10 +113,12 @@ class LiteDAOConfig : DaoConfig {
     fun iCureDAO(
         httpClient: WebClient,
         couchDbCredentialsProvider: CouchDbCredentialsProvider,
-        @Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher
+        @Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
+        activeTasksProvider: ActiveTasksProvider
     ): ICureLiteDAO = ICureLiteDAOImpl(
         httpClient = httpClient,
         couchDbCredentialsProvider = couchDbCredentialsProvider,
-        couchDbDispatcher = couchDbDispatcher
+        couchDbDispatcher = couchDbDispatcher,
+        activeTasksProvider = activeTasksProvider
     )
 }
