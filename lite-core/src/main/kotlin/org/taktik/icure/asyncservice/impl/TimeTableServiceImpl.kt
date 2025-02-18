@@ -9,8 +9,6 @@ import org.taktik.icure.asynclogic.TimeTableLogic
 import org.taktik.icure.asyncservice.TimeTableService
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.TimeTable
-import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
-import org.taktik.icure.entities.requests.EntityBulkShareResult
 
 @Service
 class TimeTableServiceImpl(
@@ -37,5 +35,4 @@ class TimeTableServiceImpl(
 
     override fun matchTimeTablesBy(filter: AbstractFilter<TimeTable>): Flow<String> = timeTableLogic.matchEntitiesBy(filter)
 
-    override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<TimeTable>> = timeTableLogic.bulkShareOrUpdateMetadata(requests)
 }
