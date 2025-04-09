@@ -2,7 +2,6 @@ package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
-import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.EntityTemplateLogic
 import org.taktik.icure.asyncservice.EntityTemplateService
@@ -49,5 +48,5 @@ class EntityTemplateServiceImpl(
     override fun modifyEntityTemplates(entities: Collection<EntityTemplate>): Flow<EntityTemplate> = entityTemplateLogic.modifyEntities(entities)
 
     override fun createEntityTemplates(entities: Collection<EntityTemplate>): Flow<EntityTemplate> = entityTemplateLogic.createEntities(entities)
-    override fun deleteEntityTemplates(ids: List<IdAndRev>): Flow<DocIdentifier> = entityTemplateLogic.deleteEntities(ids)
+    override fun deleteEntityTemplates(ids: List<IdAndRev>): Flow<EntityTemplate> = entityTemplateLogic.deleteEntities(ids)
 }

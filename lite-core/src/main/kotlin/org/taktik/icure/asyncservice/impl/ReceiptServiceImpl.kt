@@ -32,8 +32,8 @@ class ReceiptServiceImpl(
     ): Receipt = receiptLogic.addReceiptAttachment(receipt, blobType, payload)
 
     override fun createReceipts(receipts: Collection<Receipt>): Flow<Receipt> = receiptLogic.createEntities(receipts)
-    override fun deleteReceipts(ids: List<IdAndRev>): Flow<DocIdentifier> = receiptLogic.deleteEntities(ids)
-    override suspend fun deleteReceipt(id: String, rev: String?): DocIdentifier = receiptLogic.deleteEntity(id, rev)
+    override fun deleteReceipts(ids: List<IdAndRev>): Flow<Receipt> = receiptLogic.deleteEntities(ids)
+    override suspend fun deleteReceipt(id: String, rev: String?): Receipt = receiptLogic.deleteEntity(id, rev)
     override suspend fun purgeReceipt(id: String, rev: String): DocIdentifier = receiptLogic.purgeEntity(id, rev)
     override suspend fun undeleteReceipt(id: String, rev: String): Receipt = receiptLogic.undeleteEntity(id, rev)
     override suspend fun getReceipt(id: String): Receipt? = receiptLogic.getEntity(id)

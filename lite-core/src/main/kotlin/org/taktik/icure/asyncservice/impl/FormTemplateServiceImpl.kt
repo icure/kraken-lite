@@ -33,5 +33,5 @@ class FormTemplateServiceImpl(
 
     override suspend fun modifyFormTemplate(formTemplate: FormTemplate): FormTemplate? = formTemplateLogic.modifyFormTemplate(formTemplate)
 
-    override fun deleteFormTemplates(ids: Set<String>): Flow<DocIdentifier> = formTemplateLogic.deleteEntities(ids.map { IdAndRev(it, null) })
+    override fun deleteFormTemplates(ids: Set<String>): Flow<FormTemplate> = formTemplateLogic.deleteEntities(ids.map { IdAndRev(it, null) })
 }

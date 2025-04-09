@@ -20,8 +20,8 @@ class CalendarItemServiceImpl(
     private val calendarItemLogic: CalendarItemLogic
 ) : CalendarItemService {
     override suspend fun createCalendarItem(calendarItem: CalendarItem): CalendarItem? = calendarItemLogic.createCalendarItem(calendarItem)
-    override fun deleteCalendarItems(ids: List<IdAndRev>): Flow<DocIdentifier> = calendarItemLogic.deleteEntities(ids)
-    override suspend fun deleteCalendarItem(id: String, rev: String?): DocIdentifier = calendarItemLogic.deleteEntity(id, rev)
+    override fun deleteCalendarItems(ids: List<IdAndRev>): Flow<CalendarItem> = calendarItemLogic.deleteEntities(ids)
+    override suspend fun deleteCalendarItem(id: String, rev: String?): CalendarItem = calendarItemLogic.deleteEntity(id, rev)
     override suspend fun purgeCalendarItem(id: String, rev: String): DocIdentifier = calendarItemLogic.purgeEntity(id, rev)
     override suspend fun undeleteCalendarItem(id: String, rev: String): CalendarItem = calendarItemLogic.undeleteEntity(id, rev)
     override suspend fun getCalendarItem(calendarItemId: String): CalendarItem? = calendarItemLogic.getCalendarItem(calendarItemId)

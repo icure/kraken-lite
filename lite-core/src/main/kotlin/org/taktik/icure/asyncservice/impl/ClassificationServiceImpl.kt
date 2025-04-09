@@ -36,8 +36,8 @@ class ClassificationServiceImpl(
         descending: Boolean
     ): Flow<String> = classificationLogic.listClassificationIdsByDataOwnerPatientCreated(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
-    override fun deleteClassifications(ids: List<IdAndRev>): Flow<DocIdentifier> = classificationLogic.deleteEntities(ids)
-    override suspend fun deleteClassification(id: String, rev: String?): DocIdentifier = classificationLogic.deleteEntity(id, rev)
+    override fun deleteClassifications(ids: List<IdAndRev>): Flow<Classification> = classificationLogic.deleteEntities(ids)
+    override suspend fun deleteClassification(id: String, rev: String?): Classification = classificationLogic.deleteEntity(id, rev)
     override suspend fun purgeClassification(id: String, rev: String): DocIdentifier = classificationLogic.purgeEntity(id, rev)
     override suspend fun undeleteClassification(id: String, rev: String): Classification = classificationLogic.undeleteEntity(id, rev)
     override suspend fun modifyClassification(classification: Classification): Classification? = classificationLogic.modifyEntities(setOf(classification)).single()

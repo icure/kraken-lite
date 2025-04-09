@@ -2,7 +2,6 @@ package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
-import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.PlaceLogic
 import org.taktik.icure.asyncservice.PlaceService
@@ -17,9 +16,9 @@ class PlaceServiceImpl(
     override fun getAllPlaces(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = placeLogic.getAllPlaces(paginationOffset)
     override fun getAllPlaces(): Flow<Place> = placeLogic.getEntities()
     override suspend fun createPlace(place: Place): Place? = placeLogic.createPlace(place)
-    override suspend fun deletePlace(id: String, rev: String?): DocIdentifier = placeLogic.deleteEntity(id, rev)
+    override suspend fun deletePlace(id: String, rev: String?): Place = placeLogic.deleteEntity(id, rev)
     override suspend fun getPlace(place: String): Place? = placeLogic.getPlace(place)
 
     override suspend fun modifyPlace(place: Place): Place? = placeLogic.modifyPlace(place)
-    override fun deletePlaces(identifiers: List<IdAndRev>): Flow<DocIdentifier> = placeLogic.deleteEntities(identifiers)
+    override fun deletePlaces(identifiers: List<IdAndRev>): Flow<Place> = placeLogic.deleteEntities(identifiers)
 }

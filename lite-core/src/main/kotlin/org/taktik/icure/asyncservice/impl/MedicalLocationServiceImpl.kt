@@ -16,7 +16,7 @@ class MedicalLocationServiceImpl(
     private val medicalLocationLogic: MedicalLocationLogic
 ) : MedicalLocationService {
     override suspend fun createMedicalLocation(medicalLocation: MedicalLocation): MedicalLocation? = medicalLocationLogic.createMedicalLocation(medicalLocation)
-    override fun deleteMedicalLocations(ids: List<IdAndRev>): Flow<DocIdentifier> = medicalLocationLogic.deleteEntities(ids)
+    override fun deleteMedicalLocations(ids: List<IdAndRev>): Flow<MedicalLocation> = medicalLocationLogic.deleteEntities(ids)
     override suspend fun getMedicalLocation(medicalLocation: String): MedicalLocation? = medicalLocationLogic.getEntity(medicalLocation)
     override fun getMedicalLocations(medicalLocationIds: List<String>): Flow<MedicalLocation> = medicalLocationLogic.getEntities(medicalLocationIds)
 

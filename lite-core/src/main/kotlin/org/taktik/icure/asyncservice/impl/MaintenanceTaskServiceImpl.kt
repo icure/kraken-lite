@@ -19,8 +19,8 @@ import org.taktik.icure.entities.requests.EntityBulkShareResult
 class MaintenanceTaskServiceImpl(
     private val maintenanceTaskLogic: MaintenanceTaskLogic
 ) : MaintenanceTaskService {
-    override fun deleteMaintenanceTasks(ids: List<IdAndRev>): Flow<DocIdentifier> = maintenanceTaskLogic.deleteEntities(ids)
-    override suspend fun deleteMaintenanceTask(id: String, rev: String?): DocIdentifier = maintenanceTaskLogic.deleteEntity(id, rev)
+    override fun deleteMaintenanceTasks(ids: List<IdAndRev>): Flow<MaintenanceTask> = maintenanceTaskLogic.deleteEntities(ids)
+    override suspend fun deleteMaintenanceTask(id: String, rev: String?): MaintenanceTask = maintenanceTaskLogic.deleteEntity(id, rev)
     override suspend fun purgeMaintenanceTask(id: String, rev: String): DocIdentifier = maintenanceTaskLogic.purgeEntity(id, rev)
     override suspend fun undeleteMaintenanceTask(id: String, rev: String): MaintenanceTask = maintenanceTaskLogic.undeleteEntity(id, rev)
     override suspend fun modifyMaintenanceTask(entity: MaintenanceTask): MaintenanceTask? = maintenanceTaskLogic.modifyEntities(listOf(entity)).single()

@@ -15,9 +15,9 @@ class TimeTableServiceImpl(
     private val timeTableLogic: TimeTableLogic
 ) : TimeTableService {
     override suspend fun createTimeTable(timeTable: TimeTable): TimeTable? = timeTableLogic.createTimeTable(timeTable)
-    override fun deleteTimeTables(ids: List<IdAndRev>): Flow<DocIdentifier> = timeTableLogic.deleteEntities(ids)
+    override fun deleteTimeTables(ids: List<IdAndRev>): Flow<TimeTable> = timeTableLogic.deleteEntities(ids)
 
-    override suspend fun deleteTimeTable(id: String, rev: String?): DocIdentifier = timeTableLogic.deleteEntity(id, rev)
+    override suspend fun deleteTimeTable(id: String, rev: String?): TimeTable = timeTableLogic.deleteEntity(id, rev)
 
     override suspend fun purgeTimeTable(id: String, rev: String): DocIdentifier = timeTableLogic.purgeEntity(id, rev)
 
