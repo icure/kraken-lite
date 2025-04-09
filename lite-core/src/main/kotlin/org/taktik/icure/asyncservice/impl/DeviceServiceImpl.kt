@@ -32,8 +32,8 @@ class DeviceServiceImpl(
     override suspend fun getHcPartyKeysForDelegate(deviceId: String): Map<String, String> = deviceLogic.getHcPartyKeysForDelegate(deviceId)
 
     override suspend fun getAesExchangeKeysForDelegate(healthcarePartyId: String): Map<String, Map<String, Map<String, String>>> = deviceLogic.getAesExchangeKeysForDelegate(healthcarePartyId)
-    override fun deleteDevices(ids: List<IdAndRev>): Flow<DocIdentifier> = deviceLogic.deleteEntities(ids)
-    override suspend fun deleteDevice(id: String, rev: String?): DocIdentifier = deviceLogic.deleteEntity(id, rev)
+    override fun deleteDevices(ids: List<IdAndRev>): Flow<Device> = deviceLogic.deleteEntities(ids)
+    override suspend fun deleteDevice(id: String, rev: String?): Device = deviceLogic.deleteEntity(id, rev)
     override suspend fun purgeDevice(id: String, rev: String): DocIdentifier = deviceLogic.purgeEntity(id, rev)
     override suspend fun undeleteDevice(id: String, rev: String): Device = deviceLogic.undeleteEntity(id, rev)
     override fun filterDevices(

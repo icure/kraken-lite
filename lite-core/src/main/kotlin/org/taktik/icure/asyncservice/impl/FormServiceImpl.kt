@@ -41,8 +41,8 @@ class FormServiceImpl(
     override suspend fun addDelegation(formId: String, delegation: Delegation): Form? = formLogic.addDelegation(formId, delegation)
 
     override suspend fun createForm(form: Form): Form? = formLogic.createForm(form)
-    override fun deleteForms(ids: List<IdAndRev>): Flow<DocIdentifier> = formLogic.deleteEntities(ids)
-    override suspend fun deleteForm(id: String, rev: String?): DocIdentifier = formLogic.deleteEntity(id, rev)
+    override fun deleteForms(ids: List<IdAndRev>): Flow<Form> = formLogic.deleteEntities(ids)
+    override suspend fun deleteForm(id: String, rev: String?): Form = formLogic.deleteEntity(id, rev)
     override suspend fun purgeForm(id: String, rev: String): DocIdentifier = formLogic.purgeEntity(id, rev)
     override suspend fun undeleteForm(id: String, rev: String): Form = formLogic.undeleteEntity(id, rev)
     override suspend fun modifyForm(form: Form): Form? = formLogic.modifyForm(form)

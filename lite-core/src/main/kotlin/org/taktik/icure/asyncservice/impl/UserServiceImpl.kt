@@ -70,7 +70,7 @@ class UserServiceImpl(
         useShortToken: Boolean
     ): String = userLogic.createOrUpdateToken(userIdentifier, key, tokenValidity, token, useShortToken)
 
-    override suspend fun deleteUser(id: String, rev: String?): DocIdentifier = userLogic.deleteEntity(id, rev)
+    override suspend fun deleteUser(id: String, rev: String?): User = userLogic.deleteEntity(id, rev)
 
     override suspend fun purgeUser(id: String, rev: String): DocIdentifier = userLogic.purgeEntity(id, rev)
 

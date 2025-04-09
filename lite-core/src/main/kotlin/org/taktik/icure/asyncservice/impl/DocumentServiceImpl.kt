@@ -71,9 +71,9 @@ class DocumentServiceImpl(
     override fun solveConflicts(limit: Int?, ids: List<String>?): Flow<IdAndRev> = documentLogic.solveConflicts(limit, ids)
 
     override suspend fun getDocumentsByExternalUuid(documentId: String): List<Document> = documentLogic.getDocumentsByExternalUuid(documentId)
-    override fun deleteDocuments(ids: List<IdAndRev>): Flow<DocIdentifier> = documentLogic.deleteEntities(ids)
+    override fun deleteDocuments(ids: List<IdAndRev>): Flow<Document> = documentLogic.deleteEntities(ids)
 
-    override suspend fun deleteDocument(id: String, rev: String?): DocIdentifier = documentLogic.deleteEntity(id, rev)
+    override suspend fun deleteDocument(id: String, rev: String?): Document = documentLogic.deleteEntity(id, rev)
 
     override suspend fun purgeDocument(id: String, rev: String): DocIdentifier = documentLogic.purgeEntity(id, rev)
 

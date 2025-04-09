@@ -22,8 +22,8 @@ class ArticleServiceImpl(
     override fun getAllArticles(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = articleLogic.getAllArticles(paginationOffset)
     override fun getAllArticles(): Flow<Article> = articleLogic.getEntities()
     override suspend fun modifyArticle(article: Article): Article? = articleLogic.modifyArticle(article)
-    override fun deleteArticles(ids: List<IdAndRev>): Flow<DocIdentifier> = articleLogic.deleteEntities(ids)
-    override suspend fun deleteArticle(id: String, rev: String?): DocIdentifier = articleLogic.deleteEntity(id, rev)
+    override fun deleteArticles(ids: List<IdAndRev>): Flow<Article> = articleLogic.deleteEntities(ids)
+    override suspend fun deleteArticle(id: String, rev: String?): Article = articleLogic.deleteEntity(id, rev)
     override suspend fun purgeArticle(id: String, rev: String): DocIdentifier = articleLogic.purgeEntity(id, rev)
     override suspend fun undeleteArticle(id: String, rev: String): Article = articleLogic.undeleteEntity(id, rev)
 

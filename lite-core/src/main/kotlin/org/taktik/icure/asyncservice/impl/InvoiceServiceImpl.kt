@@ -142,8 +142,8 @@ class InvoiceServiceImpl(
 
 	override fun createInvoices(invoices: Collection<Invoice>): Flow<Invoice> = invoiceLogic.createEntities(invoices)
 	override fun matchInvoicesBy(filter: AbstractFilter<Invoice>): Flow<String> = invoiceLogic.matchEntitiesBy(filter)
-	override fun deleteInvoices(ids: List<IdAndRev>): Flow<DocIdentifier> = invoiceLogic.deleteEntities(ids)
-	override suspend fun deleteInvoice(id: String, rev: String?): DocIdentifier = invoiceLogic.deleteEntity(id, rev)
+	override fun deleteInvoices(ids: List<IdAndRev>): Flow<Invoice> = invoiceLogic.deleteEntities(ids)
+	override suspend fun deleteInvoice(id: String, rev: String?): Invoice = invoiceLogic.deleteEntity(id, rev)
 	override suspend fun purgeInvoice(id: String, rev: String): DocIdentifier = invoiceLogic.purgeEntity(id, rev)
 	override suspend fun undeleteInvoice(id: String, rev: String): Invoice = invoiceLogic.undeleteEntity(id, rev)
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Invoice>> = invoiceLogic.bulkShareOrUpdateMetadata(requests)

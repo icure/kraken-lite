@@ -131,8 +131,8 @@ class MessageServiceImpl(
         filter: FilterChain<Message>
     ): Flow<ViewQueryResultEvent> = messageLogic.filterMessages(paginationOffset, filter)
 
-    override fun deleteMessages(ids: List<IdAndRev>): Flow<DocIdentifier> = messageLogic.deleteEntities(ids)
-    override suspend fun deleteMessage(id: String, rev: String?): DocIdentifier = messageLogic.deleteEntity(id, rev)
+    override fun deleteMessages(ids: List<IdAndRev>): Flow<Message> = messageLogic.deleteEntities(ids)
+    override suspend fun deleteMessage(id: String, rev: String?): Message = messageLogic.deleteEntity(id, rev)
     override suspend fun purgeMessage(id: String, rev: String): DocIdentifier = messageLogic.purgeEntity(id, rev)
     override suspend fun undeleteMessage(id: String, rev: String): Message = messageLogic.undeleteEntity(id, rev)
     override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)

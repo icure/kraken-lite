@@ -34,8 +34,8 @@ class HealthcarePartyServiceImpl(
     override suspend fun modifyHealthcareParty(healthcareParty: HealthcareParty): HealthcareParty? =
         healthcarePartyLogic.modifyHealthcareParty(healthcareParty)
 
-    override fun deleteHealthcareParties(ids: List<IdAndRev>): Flow<DocIdentifier> = healthcarePartyLogic.deleteEntities(ids)
-    override suspend fun deleteHealthcareParty(id: String, rev: String?): DocIdentifier = healthcarePartyLogic.deleteEntity(id, rev)
+    override fun deleteHealthcareParties(ids: List<IdAndRev>): Flow<HealthcareParty> = healthcarePartyLogic.deleteEntities(ids)
+    override suspend fun deleteHealthcareParty(id: String, rev: String?): HealthcareParty = healthcarePartyLogic.deleteEntity(id, rev)
     override suspend fun purgeHealthcareParty(id: String, rev: String): DocIdentifier = healthcarePartyLogic.purgeEntity(id, rev)
     override suspend fun undeleteHealthcareParty(id: String, rev: String): HealthcareParty = healthcarePartyLogic.undeleteEntity(id, rev)
     override suspend fun createHealthcareParty(healthcareParty: HealthcareParty): HealthcareParty? = healthcarePartyLogic.createHealthcareParty(healthcareParty)

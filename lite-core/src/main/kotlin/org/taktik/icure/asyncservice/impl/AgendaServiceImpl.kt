@@ -17,8 +17,8 @@ class AgendaServiceImpl(
     private val agendaLogic: AgendaLogic
 ) : AgendaService {
     override suspend fun createAgenda(agenda: Agenda): Agenda? = agendaLogic.createAgenda(agenda)
-    override fun deleteAgendas(ids: List<IdAndRev>): Flow<DocIdentifier> = agendaLogic.deleteEntities(ids)
-    override suspend fun deleteAgenda(id: String, rev: String?): DocIdentifier = agendaLogic.deleteEntity(id, rev)
+    override fun deleteAgendas(ids: List<IdAndRev>): Flow<Agenda> = agendaLogic.deleteEntities(ids)
+    override suspend fun deleteAgenda(id: String, rev: String?): Agenda = agendaLogic.deleteEntity(id, rev)
     override suspend fun purgeAgenda(id: String, rev: String): DocIdentifier = agendaLogic.purgeEntity(id, rev)
     override suspend fun undeleteAgenda(id: String, rev: String): Agenda = agendaLogic.undeleteEntity(id, rev)
 

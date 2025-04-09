@@ -12,7 +12,7 @@ class FrontEndMigrationServiceImpl(
     private val frontEndMigrationLogic: FrontEndMigrationLogic
 ) : FrontEndMigrationService {
     override suspend fun createFrontEndMigration(frontEndMigration: FrontEndMigration): FrontEndMigration? = frontEndMigrationLogic.createFrontEndMigration(frontEndMigration)
-    override suspend fun deleteFrontEndMigration(frontEndMigrationId: String): DocIdentifier? = frontEndMigrationLogic.deleteEntity(frontEndMigrationId, null)
+    override suspend fun deleteFrontEndMigration(frontEndMigrationId: String): FrontEndMigration? = frontEndMigrationLogic.deleteEntity(frontEndMigrationId, null)
 
     override suspend fun getFrontEndMigration(frontEndMigrationId: String): FrontEndMigration? = frontEndMigrationLogic.getFrontEndMigration(frontEndMigrationId)
 

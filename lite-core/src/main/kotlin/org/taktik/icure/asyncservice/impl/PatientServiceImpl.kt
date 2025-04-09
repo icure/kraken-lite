@@ -128,9 +128,9 @@ class PatientServiceImpl(
         healthcarePartyId: String?
     ): Flow<Patient> = patientLogic.fuzzySearchPatients(firstName, lastName, dateOfBirth, healthcarePartyId)
 
-    override fun deletePatients(ids: List<IdAndRev>): Flow<DocIdentifier> = patientLogic.deleteEntities(ids)
+    override fun deletePatients(ids: List<IdAndRev>): Flow<Patient> = patientLogic.deleteEntities(ids)
 
-    override suspend fun deletePatient(id: String, rev: String?): DocIdentifier = patientLogic.deleteEntity(id, rev)
+    override suspend fun deletePatient(id: String, rev: String?): Patient = patientLogic.deleteEntity(id, rev)
 
     override suspend fun purgePatient(id: String, rev: String): DocIdentifier = patientLogic.purgeEntity(id, rev)
 

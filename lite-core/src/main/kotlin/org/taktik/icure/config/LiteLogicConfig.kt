@@ -203,7 +203,7 @@ class LiteLogicConfig {
         exchangeDataMapLogic: ExchangeDataMapLogic,
         datastoreInstanceProvider: DatastoreInstanceProvider,
         fixer: Fixer
-    ) = PatientLogicImpl(sessionLogic, patientDAO, userLogic, filters, exchangeDataMapLogic, datastoreInstanceProvider, fixer)
+    ) = PatientLogicImpl(sessionLogic, patientDAO, filters, exchangeDataMapLogic, datastoreInstanceProvider, fixer)
 
     @Bean
     fun healthcarePartyLogic(

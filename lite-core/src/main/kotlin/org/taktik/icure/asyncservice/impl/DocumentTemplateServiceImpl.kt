@@ -2,7 +2,6 @@ package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
-import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.DocumentTemplateLogic
 import org.taktik.icure.asyncservice.DocumentTemplateService
@@ -34,7 +33,7 @@ class DocumentTemplateServiceImpl(
         documentTemplateLogic.getDocumentTemplatesByUser(userId, loadAttachment)
 
     override suspend fun modifyDocumentTemplate(documentTemplate: DocumentTemplate): DocumentTemplate? = documentTemplateLogic.modifyDocumentTemplate(documentTemplate)
-    override fun deleteDocumentTemplates(ids: List<IdAndRev>): Flow<DocIdentifier> = documentTemplateLogic.deleteEntities(ids)
+    override fun deleteDocumentTemplates(ids: List<IdAndRev>): Flow<DocumentTemplate> = documentTemplateLogic.deleteEntities(ids)
     override fun getAllDocumentTemplates(paginationOffset: PaginationOffset<String>): Flow<PaginationElement> = documentTemplateLogic.getAllDocumentTemplates(paginationOffset)
     override fun getAllDocumentTemplates(): Flow<DocumentTemplate> = documentTemplateLogic.getEntities()
 }

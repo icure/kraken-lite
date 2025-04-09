@@ -21,8 +21,8 @@ class AccessLogServiceImpl(
     private val accessLogLogic: AccessLogLogic
 ) : AccessLogService {
     override suspend fun createAccessLog(accessLog: AccessLog): AccessLog? = accessLogLogic.createAccessLog(accessLog)
-    override fun deleteAccessLogs(ids: List<IdAndRev>): Flow<DocIdentifier> = accessLogLogic.deleteEntities(ids)
-    override suspend fun deleteAccessLog(id: String, rev: String?): DocIdentifier = accessLogLogic.deleteEntity(id, rev)
+    override fun deleteAccessLogs(ids: List<IdAndRev>): Flow<AccessLog> = accessLogLogic.deleteEntities(ids)
+    override suspend fun deleteAccessLog(id: String, rev: String?): AccessLog = accessLogLogic.deleteEntity(id, rev)
     override suspend fun purgeAccessLog(id: String, rev: String): DocIdentifier = accessLogLogic.purgeEntity(id, rev)
     override suspend fun undeleteAccessLog(id: String, rev: String): AccessLog = accessLogLogic.undeleteEntity(id, rev)
 
