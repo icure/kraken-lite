@@ -127,6 +127,20 @@ When running the generated jar, the spring profiles `kmehr` (to include kmehr mo
 -Dspring.profiles.active=app,kmehr,sam
 ```
 
+When SAM module is activated, three options can be provided:
+
+- `-Dicure.couchdb.sam.suffix=v5`
+- `-Dicure.couchdb.sam.nextVersionSuffix=v6`
+- `-Dicure.sam.updaterUrl=https://drugsv6.icure.cloud`
+
+In the above configuration, the drugs will be obtained from an icure-drugs-v5 database but a new icure-drugs-v6 database will be created and updated to prepare for a switch.
+The icure-drugs-v6 **will not** be automatically indexed. It is of your responsibility to either set KEN or to call the views to trigger the indexations.
+
+To activate the switch you must restart kraken-lite with the following options
+
+- `-Dicure.couchdb.sam.suffix=v6`
+- `-Dicure.sam.updaterUrl=https://drugsv6.icure.cloud`
+
 ### Running kraken-lite from IntelliJ including SAM and Kmehr modules
 When running the kraken-lite through IntelliJ, it fails to rebuild it before running including the Kmehr and SAM libraries
 even if the properties have been set. 
