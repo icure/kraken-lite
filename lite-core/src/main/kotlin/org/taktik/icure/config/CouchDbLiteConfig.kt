@@ -18,8 +18,10 @@ import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.taktik.couchdb.springframework.webclient.SpringWebfluxWebClient
 import org.taktik.icure.asyncdao.CouchDbDispatcher
-import org.taktik.icure.asyncdao.CouchDbDispatcherImpl
+import org.taktik.icure.dao.CouchDbDispatcherProvider
 import org.taktik.icure.properties.CouchDbLiteProperties
+import org.taktik.icure.security.CouchDbCredentialsProvider
+import org.taktik.icure.security.UsernamePassword
 import reactor.core.publisher.Mono
 import reactor.netty.http.client.HttpClient
 import reactor.netty.resources.ConnectionProvider
@@ -28,6 +30,7 @@ import reactor.netty.resources.ConnectionProvider
 @Profile("app")
 class CouchDbLiteConfig(
 	protected val couchDbProperties: CouchDbLiteProperties,
+	private val couchDbDispatcherProvider: CouchDbDispatcherProvider
 ) {
 
 	companion object {
@@ -35,6 +38,14 @@ class CouchDbLiteConfig(
 	}
 
 	val webClientLogger: Log = LogFactory.getLog("org.taktik.icure.config.WebClient")
+
+	val couchDbCredentialProvider: CouchDbCredentialsProvider = object : CouchDbCredentialsProvider {
+		override fun getCredentials(): UsernamePassword {
+			val username = couchDbProperties.username ?: throw IllegalStateException("CouchDB username is not set")
+			val password = couchDbProperties.password ?: throw IllegalStateException("CouchDB password is not set")
+			return UsernamePassword(username, password)
+		}
+	}
 
 	@Bean
 	fun httpClient(connectionProvider: ConnectionProvider) = SpringWebfluxWebClient(
@@ -52,31 +63,21 @@ class CouchDbLiteConfig(
 
 	@Bean
 	fun patientCouchDbDispatcher(httpClient: WebClient, objectMapper: ObjectMapper, couchDbProperties: CouchDbLiteProperties): CouchDbDispatcher {
-		return CouchDbDispatcherImpl(httpClient, objectMapper, couchDbProperties.prefix, "patient", couchDbProperties.username!!, couchDbProperties.password!!, 1)
+		return couchDbDispatcherProvider.getDispatcher(httpClient, objectMapper, couchDbProperties.prefix, "patient", couchDbCredentialProvider, 1)
 	}
 
 	@Bean
 	fun healthdataCouchDbDispatcher(httpClient: WebClient, objectMapper: ObjectMapper, couchDbProperties: CouchDbLiteProperties): CouchDbDispatcher {
-		return CouchDbDispatcherImpl(httpClient, objectMapper, couchDbProperties.prefix, "healthdata", couchDbProperties.username!!, couchDbProperties.password!!, 1)
+		return couchDbDispatcherProvider.getDispatcher(httpClient, objectMapper, couchDbProperties.prefix, "healthdata", couchDbCredentialProvider, 1)
 	}
 
 	@Bean
 	fun baseCouchDbDispatcher(httpClient: WebClient, objectMapper: ObjectMapper, couchDbProperties: CouchDbLiteProperties): CouchDbDispatcher {
-		return CouchDbDispatcherImpl(httpClient, objectMapper, couchDbProperties.prefix, "base", couchDbProperties.username!!, couchDbProperties.password!!, 1)
-	}
-
-	@Bean
-	fun drugCouchDbDispatcher(httpClient: WebClient, objectMapper: ObjectMapper, couchDbProperties: CouchDbLiteProperties): CouchDbDispatcher {
-		return CouchDbDispatcherImpl(httpClient, objectMapper, couchDbProperties.prefix, "drugs", couchDbProperties.username!!, couchDbProperties.password!!, 1)
-	}
-
-	@Bean
-	fun chapIVCouchDbDispatcher(httpClient: WebClient, objectMapper: ObjectMapper, couchDbProperties: CouchDbLiteProperties): CouchDbDispatcher {
-		return CouchDbDispatcherImpl(httpClient, objectMapper, couchDbProperties.prefix, "chapiv", couchDbProperties.username!!, couchDbProperties.password!!, 1)
+		return couchDbDispatcherProvider.getDispatcher(httpClient, objectMapper, couchDbProperties.prefix, "base", couchDbCredentialProvider, 1)
 	}
 
 	@Bean
 	fun systemCouchDbDispatcher(httpClient: WebClient, objectMapper: ObjectMapper): CouchDbDispatcher {
-		return CouchDbDispatcherImpl(httpClient, objectMapper, ICURE_PREFIX, "system", couchDbProperties.username!!, couchDbProperties.password!!, 1)
+		return couchDbDispatcherProvider.getDispatcher(httpClient, objectMapper, ICURE_PREFIX, "system", couchDbCredentialProvider, 1)
 	}
 }
