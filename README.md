@@ -134,8 +134,7 @@ When SAM module is activated, three options can be provided:
 - `-Dicure.sam.updaterUrl=https://drugsv6.icure.cloud`
 
 In the above configuration, the drugs will be obtained from an icure-drugs-v5 database but a new icure-drugs-v6 database will be created and updated to prepare for a switch.
-The icure-drugs-v6 **will not** be automatically indexed. It is of your responsibility to either set KEN or to call the views to trigger the indexations.
-
+The icure-drugs-v6 **will not** be automatically indexed. It is of your responsibility to either set KEN or to call the views to trigger the indexing.
 To activate the switch you must restart kraken-lite with the following options
 
 - `-Dicure.couchdb.sam.suffix=v6`
