@@ -27,7 +27,8 @@ data class CouchDbPropertiesImpl(
     override var populateDatabaseFromLocalXmls: Boolean = true,
     override var prefix: String = "icure",
     override var maxConnections: Int? = null,
-    override var maxPendingAcquire: Int? = 1000
+    override var maxPendingAcquire: Int? = 1000,
+    override var maxIdleTimeMs: Long? = null
 ) : CouchDbLiteProperties {
     override val skipDesignDocumentUpdate: Boolean
         get() = url.contains("couch-cluster")
