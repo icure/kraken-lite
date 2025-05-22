@@ -38,10 +38,11 @@ class DocumentServiceImpl(
     override fun createOrModifyDocuments(documents: List<BatchUpdateDocumentInfo>, strict: Boolean): Flow<Document> = documentLogic.createOrModifyDocuments(documents, strict)
 
     override suspend fun updateAttachments(
-        currentDocument: Document,
+        documentId: String,
+        documentRev: String?,
         mainAttachmentChange: DataAttachmentChange?,
         secondaryAttachmentsChanges: Map<String, DataAttachmentChange>
-    ): Document? = documentLogic.updateAttachments(currentDocument, mainAttachmentChange, secondaryAttachmentsChanges)
+    ): Document? = documentLogic.updateAttachments(documentId, documentRev, mainAttachmentChange, secondaryAttachmentsChanges)
 
     override fun listDocumentsByDocumentTypeHCPartySecretMessageKeys(
         documentTypeCode: String,

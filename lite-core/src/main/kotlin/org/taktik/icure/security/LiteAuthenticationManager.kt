@@ -1,7 +1,6 @@
 package org.taktik.icure.security
 
 import kotlinx.coroutines.flow.toList
-import kotlinx.coroutines.reactor.mono
 import org.springframework.security.authentication.BadCredentialsException
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
@@ -26,19 +25,19 @@ import org.taktik.icure.properties.AuthenticationProperties
 import org.taktik.icure.security.AbstractAuthenticationManager.Companion.PasswordValidationStatus.Failed2fa
 import org.taktik.icure.security.AbstractAuthenticationManager.Companion.PasswordValidationStatus.Missing2fa
 import org.taktik.icure.security.jwt.BaseJwtDetails
-import org.taktik.icure.security.jwt.BaseJwtRefreshDetails
-import org.taktik.icure.security.jwt.JwtAuthenticationToken
+import org.taktik.icure.security.jwt.BaseRefreshJwtConverter
+import org.taktik.icure.security.jwt.JwtAuthentication
 import org.taktik.icure.security.jwt.JwtDetails
 import org.taktik.icure.security.jwt.JwtRefreshDetails
 import org.taktik.icure.security.jwt.JwtUtils
 import org.taktik.icure.utils.error
-import reactor.core.publisher.Mono
 
 @Service
 class LiteAuthenticationManager(
     private val datastoreInstanceProvider: DatastoreInstanceProvider,
     private val userDAO: UserDAO,
     private val authenticationProperties: AuthenticationProperties,
+    private val refreshJwtConverter: BaseRefreshJwtConverter,
     healthcarePartyDAO: HealthcarePartyDAO,
     passwordEncoder: PasswordEncoder,
     jwtUtils: JwtUtils
@@ -49,22 +48,15 @@ class LiteAuthenticationManager(
 ) {
     private val messageSourceAccessor = SpringSecurityMessageSource.getAccessor()
 
-    override fun encodedJwtToAuthentication(encodedJwt: String): JwtAuthenticationToken<BaseJwtDetails> =
-        jwtUtils.decodeAndGetDetails(BaseJwtDetails, encodedJwt).let { jwtDetails ->
-            JwtAuthenticationToken(
-                claims = jwtDetails,
-                authorities = jwtDetails.authorities.toMutableSet(),
-                encodedJwt = encodedJwt,
-                authenticated = true
-            )
-        }
+    override suspend fun encodedJwtToAuthentication(encodedJwt: String): JwtAuthentication =
+        LiteJwtAuthentication(jwtUtils.validateAndDecodeAuthDetails(BaseJwtDetails, encodedJwt))
 
-    override suspend fun regenerateJwtDetails(
+    override suspend fun regenerateAuthJwt(
         encodedRefreshToken: String,
         bypassRefreshValidityCheck: Boolean,
         totpToken: String?
-    ): BaseJwtDetails {
-        val jwtRefreshDetails = jwtUtils.decodeRefreshToken(BaseJwtRefreshDetails, encodedRefreshToken)
+    ): Pair<JwtDetails, Long?> {
+        val jwtRefreshDetails = jwtUtils.validateAndDecodeRefreshToken(refreshJwtConverter, encodedRefreshToken)
         val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
         val user = userDAO.findUserOnUserDb(datastoreInformation, jwtRefreshDetails.userId, false)
             ?: throw InvalidJwtException("Cannot refresh authentication token for this user")
@@ -86,7 +78,7 @@ class LiteAuthenticationManager(
                 SimpleGrantedAuthority(ROLE_USER),
                 SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
             )
-        )
+        ) to jwtRefreshDetails.jwtDuration
     }
 
     override suspend fun checkAuthentication(fullGroupAndId: String, password: String) {
@@ -108,11 +100,11 @@ class LiteAuthenticationManager(
             }
     }
 
-    override fun authenticateWithUsernameAndPassword(
+    override suspend fun authenticateWithUsernameAndPassword(
         authentication: Authentication,
         groupId: String?,
         applicationId: String?
-    ): Mono<Authentication> = mono {
+    ): JwtAuthentication {
         val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 
         authentication.principal ?: throw BadCredentialsException("Invalid username or password")
@@ -140,17 +132,17 @@ class LiteAuthenticationManager(
                 (userDAO.findUserOnUserDb(datastoreInformation, username, false)?.let { listOf(it) } ?: emptyList())
                         + try {
                     userDAO.listUsersByUsername(datastoreInformation, username).toList()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     emptyList()
                 }
                         + try {
                     userDAO.listUsersByEmail(datastoreInformation, username).toList()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     emptyList()
                 }
                         + try {
                     userDAO.listUsersByPhone(datastoreInformation, username).toList()
-                } catch (e: Exception) {
+                } catch (_: Exception) {
                     emptyList()
                 }
                 )
@@ -169,16 +161,10 @@ class LiteAuthenticationManager(
             }
         }
 
-        buildAuthenticationToken(
-            accumulatedUsers.first { it.first.isSuccess() }.second,
-            authentication
-        )
+        return buildAuthenticationToken(accumulatedUsers.first { it.first.isSuccess() }.second)
     }
 
-    private suspend fun buildAuthenticationToken(
-        user: User,
-        authentication: Authentication?
-    ): UsernamePasswordAuthenticationToken {
+    private suspend fun buildAuthenticationToken(user: User): LiteJwtAuthentication {
         val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 
         val hcpHierarchy = user.healthcarePartyId?.let {
@@ -202,10 +188,8 @@ class LiteAuthenticationManager(
             authorities = authorities
         )
 
-        return UsernamePasswordAuthenticationToken(
-            userDetails,
-            authentication,
-            authorities
+        return LiteJwtAuthentication(
+            userDetails
         )
     }
 }

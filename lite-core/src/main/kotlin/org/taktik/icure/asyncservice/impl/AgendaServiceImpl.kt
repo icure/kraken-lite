@@ -29,7 +29,8 @@ class AgendaServiceImpl(
 
     override fun getAgendasByUser(userId: String): Flow<Agenda> = agendaLogic.getAgendasByUser(userId)
 
-    override fun getReadableAgendaForUser(userId: String): Flow<Agenda> = agendaLogic.getReadableAgendaForUser(userId)
+    @Deprecated("Based on legacy Agenda.rights ; use filter for agendas using userRights")
+    override fun getReadableAgendaForUser(userId: String): Flow<Agenda> = agendaLogic.getReadableAgendaForUserLegacy(userId)
     override fun getAllAgendas(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = agendaLogic.getAllPaginated(offset)
     override fun getAllAgendas(): Flow<Agenda>  = agendaLogic.getEntities()
     override fun matchAgendasBy(filter: AbstractFilter<Agenda>): Flow<String> = agendaLogic.matchEntitiesBy(filter)

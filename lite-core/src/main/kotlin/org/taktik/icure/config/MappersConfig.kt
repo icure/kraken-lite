@@ -17,6 +17,7 @@ import org.taktik.icure.services.external.rest.v2.mapper.SecureUserV2Mapper
 import org.taktik.icure.services.external.rest.v2.mapper.SecureUserV2MapperImpl
 import org.taktik.icure.services.external.rest.v2.mapper.UnsecureUserV2Mapper
 import org.taktik.icure.services.external.rest.v2.mapper.base.IdentifierV2Mapper
+import org.taktik.icure.services.external.rest.v2.mapper.base.PropertyStubV2Mapper
 import org.taktik.icure.services.external.rest.v2.mapper.embed.GenderV2Mapper
 import org.taktik.icure.services.external.rest.v2.mapper.filter.FilterChainV2Mapper
 import org.taktik.icure.services.external.rest.v2.mapper.filter.FilterV2Mapper
@@ -50,9 +51,10 @@ class MappersConfig {
     fun filterV2Mapper(
         identifierV2Mapper: IdentifierV2Mapper,
         genderV2Mapper: GenderV2Mapper,
-        externalFilterKeyMapper: ExternalFilterKeyV2Mapper
+        externalFilterKeyMapper: ExternalFilterKeyV2Mapper,
+        propertyStubV2Mapper: PropertyStubV2Mapper
     ): FilterV2Mapper =
-        FilterV2MapperImpl(identifierV2Mapper, genderV2Mapper, externalFilterKeyMapper)
+        FilterV2MapperImpl(identifierV2Mapper, genderV2Mapper, externalFilterKeyMapper, propertyStubV2Mapper)
 
     @Bean
     fun filterChainV2Mapper(filterV2Mapper: FilterV2Mapper): FilterChainV2Mapper =

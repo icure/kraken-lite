@@ -147,8 +147,13 @@ class PatientServiceImpl(
     override fun undeletePatients(ids: List<IdAndRev>): Flow<Patient> = patientLogic.undeleteEntities(ids)
 
     override fun getEntityIds(): Flow<String> = patientLogic.getEntityIds()
+    override suspend fun mergePatients(
+        fromId: String,
+        expectedFromRev: String,
+        updatedInto: Patient,
+        omitEncryptionKeysOfFrom: Boolean
+    ): Patient = patientLogic.mergePatients(fromId, expectedFromRev, updatedInto, omitEncryptionKeysOfFrom)
 
-    override suspend fun mergePatients(fromId: String, expectedFromRev: String, updatedInto: Patient): Patient = patientLogic.mergePatients(fromId, expectedFromRev, updatedInto)
     override fun matchPatientsBy(filter: AbstractFilter<Patient>): Flow<String> = patientLogic.matchEntitiesBy(filter)
 
     override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Patient>> = patientLogic.bulkShareOrUpdateMetadata(requests)
