@@ -64,6 +64,7 @@ class SecurityConfigAdapter(
 			exchange.pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.pathMatchers("/rest/*/replication/group/**").hasAuthority(if (allowOnlyHcp) Roles.GrantedAuthority.ROLE_HCP else Roles.GrantedAuthority.ROLE_USER)
 				.pathMatchers("/rest/*/auth/login").permitAll()
+				.pathMatchers("/rest/*/auth/login/icureCloud").permitAll()
 				.pathMatchers("/rest/*/auth/refresh").permitAll()
 				.pathMatchers("/rest/*/auth/invalidate").permitAll()
 				.pathMatchers("/rest/*/user/forgottenPassword/*").permitAll()

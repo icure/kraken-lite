@@ -54,6 +54,7 @@ class GlobalErrorHandler(
                     is org.springframework.security.access.AccessDeniedException -> bufferFactory.toBuffer(ex.message).also { r.statusCode = HttpStatus.FORBIDDEN }
                     is ServerWebInputException -> bufferFactory.toBuffer(ex.reason).also { r.statusCode = HttpStatus.BAD_REQUEST }
                     is BulkUpdateConflictException -> bufferFactory.toBuffer(ex.message).also { r.statusCode = HttpStatus.CONFLICT }
+                    is UnauthorizedRequestException -> bufferFactory.toBuffer(ex.message).also { r.statusCode = HttpStatus.UNAUTHORIZED }
                     is TooManyRequestsException -> bufferFactory.toBuffer(ex.message).also { r.statusCode = HttpStatus.TOO_MANY_REQUESTS }
                     // Keep at the end: some exceptions are also IllegalArgumentException
                     is IllegalArgumentException -> bufferFactory.toBuffer(ex.message)

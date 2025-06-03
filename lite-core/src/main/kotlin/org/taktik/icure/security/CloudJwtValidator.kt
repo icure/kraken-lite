@@ -1,7 +1,5 @@
 package org.taktik.icure.security
 
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import io.icure.asyncjacksonhttpclient.net.web.HttpMethod
 import io.icure.asyncjacksonhttpclient.net.web.WebClient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -11,13 +9,13 @@ import org.taktik.icure.security.jwt.JwtDecoder
 import org.taktik.icure.security.jwt.JwtKeyUtils
 import org.taktik.icure.security.jwt.USER_ID
 import java.net.URI
+import java.net.URISyntaxException
 import kotlin.text.matches
 
 @Service
 @OptIn(ExperimentalCoroutinesApi::class)
 class CloudJwtValidator(
 	private val liteAuthProperties: LiteAuthProperties,
-	private val objectMapper: ObjectMapper,
 	private val httpClient: WebClient,
 ) {
 	private val cloudHostPatterns = liteAuthProperties.knownCloudJwtIssuers.map(CloudHostPattern::parse)
@@ -26,9 +24,13 @@ class CloudJwtValidator(
 		issuer: String,
 		cloudToken: String
 	): String {
-		val issuerUri = URI(issuer)
-		require(issuerUri.scheme == "https") {
-			"Issuer URI scheme must be https"
+		val issuerUri = try {
+			URI(issuer)
+		} catch (e: URISyntaxException) {
+			throw IllegalArgumentException("Issuer $issuer is not a valid uri", e)
+		}
+		require(issuerUri.scheme == "https" || (liteAuthProperties.allowUnsecureCloudJwtIssuer && issuerUri.scheme == "http")) {
+			"Issuer URI scheme must be https or, if unsecure issuers are allowed, http"
 		}
 		require(issuerUri.host?.let { host -> cloudHostPatterns.any { it.matches(host) } } == true) {
 			"Cloud issuer not among known hosts"
@@ -39,7 +41,7 @@ class CloudJwtValidator(
 			.toTextFlow()
 			.toList()
 			.joinToString()
-			.let { JwtKeyUtils.decodePublicKeyFromString(objectMapper.readValue<String>(it)) }
+			.let { JwtKeyUtils.decodePublicKeyFromString(it) }
 		val claims = JwtDecoder.validateAndGetClaims(cloudToken, validationKey, liteAuthProperties.validationSkewSeconds)
 		return claims.getValue(USER_ID) as String
 	}
@@ -47,8 +49,9 @@ class CloudJwtValidator(
 
 private sealed interface CloudHostPattern {
 	companion object {
-		private val EXACT_REGEX = Regex("[a-z]+(?:\\.[a-z]+)+")
-		private val SUB_DOMAIN_REGEX = Regex("\\*\\.[a-z]+(?:\\.[a-z]+)+")
+		private val URL_CHAR = "[0-9-_.~]"
+		private val EXACT_REGEX = Regex("$URL_CHAR+(?:\\.$URL_CHAR+)+")
+		private val SUB_DOMAIN_REGEX = Regex("\\*\\.$URL_CHAR+(?:\\.$URL_CHAR+)+")
 
 		fun parse(
 			pattern: String

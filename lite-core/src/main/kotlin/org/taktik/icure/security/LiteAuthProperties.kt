@@ -11,7 +11,8 @@ import org.taktik.icure.properties.AuthProperties
 class LiteAuthPropertiesImpl(
 	override var validationSkewSeconds: Long = 10,
 	override var jwt: AuthProperties.Jwt = Jwt(),
-	override var knownCloudJwtIssuers: List<String> = listOf("*.icure.cloud")
+	override var knownCloudJwtIssuers: List<String> = listOf("*.icure.cloud"),
+	override var allowUnsecureCloudJwtIssuer: Boolean = false,
 ) : LiteAuthProperties {
 	class Jwt(
 		override var expirationSeconds: Long = 3600,
@@ -21,4 +22,8 @@ class LiteAuthPropertiesImpl(
 
 interface LiteAuthProperties : AuthProperties {
 	val knownCloudJwtIssuers: List<String>
+	/**
+	 * For testing purposes, true if http is valid for jwt issuers (else only https is allowed)
+	 */
+	val allowUnsecureCloudJwtIssuer: Boolean
 }
