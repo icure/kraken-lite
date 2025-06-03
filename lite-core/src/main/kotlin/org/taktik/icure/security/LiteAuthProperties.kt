@@ -8,13 +8,17 @@ import org.taktik.icure.properties.AuthProperties
 @Component
 @Profile("app")
 @ConfigurationProperties(prefix = "icure.auth")
-class LiteAuthProperties(
+class LiteAuthPropertiesImpl(
 	override var validationSkewSeconds: Long = 10,
 	override var jwt: AuthProperties.Jwt = Jwt(),
-) : AuthProperties {
+	override var knownCloudJwtIssuers: List<String> = listOf("*.icure.cloud")
+) : LiteAuthProperties {
 	class Jwt(
 		override var expirationSeconds: Long = 3600,
 		override var refreshExpirationSeconds: Long = 86400,
 	) : AuthProperties.Jwt
+}
 
+interface LiteAuthProperties : AuthProperties {
+	val knownCloudJwtIssuers: List<String>
 }

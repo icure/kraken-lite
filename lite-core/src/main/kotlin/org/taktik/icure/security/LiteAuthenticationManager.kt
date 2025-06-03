@@ -21,6 +21,7 @@ import org.taktik.icure.exceptions.Invalid2FAException
 import org.taktik.icure.exceptions.InvalidJwtException
 import org.taktik.icure.exceptions.Missing2FAException
 import org.taktik.icure.exceptions.PasswordTooShortException
+import org.taktik.icure.exceptions.UnauthorizedRequestException
 import org.taktik.icure.properties.AuthenticationProperties
 import org.taktik.icure.security.AbstractAuthenticationManager.Companion.PasswordValidationStatus.Failed2fa
 import org.taktik.icure.security.AbstractAuthenticationManager.Companion.PasswordValidationStatus.Missing2fa
@@ -31,21 +32,29 @@ import org.taktik.icure.security.jwt.JwtDetails
 import org.taktik.icure.security.jwt.JwtRefreshDetails
 import org.taktik.icure.security.jwt.JwtUtils
 import org.taktik.icure.utils.error
+import java.net.URI
+import java.net.URL
+
+interface LiteAuthenticationManager : CustomReactiveAuthenticationManager {
+    suspend fun loginWithCloudJwt(issuer: String, cloudToken: String): JwtAuthentication
+}
 
 @Service
-class LiteAuthenticationManager(
+class LiteAuthenticationManagerImpl(
     private val datastoreInstanceProvider: DatastoreInstanceProvider,
     private val userDAO: UserDAO,
     private val authenticationProperties: AuthenticationProperties,
     private val refreshJwtConverter: BaseRefreshJwtConverter,
     healthcarePartyDAO: HealthcarePartyDAO,
     passwordEncoder: PasswordEncoder,
-    jwtUtils: JwtUtils
+    jwtUtils: JwtUtils,
+    private val cloudJwtValidator: CloudJwtValidator,
+    jwtValidator: CloudJwtValidator,
 ) : AbstractAuthenticationManager<JwtDetails, JwtRefreshDetails>(
     healthcarePartyDAO,
     passwordEncoder,
     jwtUtils
-) {
+), LiteAuthenticationManager {
     private val messageSourceAccessor = SpringSecurityMessageSource.getAccessor()
 
     override suspend fun encodedJwtToAuthentication(encodedJwt: String): JwtAuthentication =
@@ -190,6 +199,17 @@ class LiteAuthenticationManager(
 
         return LiteJwtAuthentication(
             userDetails
+        )
+    }
+
+    override suspend fun loginWithCloudJwt(
+        issuer: String,
+        cloudToken: String
+    ): JwtAuthentication {
+        val userId = cloudJwtValidator.validateCloudJwtAndExtractUserId(issuer, cloudToken)
+        return buildAuthenticationToken(
+            userDAO.get(datastoreInstanceProvider.getInstanceAndGroup(), userId)
+                ?: throw UnauthorizedRequestException("User for provided cloud jwt was not found; make sure provided jwt is for the correct group.")
         )
     }
 }
