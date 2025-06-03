@@ -16,12 +16,16 @@ import org.springframework.web.server.ServerWebInputException
 import org.taktik.couchdb.exception.CouchDbConflictException
 import org.taktik.couchdb.exception.DocumentNotFoundException
 import org.taktik.icure.exceptions.*
+import org.taktik.icure.properties.SecurityProperties
 import reactor.core.publisher.Mono
 import java.io.IOException
 
 @Configuration
 @Profile("app")
-class GlobalErrorHandler(private val objectMapper: ObjectMapper) : ErrorWebExceptionHandler {
+class GlobalErrorHandler(
+    private val objectMapper: ObjectMapper,
+    private val securityProperties: SecurityProperties,
+) : ErrorWebExceptionHandler {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
 
     override fun handle(exchange: ServerWebExchange, ex: Throwable) = exchange.response.let { r ->
@@ -54,9 +58,16 @@ class GlobalErrorHandler(private val objectMapper: ObjectMapper) : ErrorWebExcep
                     // Keep at the end: some exceptions are also IllegalArgumentException
                     is IllegalArgumentException -> bufferFactory.toBuffer(ex.message)
                         .also { r.statusCode = HttpStatus.BAD_REQUEST }
-                    else -> bufferFactory.toBuffer("Internal server error. If the issue persists please contact iCure with reference ${exchange.request.id}").also {
-                        r.statusCode = HttpStatus.INTERNAL_SERVER_ERROR
-                        log.error("${exchange.request.id} - ${ex.message}", ex)
+                    else -> if (securityProperties.hideServerErrorMessage)
+                        bufferFactory.toBuffer("Internal server error. If the issue persists please contact iCure with reference ${exchange.request.id}").also {
+                            r.statusCode = HttpStatus.INTERNAL_SERVER_ERROR
+                            log.error("${exchange.request.id} - ${ex.message}", ex)
+                        }
+                    else {
+                        bufferFactory.toBuffer(ex.message).also {
+                            r.statusCode = HttpStatus.INTERNAL_SERVER_ERROR
+                            log.error("${exchange.request.id} - ${ex.message}", ex)
+                        }
                     }
                 }
             )
