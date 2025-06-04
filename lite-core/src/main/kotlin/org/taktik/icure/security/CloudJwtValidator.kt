@@ -49,7 +49,7 @@ class CloudJwtValidator(
 
 private sealed interface CloudHostPattern {
 	companion object {
-		private val URL_CHAR = "[0-9-_.~]"
+		private val URL_CHAR = "[0-9A-Za-z_.~\\-]"
 		private val EXACT_REGEX = Regex("$URL_CHAR+(?:\\.$URL_CHAR+)+")
 		private val SUB_DOMAIN_REGEX = Regex("\\*\\.$URL_CHAR+(?:\\.$URL_CHAR+)+")
 
