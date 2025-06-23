@@ -13,7 +13,7 @@ class BaseRefreshJwtConverter(
     override fun fromClaims(claims: Map<String, Any?>): JwtRefreshDetails =
         BaseJwtRefreshDetails(
             userId = (claims[USER_ID] as String?) ?: throw InvalidJwtException("Missing user id from claims"),
-            jwtDuration = (claims[JWT_DURATION] as? Int?)?.toLong() ?: authProperties.jwt.refreshExpirationSeconds,
+            jwtDuration = (claims[JWT_DURATION] as? Long) ?: authProperties.jwt.expirationSeconds,
             expiration = (claims[Jwt.StandardClaims.EXPIRES_AT] as Instant).epochSecond
         )
 
