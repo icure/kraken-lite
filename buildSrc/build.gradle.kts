@@ -26,5 +26,4 @@ java {
 dependencies {
 	implementation(coreLibs.bundles.kotlinxCoroutinesLibs)
 	implementation(coreLibs.kotlinxSerializationPlugin)
-	implementation(coreLibs.icureTestSetup)
 }
