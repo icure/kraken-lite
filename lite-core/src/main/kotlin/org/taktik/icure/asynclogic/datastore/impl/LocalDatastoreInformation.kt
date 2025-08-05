@@ -1,6 +1,6 @@
 package org.taktik.icure.asynclogic.datastore.impl
 
-import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
+import org.taktik.icure.datastore.IDatastoreInformation
 import java.net.URI
 
 data class LocalDatastoreInformation(

@@ -1,6 +1,8 @@
 [versions]
 sonarqube = "3.3"
-kmehr = "25.7.2-g1f972accd9"
+kmehr = "25.7.3-ge81ac139cf"
+kotest = "5.9.1"
+logback = "1.5.18"
 
 [libraries]
 reactorCore = { group = "io.projectreactor", name = "reactor-core" }
@@ -12,6 +14,11 @@ commonsCodec = { group = "commons-codec", name = "commons-codec", version = "1.1
 mustacheJava = { group = "com.github.spullara.mustache.java", name = "compiler", version = "0.9.10" }
 jaxbApi = { group = "javax.xml.bind", name = "jaxb-api", version = "2.3.1" }
 jaxbRuntime = { group = "org.glassfish.jaxb", name = "jaxb-runtime", version = "2.3.8" }
+kotestFrameworkApi = { group = "io.kotest", name = "kotest-framework-api", version.ref = "kotest" }
+slf4jApi = { group = "org.slf4j", name = "slf4j-api", version = "2.0.17" }
+logbackClassic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+logbackCore = { group = "ch.qos.logback", name = "logback-core", version.ref = "logback" }
+micrometerObservation = { group = "io.micrometer", name = "micrometer-observation", version = "1.15.1" }
 
 [bundles]
 reactorLibs = ["reactorCore", "reactorTools", "reactorNetty"]

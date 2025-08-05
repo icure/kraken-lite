@@ -1,6 +1,6 @@
 package org.taktik.icure.asyncdao
 
-import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
+import org.taktik.icure.datastore.IDatastoreInformation
 
 interface ICureLiteDAO : ICureDAO {
 	suspend fun getCouchDbConfigProperty(datastoreInformation: IDatastoreInformation, section: String, key: String): String?

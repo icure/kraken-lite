@@ -2,6 +2,7 @@ package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
+import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.CalendarItemTypeLogic
 import org.taktik.icure.asyncservice.CalendarItemTypeService
@@ -19,6 +20,11 @@ class CalendarItemTypeServiceImpl(
     override suspend fun getCalendarItemType(calendarItemTypeId: String): CalendarItemType? = calendarItemTypeLogic.getCalendarItemType(calendarItemTypeId)
 
     override fun getCalendarItemTypes(calendarItemTypeIds: Collection<String>): Flow<CalendarItemType> = calendarItemTypeLogic.getCalendarItemTypes(calendarItemTypeIds)
+    override suspend fun purgeCalendarItemType(
+        id: String,
+        rev: String
+    ): DocIdentifier = calendarItemTypeLogic.purgeEntity(id, rev)
+
     override fun getAllCalendarItemTypes(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = calendarItemTypeLogic.getAllCalendarItemTypes(offset)
     override fun getAllCalendarItemTypes(): Flow<CalendarItemType> = calendarItemTypeLogic.getEntities()
     override suspend fun modifyCalendarItemType(calendarItemType: CalendarItemType): CalendarItemType? = calendarItemTypeLogic.modifyCalendarTypeItem(calendarItemType)

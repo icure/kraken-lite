@@ -21,7 +21,7 @@ import org.taktik.icure.asyncdao.AttachmentManagementDAO
 import org.taktik.icure.asyncdao.DocumentDAO
 import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asyncdao.objectstorage.ObjectStorageMigrationTasksDAO
-import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
+import org.taktik.icure.datastore.DatastoreInstanceProvider
 import org.taktik.icure.entities.Document
 import org.taktik.icure.entities.base.HasDataAttachments
 import org.taktik.icure.entities.embed.DeletedAttachment

@@ -6,7 +6,7 @@ import org.taktik.couchdb.Client
 import org.taktik.icure.asyncdao.CouchDbDispatcher
 import org.taktik.icure.asyncdao.ICureLiteDAO
 import org.taktik.icure.asyncdao.components.ActiveTasksProvider
-import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
+import org.taktik.icure.datastore.IDatastoreInformation
 import org.taktik.icure.security.CouchDbCredentialsProvider
 
 
