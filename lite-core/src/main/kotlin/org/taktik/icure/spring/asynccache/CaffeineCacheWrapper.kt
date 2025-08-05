@@ -21,7 +21,7 @@ package org.taktik.icure.spring.asynccache
 import com.github.benmanes.caffeine.cache.Caffeine
 import java.util.concurrent.TimeUnit
 
-class CaffeineCacheWrapper<K : Any, V>(
+class CaffeineCacheWrapper<K : Any, V: Any>(
 	private val name: String,
 	ttlSeconds: Int?
 ) : Cache<K, V> {

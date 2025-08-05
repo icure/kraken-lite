@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.util.Assert
 import org.taktik.icure.asyncdao.HealthcarePartyDAO
 import org.taktik.icure.asyncdao.UserDAO
-import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
+import org.taktik.icure.datastore.DatastoreInstanceProvider
 import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_HCP
 import org.taktik.icure.constants.Roles.GrantedAuthority.Companion.ROLE_USER
 import org.taktik.icure.constants.Users
@@ -31,9 +31,6 @@ import org.taktik.icure.security.jwt.JwtAuthentication
 import org.taktik.icure.security.jwt.JwtDetails
 import org.taktik.icure.security.jwt.JwtRefreshDetails
 import org.taktik.icure.security.jwt.JwtUtils
-import org.taktik.icure.utils.error
-import java.net.URI
-import java.net.URL
 
 interface LiteAuthenticationManager : CustomReactiveAuthenticationManager {
     suspend fun loginWithCloudJwt(issuer: String, cloudToken: String): JwtAuthentication
@@ -48,8 +45,7 @@ class LiteAuthenticationManagerImpl(
     healthcarePartyDAO: HealthcarePartyDAO,
     passwordEncoder: PasswordEncoder,
     jwtUtils: JwtUtils,
-    private val cloudJwtValidator: CloudJwtValidator,
-    jwtValidator: CloudJwtValidator,
+    private val cloudJwtValidator: CloudJwtValidator
 ) : AbstractAuthenticationManager<JwtDetails, JwtRefreshDetails>(
     healthcarePartyDAO,
     passwordEncoder,

@@ -29,7 +29,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.core.task.TaskExecutor
-import org.springframework.scheduling.TaskScheduler
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
 import org.taktik.couchdb.ViewRowWithDoc
@@ -40,8 +39,8 @@ import org.taktik.icure.asyncdao.impl.ICureLiteDAOImpl
 import org.taktik.icure.asynclogic.CodeLogic
 import org.taktik.icure.asynclogic.ICureLogic
 import org.taktik.icure.asynclogic.UserLogic
-import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
-import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
+import org.taktik.icure.datastore.DatastoreInstanceProvider
+import org.taktik.icure.datastore.IDatastoreInformation
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorage
 import org.taktik.icure.asynclogic.objectstorage.IcureObjectStorageMigration
 import org.taktik.icure.config.ExternalViewsConfig
@@ -62,7 +61,6 @@ import org.taktik.icure.entities.embed.PersonalStatus
 import org.taktik.icure.entities.embed.TelecomType
 import org.taktik.icure.entities.embed.Visibility
 import org.taktik.icure.properties.AuthenticationLiteProperties
-import org.taktik.icure.properties.AuthenticationProperties
 import org.taktik.icure.properties.CouchDbLiteProperties
 import org.taktik.icure.utils.suspendRetry
 import java.util.*
@@ -112,7 +110,6 @@ class ICureBackendApplication {
     @Profile("app")
     fun performStartupTasks(
         @Qualifier("threadPoolTaskExecutor") taskExecutor: TaskExecutor,
-        taskScheduler: TaskScheduler,
         userLogic: UserLogic,
         iCureLogic: ICureLogic,
         codeLogic: CodeLogic,
@@ -120,7 +117,6 @@ class ICureBackendApplication {
         allDaos: List<GenericDAO<*>>,
         allInternalDaos: List<InternalDAO<*>>,
         couchDbProperties: CouchDbLiteProperties,
-        authenticationProperties: AuthenticationProperties,
         authenticationLiteProperties: AuthenticationLiteProperties,
         allObjectStorageLogic: List<IcureObjectStorage<*>>,
         allObjectStorageMigrationLogic: List<IcureObjectStorageMigration<*>>,

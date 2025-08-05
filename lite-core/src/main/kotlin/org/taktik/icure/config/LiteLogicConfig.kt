@@ -58,7 +58,7 @@ import org.taktik.icure.asynclogic.SecureDelegationKeyMapLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.asynclogic.TarificationLogic
 import org.taktik.icure.asynclogic.UserLogic
-import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
+import org.taktik.icure.datastore.DatastoreInstanceProvider
 import org.taktik.icure.asynclogic.impl.AgendaLogicImpl
 import org.taktik.icure.asynclogic.impl.CalendarItemLogicImpl
 import org.taktik.icure.asynclogic.impl.ClassificationLogicImpl
