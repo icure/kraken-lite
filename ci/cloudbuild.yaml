@@ -30,4 +30,7 @@ availableSecrets:
     - versionName: projects/taktik-dev/secrets/ci-repo-password/versions/1
       env: 'REPO_PASSWORD'
 
+options:
+  pool:
+    name: "projects/taktik-dev/locations/europe-west1/workerPools/taktik-gcb-large-pool"
 timeout: 2700s
