@@ -66,6 +66,7 @@ subprojects {
 				force(coreLibs.kotlinxCoroutinesCoreJvm)
 				force(coreLibs.kotlinxCoroutinesDebug)
 				force(coreLibs.kotlinxCoroutinesJdk8)
+				force(coreLibs.kotlinxCoroutinesReactor)
 				force(coreLibs.kotlinxCoroutinesTest)
 				force(coreLibs.kotlinxIoCore)
 				force(coreLibs.kotlinxSerializationBom)
