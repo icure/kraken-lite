@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.taktik.couchdb.id.UUIDGenerator
 import org.taktik.icure.asyncdao.AgendaDAO
+import org.taktik.icure.asyncdao.ApplicationSettingsDAO
 import org.taktik.icure.asyncdao.CalendarItemDAO
 import org.taktik.icure.asyncdao.ClassificationDAO
 import org.taktik.icure.asyncdao.CodeDAO
@@ -34,6 +35,7 @@ import org.taktik.icure.asyncdao.SecureDelegationKeyMapDAO
 import org.taktik.icure.asyncdao.TarificationDAO
 import org.taktik.icure.asyncdao.UserDAO
 import org.taktik.icure.asynclogic.AgendaLogic
+import org.taktik.icure.asynclogic.ApplicationSettingsLogic
 import org.taktik.icure.asynclogic.CalendarItemLogic
 import org.taktik.icure.asynclogic.ClassificationLogic
 import org.taktik.icure.asynclogic.CodeLogic
@@ -60,6 +62,7 @@ import org.taktik.icure.asynclogic.TarificationLogic
 import org.taktik.icure.asynclogic.UserLogic
 import org.taktik.icure.datastore.DatastoreInstanceProvider
 import org.taktik.icure.asynclogic.impl.AgendaLogicImpl
+import org.taktik.icure.asynclogic.impl.ApplicationSettingsLogicImpl
 import org.taktik.icure.asynclogic.impl.CalendarItemLogicImpl
 import org.taktik.icure.asynclogic.impl.ClassificationLogicImpl
 import org.taktik.icure.asynclogic.impl.CodeLogicImpl
@@ -145,6 +148,23 @@ class LiteLogicConfig {
 	): InsuranceLogic = InsuranceLogicImpl(
 		insuranceDAO = insuranceDAO,
 		datastoreInstanceProvider = datastoreInstanceProvider,
+		fixer = fixer,
+		filters = filters
+	)
+
+	@Bean
+	fun applicationSettingsLogic(
+		applicationSettingsDAO: ApplicationSettingsDAO,
+		datastoreInstanceProvider: DatastoreInstanceProvider,
+		sessionInformationProvider: SessionInformationProvider,
+		exchangeDataMapLogic: ExchangeDataMapLogic,
+		fixer: Fixer,
+		filters: Filters,
+	): ApplicationSettingsLogic = ApplicationSettingsLogicImpl(
+		applicationSettingsDAO = applicationSettingsDAO,
+		datastoreInstanceProvider = datastoreInstanceProvider,
+		sessionInformationProvider = sessionInformationProvider,
+		exchangeDataMapLogic = exchangeDataMapLogic,
 		fixer = fixer,
 		filters = filters
 	)
