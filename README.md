@@ -211,6 +211,13 @@ To use kraken-lite with a kraken cloud CouchDB database, you have to start it wi
 -Dicure.objectstorage.icureCloudUrl=http://127.0.0.1:16043
 ```
 
+## Available properties
+
+```bash
+-Dicure.auth.known-cloud-jwt-issuers=*.icure.cloud #Set the listed of trusted JWT issuers
+-Dicure.auth.allow-unsecure-cloud-jwt-issuer=false #Trust issuers reachable through http only
+```
+
 ## TroubleShooting
 
 ### Unresolved Reference: (X)FilterMapperImpl
