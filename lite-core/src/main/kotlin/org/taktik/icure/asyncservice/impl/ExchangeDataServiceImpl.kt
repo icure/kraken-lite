@@ -27,6 +27,9 @@ class ExchangeDataServiceImpl(
     override suspend fun createExchangeData(exchangeData: ExchangeData): ExchangeData =
         exchangeDataLogic.createExchangeData(exchangeData)
 
+    override suspend fun createExchangeDatas(exchangeDatas: List<ExchangeData>): Flow<ExchangeData> =
+        exchangeDataLogic.createExchangeDatas(exchangeDatas)
+
     override suspend fun modifyExchangeData(exchangeData: ExchangeData): ExchangeData =
         exchangeDataLogic.modifyExchangeData(exchangeData)
 
