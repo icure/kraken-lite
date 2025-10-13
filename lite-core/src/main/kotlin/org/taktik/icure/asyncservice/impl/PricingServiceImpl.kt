@@ -21,13 +21,6 @@ class PricingServiceImpl(
 
     override fun getTarifications(ids: List<String>): Flow<Tarification> = tarificationLogic.getTarifications(ids)
 
-    override fun getTarifications(
-        groupId: String,
-        ids: List<String>
-    ): Flow<Tarification> {
-        throw NotImplementedError()
-    }
-
     override suspend fun createTarification(tarification: Tarification): Tarification? = tarificationLogic.createTarification(tarification)
 
     override suspend fun modifyTarification(tarification: Tarification): Tarification? = tarificationLogic.modifyTarification(tarification)
@@ -40,20 +33,6 @@ class PricingServiceImpl(
         tarification: String?,
         version: String?
     ): Flow<Tarification> = tarificationLogic.findTarificationsBy(region, type, tarification, version)
-
-    override fun create(
-        groupId: String,
-        batch: List<Tarification>
-    ): Flow<Tarification> {
-        throw NotImplementedError()
-    }
-
-    override fun modify(
-        groupId: String,
-        batch: List<Tarification>
-    ): Flow<Tarification> {
-        throw NotImplementedError()
-    }
 
     override fun matchTarificationsBy(filter: AbstractFilter<Tarification>): Flow<String> {
         throw NotImplementedError()
@@ -84,11 +63,4 @@ class PricingServiceImpl(
     ): Flow<ViewQueryResultEvent> = tarificationLogic.findTarificationsByLabel(region, language, type, label, paginationOffset)
 
     override suspend fun getOrCreateTarification(type: String, tarification: String): Tarification? = tarificationLogic.getOrCreateTarification(type, tarification)
-
-    override fun matchTarificationsInGroupBy(
-        filter: AbstractFilter<Tarification>,
-        groupId: String
-    ): Flow<String> {
-        throw NotImplementedError()
-    }
 }
