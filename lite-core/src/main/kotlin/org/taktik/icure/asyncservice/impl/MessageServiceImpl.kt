@@ -25,117 +25,117 @@ import org.taktik.icure.pagination.PaginationElement
 
 @Service
 class MessageServiceImpl(
-    private val messageLogic: MessageLogic,
-    private val sessionInformationProvider: SessionInformationProvider
+	private val messageLogic: MessageLogic,
+	private val sessionInformationProvider: SessionInformationProvider
 ) : MessageService {
-    override fun findMessagesByFromAddress(
-        hcPartyId: String,
-        fromAddress: String,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = messageLogic.findMessagesByFromAddress(hcPartyId, fromAddress, paginationOffset)
+	override fun findMessagesByFromAddress(
+		hcPartyId: String,
+		fromAddress: String,
+		paginationOffset: PaginationOffset<ComplexKey>
+	): Flow<PaginationElement> = messageLogic.findMessagesByFromAddress(hcPartyId, fromAddress, paginationOffset)
 
-    override fun findMessagesByToAddress(
-        hcPartyId: String,
-        toAddress: String,
-        paginationOffset: PaginationOffset<ComplexKey>,
-        reverse: Boolean?
-    ): Flow<PaginationElement> = messageLogic.findMessagesByToAddress(hcPartyId, toAddress, paginationOffset, reverse ?: false)
+	override fun findMessagesByToAddress(
+		hcPartyId: String,
+		toAddress: String,
+		paginationOffset: PaginationOffset<ComplexKey>,
+		reverse: Boolean?
+	): Flow<PaginationElement> = messageLogic.findMessagesByToAddress(hcPartyId, toAddress, paginationOffset, reverse ?: false)
 
-    override fun findMessagesByTransportGuidReceived(
-        hcPartyId: String,
-        transportGuid: String?,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuidReceived(hcPartyId, transportGuid, paginationOffset)
+	override fun findMessagesByTransportGuidReceived(
+		hcPartyId: String,
+		transportGuid: String?,
+		paginationOffset: PaginationOffset<ComplexKey>
+	): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuidReceived(hcPartyId, transportGuid, paginationOffset)
 
-    override fun findMessagesByTransportGuid(
-        hcPartyId: String,
-        transportGuid: String?,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuid(hcPartyId, transportGuid, paginationOffset)
-    override fun findMessagesByTransportGuidSentDate(
-        hcPartyId: String,
-        transportGuid: String,
-        fromDate: Long,
-        toDate: Long,
-        paginationOffset: PaginationOffset<ComplexKey>
-    ): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuidSentDate(hcPartyId, transportGuid, fromDate, toDate, paginationOffset)
+	override fun findMessagesByTransportGuid(
+		hcPartyId: String,
+		transportGuid: String?,
+		paginationOffset: PaginationOffset<ComplexKey>
+	): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuid(hcPartyId, transportGuid, paginationOffset)
+	override fun findMessagesByTransportGuidSentDate(
+		hcPartyId: String,
+		transportGuid: String,
+		fromDate: Long,
+		toDate: Long,
+		paginationOffset: PaginationOffset<ComplexKey>
+	): Flow<PaginationElement> = messageLogic.findMessagesByTransportGuidSentDate(hcPartyId, transportGuid, fromDate, toDate, paginationOffset)
 
-    override suspend fun addDelegation(messageId: String, delegation: Delegation): Message? = getMessage(messageId)?.let {
-        messageLogic.addDelegation(it, delegation)
-    }
+	override suspend fun addDelegation(messageId: String, delegation: Delegation): Message? = getMessage(messageId)?.let {
+		messageLogic.addDelegation(it, delegation)
+	}
 
-    override suspend fun createMessage(message: Message): Message? = messageLogic.createMessage(message)
+	override suspend fun createMessage(message: Message): Message? = messageLogic.createMessage(message)
 
-    override fun createMessages(entities: Collection<Message>): Flow<Message> = messageLogic.createMessages(entities)
+	override fun createMessages(entities: Collection<Message>): Flow<Message> = messageLogic.createMessages(entities)
 
-    override suspend fun getMessage(messageId: String): Message? = messageLogic.getMessage(messageId)
+	override suspend fun getMessage(messageId: String): Message? = messageLogic.getMessage(messageId)
 
-    override fun getMessages(messageIds: List<String>): Flow<Message> = messageLogic.getMessages(messageIds)
+	override fun getMessages(messageIds: List<String>): Flow<Message> = messageLogic.getMessages(messageIds)
 
-    override suspend fun modifyMessage(message: Message): Message? = messageLogic.modifyEntities(flowOf(message)).singleOrNull()
+	override suspend fun modifyMessage(message: Message): Message? = messageLogic.modifyEntities(flowOf(message)).singleOrNull()
 
-    @Suppress("DEPRECATION")
-    @Deprecated("This method cannot include results with secure delegations, use listMessageIdsByDataOwnerPatientSentDate instead")
-    override fun listMessagesByCurrentHCPartySecretPatientKeys(secretPatientKeys: List<String>): Flow<Message> = flow {
-        emitAll(
-            messageLogic.listMessagesByHCPartySecretPatientKeys(sessionInformationProvider.getCurrentHealthcarePartyId(), secretPatientKeys)
-        )
-    }
+	@Suppress("DEPRECATION")
+	@Deprecated("This method cannot include results with secure delegations, use listMessageIdsByDataOwnerPatientSentDate instead")
+	override fun listMessagesByCurrentHCPartySecretPatientKeys(secretPatientKeys: List<String>): Flow<Message> = flow {
+		emitAll(
+			messageLogic.listMessagesByHCPartySecretPatientKeys(sessionInformationProvider.getCurrentDataOwnerId(), secretPatientKeys)
+		)
+	}
 
-    override fun listMessageIdsByDataOwnerPatientSentDate(
-        dataOwnerId: String,
-        secretForeignKeys: Set<String>,
-        startDate: Long?,
-        endDate: Long?,
-        descending: Boolean
-    ): Flow<String> = messageLogic.listMessageIdsByDataOwnerPatientSentDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
+	override fun listMessageIdsByDataOwnerPatientSentDate(
+		dataOwnerId: String,
+		secretForeignKeys: Set<String>,
+		startDate: Long?,
+		endDate: Long?,
+		descending: Boolean
+	): Flow<String> = messageLogic.listMessageIdsByDataOwnerPatientSentDate(dataOwnerId, secretForeignKeys, startDate, endDate, descending)
 
-    override fun setStatus(messageIds: List<String>, status: Int): Flow<Message> = flow {
-        emitAll(
-            messageLogic.getEntities(messageIds).let {
-                messageLogic.setStatus(it.toList(), status)
-            }
-        )
-    }
+	override fun setStatus(messageIds: List<String>, status: Int): Flow<Message> = flow {
+		emitAll(
+			messageLogic.getEntities(messageIds).let {
+				messageLogic.setStatus(it.toList(), status)
+			}
+		)
+	}
 
-    override fun setReadStatus(messageIds: List<String>, userId: String?, status: Boolean, time: Long?): Flow<Message> = flow {
-        emitAll(
-            messageLogic.getEntities(messageIds).let {
-                messageLogic.setReadStatus(it.toList(), userId, status, time)
-            }
-        )
-    }
+	override fun setReadStatus(messageIds: List<String>, userId: String?, status: Boolean, time: Long?): Flow<Message> = flow {
+		emitAll(
+			messageLogic.getEntities(messageIds).let {
+				messageLogic.setReadStatus(it.toList(), userId, status, time)
+			}
+		)
+	}
 
-    override fun findForCurrentHcPartySortedByReceived(paginationOffset: PaginationOffset<ComplexKey>): Flow<PaginationElement> = flow {
-        emitAll(
-            messageLogic.findForHcPartySortedByReceived(sessionInformationProvider.getCurrentHealthcarePartyId(), paginationOffset)
-        )
-    }
+	override fun findForCurrentHcPartySortedByReceived(paginationOffset: PaginationOffset<ComplexKey>): Flow<PaginationElement> = flow {
+		emitAll(
+			messageLogic.findForHcPartySortedByReceived(sessionInformationProvider.getCurrentDataOwnerId(), paginationOffset)
+		)
+	}
 
-    override suspend fun addDelegations(messageId: String, delegations: List<Delegation>): Message? = getMessage(messageId)?.let {
-        messageLogic.addDelegations(it, delegations)
-    }
+	override suspend fun addDelegations(messageId: String, delegations: List<Delegation>): Message? = getMessage(messageId)?.let {
+		messageLogic.addDelegations(it, delegations)
+	}
 
-    override fun getMessageChildren(messageId: String): Flow<Message> = messageLogic.getMessageChildren(messageId)
+	override fun getMessageChildren(messageId: String): Flow<Message> = messageLogic.getMessageChildren(messageId)
 
-    override fun getMessagesChildren(parentIds: List<String>): Flow<Message> = messageLogic.getMessagesChildren(parentIds)
+	override fun getMessagesChildren(parentIds: List<String>): Flow<Message> = messageLogic.getMessagesChildren(parentIds)
 
-    override fun getMessagesByTransportGuids(hcpId: String, transportGuids: Set<String>): Flow<Message> = messageLogic.getMessagesByTransportGuids(hcpId, transportGuids)
+	override fun getMessagesByTransportGuids(hcpId: String, transportGuids: Set<String>): Flow<Message> = messageLogic.getMessagesByTransportGuids(hcpId, transportGuids)
 
-    override fun listMessagesByInvoiceIds(ids: List<String>): Flow<Message> = messageLogic.listMessagesByInvoiceIds(ids)
+	override fun listMessagesByInvoiceIds(ids: List<String>): Flow<Message> = messageLogic.listMessagesByInvoiceIds(ids)
 
-    override fun solveConflicts(limit: Int?, ids: List<String>?) = messageLogic.solveConflicts(limit, ids)
+	override fun solveConflicts(limit: Int?, ids: List<String>?) = messageLogic.solveConflicts(limit, ids)
 
-    override fun filterMessages(
-        paginationOffset: PaginationOffset<Nothing>,
-        filter: FilterChain<Message>
-    ): Flow<ViewQueryResultEvent> = messageLogic.filterMessages(paginationOffset, filter)
+	override fun filterMessages(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Message>
+	): Flow<ViewQueryResultEvent> = messageLogic.filterMessages(paginationOffset, filter)
 
-    override fun deleteMessages(ids: List<IdAndRev>): Flow<Message> = messageLogic.deleteEntities(ids)
-    override suspend fun deleteMessage(id: String, rev: String?): Message = messageLogic.deleteEntity(id, rev)
-    override suspend fun purgeMessage(id: String, rev: String): DocIdentifier = messageLogic.purgeEntity(id, rev)
-    override suspend fun undeleteMessage(id: String, rev: String): Message = messageLogic.undeleteEntity(id, rev)
-    override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
+	override fun deleteMessages(ids: List<IdAndRev>): Flow<Message> = messageLogic.deleteEntities(ids)
+	override suspend fun deleteMessage(id: String, rev: String?): Message = messageLogic.deleteEntity(id, rev)
+	override suspend fun purgeMessage(id: String, rev: String): DocIdentifier = messageLogic.purgeEntity(id, rev)
+	override suspend fun undeleteMessage(id: String, rev: String): Message = messageLogic.undeleteEntity(id, rev)
+	override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
 
-    override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Message>> = messageLogic.bulkShareOrUpdateMetadata(requests)
+	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Message>> = messageLogic.bulkShareOrUpdateMetadata(requests)
 }
