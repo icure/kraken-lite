@@ -33,179 +33,181 @@ import org.taktik.icure.security.jwt.JwtRefreshDetails
 import org.taktik.icure.security.jwt.JwtUtils
 
 interface LiteAuthenticationManager : CustomReactiveAuthenticationManager {
-    suspend fun loginWithCloudJwt(issuer: String, cloudToken: String): JwtAuthentication
+	suspend fun loginWithCloudJwt(issuer: String, cloudToken: String): JwtAuthentication
 }
 
 @Service
 class LiteAuthenticationManagerImpl(
-    private val datastoreInstanceProvider: DatastoreInstanceProvider,
-    private val userDAO: UserDAO,
-    private val authenticationProperties: AuthenticationProperties,
-    private val refreshJwtConverter: BaseRefreshJwtConverter,
-    healthcarePartyDAO: HealthcarePartyDAO,
-    passwordEncoder: PasswordEncoder,
-    jwtUtils: JwtUtils,
-    private val cloudJwtValidator: CloudJwtValidator
+	private val datastoreInstanceProvider: DatastoreInstanceProvider,
+	private val userDAO: UserDAO,
+	private val authenticationProperties: AuthenticationProperties,
+	private val refreshJwtConverter: BaseRefreshJwtConverter,
+	healthcarePartyDAO: HealthcarePartyDAO,
+	passwordEncoder: PasswordEncoder,
+	jwtUtils: JwtUtils,
+	private val cloudJwtValidator: CloudJwtValidator
 ) : AbstractAuthenticationManager<JwtDetails, JwtRefreshDetails>(
-    healthcarePartyDAO,
-    passwordEncoder,
-    jwtUtils
+	healthcarePartyDAO,
+	passwordEncoder,
+	jwtUtils
 ), LiteAuthenticationManager {
-    private val messageSourceAccessor = SpringSecurityMessageSource.getAccessor()
+	private val messageSourceAccessor = SpringSecurityMessageSource.getAccessor()
 
-    override suspend fun encodedJwtToAuthentication(encodedJwt: String): JwtAuthentication =
-        LiteJwtAuthentication(jwtUtils.validateAndDecodeAuthDetails(BaseJwtDetails, encodedJwt))
+	override suspend fun encodedJwtToAuthentication(encodedJwt: String): JwtAuthentication =
+		LiteJwtAuthentication(jwtUtils.validateAndDecodeAuthDetails(BaseJwtDetails, encodedJwt))
 
-    override suspend fun regenerateAuthJwt(
-        encodedRefreshToken: String,
-        bypassRefreshValidityCheck: Boolean,
-        totpToken: String?
-    ): Pair<JwtDetails, Long?> {
-        val jwtRefreshDetails = jwtUtils.validateAndDecodeRefreshToken(refreshJwtConverter, encodedRefreshToken)
-        val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
-        val user = userDAO.findUserOnUserDb(datastoreInformation, jwtRefreshDetails.userId, false)
-            ?: throw InvalidJwtException("Cannot refresh authentication token for this user")
-        if (user.status != Users.Status.ACTIVE || user.deletionDate != null) throw InvalidJwtException("Cannot create access token for non-active user")
-        val hcpHierarchy = user.healthcarePartyId?.let { hcpId ->
-            healthcarePartyDAO.get(datastoreInformation, hcpId)?.let { baseHcp ->
-                getHcpHierarchy(baseHcp, datastoreInformation).map { it.id }
-            } ?: emptyList()
-        } ?: emptyList()
+	override suspend fun regenerateAuthJwt(
+		encodedRefreshToken: String,
+		bypassRefreshValidityCheck: Boolean,
+		totpToken: String?
+	): Pair<JwtDetails, Long?> {
+		val jwtRefreshDetails = jwtUtils.validateAndDecodeRefreshToken(refreshJwtConverter, encodedRefreshToken)
+		val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
+		val user = userDAO.findUserOnUserDb(datastoreInformation, jwtRefreshDetails.userId, false)
+			?: throw InvalidJwtException("Cannot refresh authentication token for this user")
+		if (user.status != Users.Status.ACTIVE || user.deletionDate != null) throw InvalidJwtException("Cannot create access token for non-active user")
+		val hcpHierarchy = user.healthcarePartyId?.let { hcpId ->
+			healthcarePartyDAO.get(datastoreInformation, hcpId)?.let { baseHcp ->
+				getHcpHierarchy(baseHcp, datastoreInformation).map { it.id }
+			} ?: emptyList()
+		} ?: emptyList()
 
-        return BaseJwtDetails(
-            userId = jwtRefreshDetails.userId,
-            dataOwnerId = user.healthcarePartyId
-                ?: user.patientId
-                ?: user.deviceId,
-            dataOwnerType = user.getDataOwnerTypeOrNull(),
-            hcpHierarchy = hcpHierarchy,
-            authorities = setOfNotNull(
-                SimpleGrantedAuthority(ROLE_USER),
-                SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
-            )
-        ) to jwtRefreshDetails.jwtDuration
-    }
+		return BaseJwtDetails(
+			userId = jwtRefreshDetails.userId,
+			dataOwnerId = user.healthcarePartyId
+				?: user.patientId
+				?: user.deviceId,
+			dataOwnerType = user.getDataOwnerTypeOrNull(),
+			hcpHierarchy = hcpHierarchy,
+			authorities = setOfNotNull(
+				SimpleGrantedAuthority(ROLE_USER),
+				SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
+			)
+		) to jwtRefreshDetails.jwtDuration
+	}
 
-    override suspend fun checkAuthentication(fullGroupAndId: String, password: String) {
-        if (password.length < authenticationProperties.minPasswordLength && !password.matches(TOKEN_REGEX)) {
-            throw BadCredentialsException("Password too short")
-        }
-        val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
-        return listOfNotNull(userDAO.findUserOnUserDb(datastoreInformation, fullGroupAndId, false))
-            .filter { it.status == Users.Status.ACTIVE && it.deletionDate != null }.toSet()
-            .sortedWith(compareBy({ it.groupId }, { it.id }))
-            .let { candidates ->
-                candidates.fold(false) { result, candidate ->
-                    result || isPasswordValid(candidate, password).isSuccess()
-                }.let { result ->
-                    if (!result) {
-                        throw BadCredentialsException("Invalid username or password")
-                    }
-                }
-            }
-    }
+	override suspend fun checkAuthentication(fullGroupAndId: String, password: String) {
+		if (password.length < authenticationProperties.minPasswordLength && !password.matches(TOKEN_REGEX)) {
+			throw BadCredentialsException("Password too short")
+		}
+		val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
+		return listOfNotNull(userDAO.findUserOnUserDb(datastoreInformation, fullGroupAndId, false))
+			.filter { it.status == Users.Status.ACTIVE && it.deletionDate != null }.toSet()
+			.sortedWith(compareBy({ it.groupId }, { it.id }))
+			.let { candidates ->
+				candidates.fold(false) { result, candidate ->
+					result || isPasswordValid(candidate, password).isSuccess()
+				}.let { result ->
+					if (!result) {
+						throw BadCredentialsException("Invalid username or password")
+					}
+				}
+			}
+	}
 
-    override suspend fun authenticateWithUsernameAndPassword(
-        authentication: Authentication,
-        groupId: String?,
-        applicationId: String?
-    ): JwtAuthentication {
-        val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
+	override suspend fun authenticateWithUsernameAndPassword(
+		authentication: Authentication,
+		groupId: String?,
+		applicationId: String?,
+		scopeDataOwner: String?,
+		cacheJwtRefreshDetails: Boolean
+	): JwtAuthentication {
+		val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 
-        authentication.principal ?: throw BadCredentialsException("Invalid username or password")
-        authentication.name?.takeIf { it.isNotBlank() } ?: throw BadCredentialsException("Invalid username or password")
-        authentication.credentials ?: throw BadCredentialsException("Invalid username or password")
+		authentication.principal ?: throw BadCredentialsException("Invalid username or password")
+		authentication.name?.takeIf { it.isNotBlank() } ?: throw BadCredentialsException("Invalid username or password")
+		authentication.credentials ?: throw BadCredentialsException("Invalid username or password")
 
-        val username: String = authentication.name
+		val username: String = authentication.name
 
-        val password = authentication.credentials.toString()
-        if (password.length < authenticationProperties.minPasswordLength && !password.matches(TOKEN_REGEX)) {
-            throw PasswordTooShortException("Password too short")
-        }
-        if (password.length < authenticationProperties.recommendedPasswordLength && !password.matches(TOKEN_REGEX)) {
-            log.error { "$username is attempting to login with a short password" }
-        }
+		val password = authentication.credentials.toString()
+		if (password.length < authenticationProperties.minPasswordLength && !password.matches(TOKEN_REGEX)) {
+			throw PasswordTooShortException("Password too short")
+		}
+		if (password.length < authenticationProperties.recommendedPasswordLength && !password.matches(TOKEN_REGEX)) {
+			log.error { "$username is attempting to login with a short password" }
+		}
 
-        Assert.isInstanceOf(
-            UsernamePasswordAuthenticationToken::class.java, authentication,
-            messageSourceAccessor.getMessage(
-                "AbstractUserDetailsAuthenticationProvider.onlySupports",
-                "Only UsernamePasswordAuthenticationToken is supported"
-            )
-        )
-        val users = (
-                (userDAO.findUserOnUserDb(datastoreInformation, username, false)?.let { listOf(it) } ?: emptyList())
-                        + try {
-                    userDAO.listUsersByUsername(datastoreInformation, username).toList()
-                } catch (_: Exception) {
-                    emptyList()
-                }
-                        + try {
-                    userDAO.listUsersByEmail(datastoreInformation, username).toList()
-                } catch (_: Exception) {
-                    emptyList()
-                }
-                        + try {
-                    userDAO.listUsersByPhone(datastoreInformation, username).toList()
-                } catch (_: Exception) {
-                    emptyList()
-                }
-                )
-            .filter { it.status == Users.Status.ACTIVE && it.deletionDate == null }
-            .toList()
-            .sortedBy { it.id }
-            .distinctBy { it.id }
+		Assert.isInstanceOf(
+			UsernamePasswordAuthenticationToken::class.java, authentication,
+			messageSourceAccessor.getMessage(
+				"AbstractUserDetailsAuthenticationProvider.onlySupports",
+				"Only UsernamePasswordAuthenticationToken is supported"
+			)
+		)
+		val users = (
+				(userDAO.findUserOnUserDb(datastoreInformation, username, false)?.let { listOf(it) } ?: emptyList())
+						+ try {
+					userDAO.listUsersByUsername(datastoreInformation, username).toList()
+				} catch (_: Exception) {
+					emptyList()
+				}
+						+ try {
+					userDAO.listUsersByEmail(datastoreInformation, username).toList()
+				} catch (_: Exception) {
+					emptyList()
+				}
+						+ try {
+					userDAO.listUsersByPhone(datastoreInformation, username).toList()
+				} catch (_: Exception) {
+					emptyList()
+				}
+				)
+			.filter { it.status == Users.Status.ACTIVE && it.deletionDate == null }
+			.toList()
+			.sortedBy { it.id }
+			.distinctBy { it.id }
 
-        val accumulatedUsers = users.map { isPasswordValid(it, password) to it }
+		val accumulatedUsers = users.map { isPasswordValid(it, password) to it }
 
-        if (accumulatedUsers.none { (it, _) -> it.isSuccess() }) {
-            throw when {
-                accumulatedUsers.any { (it, _) -> it == Missing2fa } -> Missing2FAException("Missing verification code")
-                accumulatedUsers.any { (it, _) -> it == Failed2fa } -> Invalid2FAException("Invalid verification code")
-                else -> BadCredentialsException("Invalid username or password")
-            }
-        }
+		if (accumulatedUsers.none { (it, _) -> it.isSuccess() }) {
+			throw when {
+				accumulatedUsers.any { (it, _) -> it == Missing2fa } -> Missing2FAException("Missing verification code")
+				accumulatedUsers.any { (it, _) -> it == Failed2fa } -> Invalid2FAException("Invalid verification code")
+				else -> BadCredentialsException("Invalid username or password")
+			}
+		}
 
-        return buildAuthenticationToken(accumulatedUsers.first { it.first.isSuccess() }.second)
-    }
+		return buildAuthenticationToken(accumulatedUsers.first { it.first.isSuccess() }.second)
+	}
 
-    private suspend fun buildAuthenticationToken(user: User): LiteJwtAuthentication {
-        val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
+	private suspend fun buildAuthenticationToken(user: User): LiteJwtAuthentication {
+		val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 
-        val hcpHierarchy = user.healthcarePartyId?.let {
-            healthcarePartyDAO.get(datastoreInformation, it)?.let { baseHcp ->
-                getHcpHierarchy(baseHcp, datastoreInformation).map { hcp ->  hcp.id }
-            }
-        } ?: emptyList()
+		val hcpHierarchy = user.healthcarePartyId?.let {
+			healthcarePartyDAO.get(datastoreInformation, it)?.let { baseHcp ->
+				getHcpHierarchy(baseHcp, datastoreInformation).map { hcp ->  hcp.id }
+			}
+		} ?: emptyList()
 
-        val authorities = setOfNotNull(
-            SimpleGrantedAuthority(ROLE_USER),
-            SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
-        )
+		val authorities = setOfNotNull(
+			SimpleGrantedAuthority(ROLE_USER),
+			SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
+		)
 
-        val userDetails = BaseJwtDetails(
-            userId = user.id,
-            dataOwnerId = user.healthcarePartyId
-                ?: user.patientId
-                ?: user.deviceId,
-            dataOwnerType = user.getDataOwnerTypeOrNull(),
-            hcpHierarchy = hcpHierarchy,
-            authorities = authorities
-        )
+		val userDetails = BaseJwtDetails(
+			userId = user.id,
+			dataOwnerId = user.healthcarePartyId
+				?: user.patientId
+				?: user.deviceId,
+			dataOwnerType = user.getDataOwnerTypeOrNull(),
+			hcpHierarchy = hcpHierarchy,
+			authorities = authorities
+		)
 
-        return LiteJwtAuthentication(
-            userDetails
-        )
-    }
+		return LiteJwtAuthentication(
+			userDetails
+		)
+	}
 
-    override suspend fun loginWithCloudJwt(
-        issuer: String,
-        cloudToken: String
-    ): JwtAuthentication {
-        val userId = cloudJwtValidator.validateCloudJwtAndExtractUserId(issuer, cloudToken)
-        return buildAuthenticationToken(
-            userDAO.get(datastoreInstanceProvider.getInstanceAndGroup(), userId)
-                ?: throw UnauthorizedRequestException("User for provided cloud jwt was not found; make sure provided jwt is for the correct group.")
-        )
-    }
+	override suspend fun loginWithCloudJwt(
+		issuer: String,
+		cloudToken: String
+	): JwtAuthentication {
+		val userId = cloudJwtValidator.validateCloudJwtAndExtractUserId(issuer, cloudToken)
+		return buildAuthenticationToken(
+			userDAO.get(datastoreInstanceProvider.getInstanceAndGroup(), userId)
+				?: throw UnauthorizedRequestException("User for provided cloud jwt was not found; make sure provided jwt is for the correct group.")
+		)
+	}
 }
