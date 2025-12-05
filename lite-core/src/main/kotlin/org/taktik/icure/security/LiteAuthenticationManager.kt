@@ -112,6 +112,10 @@ class LiteAuthenticationManagerImpl(
 		scopeDataOwner: String?,
 		cacheJwtRefreshDetails: Boolean
 	): JwtAuthentication {
+		require(scopeDataOwner == null) {
+			"It is not possible to use the scope of another data owner in kraken lite"
+		}
+
 		val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 
 		authentication.principal ?: throw BadCredentialsException("Invalid username or password")
