@@ -21,6 +21,7 @@ subprojects {
 				force(liteLibs.logbackCore)
 				force(liteLibs.micrometerObservation)
 				force(liteLibs.slf4jApi)
+				force("io.netty:netty-transport-native-unix-common:${coreLibs.versions.nettyVersion.get()}")
 
 				force(coreLibs.apacheCommonsCodec)
 				force(coreLibs.apacheCommonsLang3)
@@ -31,6 +32,7 @@ subprojects {
 				force(coreLibs.commonsCodec)
 				force(coreLibs.commonsCodec)
 				force(coreLibs.commonsIO)
+				force(coreLibs.commonsLogging)
 				force(coreLibs.googleErrorProneAnnotations)
 				force(coreLibs.googleGson)
 				force(coreLibs.googleHttpClient)
