@@ -9,6 +9,8 @@ import org.taktik.icure.asynclogic.CalendarItemTypeLogic
 import org.taktik.icure.asyncservice.CalendarItemTypeService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.CalendarItemType
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 
 @Service
@@ -52,4 +54,20 @@ class CalendarItemTypeServiceImpl(
 
 	override fun getAllEntitiesIncludeDeleted(offset: PaginationOffset<String>): Flow<PaginationElement>  = calendarItemTypeLogic.getAllEntitiesIncludeDeleted(offset)
 	override fun getAllEntitiesIncludeDeleted(): Flow<CalendarItemType> = calendarItemTypeLogic.getAllEntitiesIncludeDeleted()
+
+	override fun getConflictingEntitiesIds(): Flow<String> = calendarItemTypeLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<CalendarItemType> = calendarItemTypeLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: CalendarItemType,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<CalendarItemType> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			calendarItemTypeLogic.getBypassingCache(entity.id, rev)
+		}
+		return calendarItemTypeLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = calendarItemTypeLogic.solveConflicts(limit, ids)
 }

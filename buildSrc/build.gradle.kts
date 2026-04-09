@@ -24,5 +24,6 @@ java {
 
 dependencies {
 	implementation(coreLibs.bundles.kotlinxCoroutinesLibs)
-	implementation(group = "org.jetbrains.kotlin.plugin.serialization", name = "org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version = "2.2.0")
+	implementation("org.jetbrains.kotlin.plugin.serialization:org.jetbrains.kotlin.plugin.serialization.gradle.plugin:2.2.0")
+	implementation("com.icure:multiplatform-codegen-library:1.7.5")
 }

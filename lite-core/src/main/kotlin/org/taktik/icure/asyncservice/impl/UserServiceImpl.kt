@@ -13,6 +13,8 @@ import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.User
 import org.taktik.icure.entities.base.PropertyStub
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 
 @Service
@@ -77,13 +79,13 @@ class UserServiceImpl(
 	override suspend fun changeUserEmail(
 		userId: String,
 		newEmail: String,
-		previousEmail: String
+		previousEmail: String?
 	): User = userLogic.changeUserEmail(userId, newEmail, previousEmail)
 
 	override suspend fun changeUserMobilePhone(
 		userId: String,
 		newMobilePhone: String,
-		previousMobilePhone: String
+		previousMobilePhone: String?
 	): User = userLogic.changeUserMobilePhone(userId, newMobilePhone, previousMobilePhone)
 
 	override suspend fun changeUserPassword(
@@ -100,5 +102,19 @@ class UserServiceImpl(
 	override suspend fun undeleteUser(id: String, rev: String): User = userLogic.undeleteEntity(id, rev)
 	override fun undeleteUsers(userIds: List<IdAndRev>): Flow<User> = userLogic.undeleteEntities(userIds)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = userLogic.solveConflicts(limit, ids)
+	override fun getConflictingEntitiesIds(): Flow<String> = userLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<User> = userLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: User,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<User> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			userLogic.getBypassingCache(entity.id, rev)
+		}
+		return userLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = userLogic.solveConflicts(limit, ids)
 }

@@ -10,6 +10,8 @@ import org.taktik.icure.asyncservice.DeviceService
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Device
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 
 @Service
 class DeviceServiceImpl(
@@ -48,4 +50,20 @@ class DeviceServiceImpl(
 
 	override fun getEntityIds(): Flow<String> = deviceLogic.getEntityIds()
 	override fun matchDevicesBy(filter: AbstractFilter<Device>): Flow<String> = deviceLogic.matchEntitiesBy(filter)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = deviceLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Device> = deviceLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Device,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Device> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			deviceLogic.getBypassingCache(entity.id, rev)
+		}
+		return deviceLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = deviceLogic.solveConflicts(limit, ids)
 }

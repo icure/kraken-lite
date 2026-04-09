@@ -13,6 +13,8 @@ import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.base.Code
 import org.taktik.icure.entities.base.CodeStub
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 import java.io.InputStream
 
@@ -108,5 +110,19 @@ class CodeServiceImpl(
 	override suspend fun getCodeByLabel(region: String?, label: String, type: String, languages: List<String>): Code? = codeLogic.getCodeByLabel(region, label, type, languages)
 	override fun matchCodesBy(filter: AbstractFilter<Code>): Flow<String> = codeLogic.matchEntitiesBy(filter)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = codeLogic.solveConflicts(limit, ids)
+	override fun getConflictingEntitiesIds(): Flow<String> = codeLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Code> = codeLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Code,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Code> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			codeLogic.getBypassingCache(entity.id, rev)
+		}
+		return codeLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = codeLogic.solveConflicts(limit, ids)
 }

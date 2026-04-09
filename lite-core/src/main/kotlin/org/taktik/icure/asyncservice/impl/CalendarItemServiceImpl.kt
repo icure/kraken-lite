@@ -10,6 +10,8 @@ import org.taktik.icure.asyncservice.CalendarItemService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.CalendarItem
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
 import org.taktik.icure.pagination.PaginationElement
@@ -77,4 +79,20 @@ class CalendarItemServiceImpl(
 	override fun matchCalendarItemsBy(filter: AbstractFilter<CalendarItem>): Flow<String> = calendarItemLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<CalendarItem>> = calendarItemLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = calendarItemLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<CalendarItem> = calendarItemLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: CalendarItem,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<CalendarItem> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			calendarItemLogic.getBypassingCache(entity.id, rev)
+		}
+		return calendarItemLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = calendarItemLogic.solveConflicts(limit, ids)
 }

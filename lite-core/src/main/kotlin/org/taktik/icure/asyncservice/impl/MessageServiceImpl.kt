@@ -16,6 +16,8 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Message
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -122,8 +124,6 @@ class MessageServiceImpl(
 
 	override fun listMessagesByInvoiceIds(ids: List<String>): Flow<Message> = messageLogic.listMessagesByInvoiceIds(ids)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = messageLogic.solveConflicts(limit, ids)
-
 	override fun filterMessages(
 		paginationOffset: PaginationOffset<Nothing>,
 		filter: FilterChain<Message>
@@ -140,4 +140,20 @@ class MessageServiceImpl(
 	override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Message>> = messageLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = messageLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Message> = messageLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Message,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Message> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			messageLogic.getBypassingCache(entity.id, rev)
+		}
+		return messageLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = messageLogic.solveConflicts(limit, ids)
 }
