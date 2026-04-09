@@ -69,219 +69,220 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 @SpringBootApplication(
-    scanBasePackages = [
-        "org.springframework.boot.autoconfigure.aop",
-        "org.springframework.boot.autoconfigure.context",
-        "org.springframework.boot.autoconfigure.validation",
-        "org.springframework.boot.autoconfigure.websocket",
-        "org.taktik.icure.application",
-        "org.taktik.icure.config",
-        "org.taktik.icure.cache",
-        "org.taktik.icure.security",
-        "org.taktik.icure.asyncdao",
-        "org.taktik.icure.asynclogic",
-        "org.taktik.icure.asyncservice",
-        "org.taktik.icure.be.ehealth.logic",
-        "org.taktik.icure.properties",
-        "org.taktik.icure.services.external.http",
-        "org.taktik.icure.services.external.rest",
-        "org.taktik.icure.scheduledtask",
-        "org.taktik.icure.errors",
-        "org.taktik.icure.be.format.logic",
-        "org.taktik.icure.db",
-        "org.taktik.icure.services.external.rest.v1.controllers",
-        "org.taktik.icure.services.external.rest.v1.controllers.support",
-        "org.taktik.icure.services.external.rest.v1.mapper",
-        "org.taktik.icure.services.external.rest.v2.mapper"
-    ],
-    exclude = [
-        FreeMarkerAutoConfiguration::class,
-        CacheAutoConfiguration::class,
-        DataSourceAutoConfiguration::class,
-        JndiDataSourceAutoConfiguration::class,
-        ErrorWebFluxAutoConfiguration::class
-    ]
+	scanBasePackages = [
+		"org.springframework.boot.autoconfigure.aop",
+		"org.springframework.boot.autoconfigure.context",
+		"org.springframework.boot.autoconfigure.validation",
+		"org.springframework.boot.autoconfigure.websocket",
+		"org.taktik.icure.application",
+		"org.taktik.icure.config",
+		"org.taktik.icure.cache",
+		"org.taktik.icure.security",
+		"org.taktik.icure.asyncdao",
+		"org.taktik.icure.asynclogic",
+		"org.taktik.icure.asyncservice",
+		"org.taktik.icure.be.ehealth.logic",
+		"org.taktik.icure.mergers.generated",
+		"org.taktik.icure.properties",
+		"org.taktik.icure.services.external.http",
+		"org.taktik.icure.services.external.rest",
+		"org.taktik.icure.scheduledtask",
+		"org.taktik.icure.errors",
+		"org.taktik.icure.be.format.logic",
+		"org.taktik.icure.db",
+		"org.taktik.icure.services.external.rest.v1.controllers",
+		"org.taktik.icure.services.external.rest.v1.controllers.support",
+		"org.taktik.icure.services.external.rest.v1.mapper",
+		"org.taktik.icure.services.external.rest.v2.mapper"
+	],
+	exclude = [
+		FreeMarkerAutoConfiguration::class,
+		CacheAutoConfiguration::class,
+		DataSourceAutoConfiguration::class,
+		JndiDataSourceAutoConfiguration::class,
+		ErrorWebFluxAutoConfiguration::class
+	]
 )
 @EnableScheduling
 class ICureBackendApplication {
-    private val log = LoggerFactory.getLogger(this.javaClass)
+	private val log = LoggerFactory.getLogger(this.javaClass)
 
-    @Bean
-    @Profile("app")
-    fun performStartupTasks(
-        @Qualifier("threadPoolTaskExecutor") taskExecutor: TaskExecutor,
-        userLogic: UserLogic,
-        iCureLogic: ICureLogic,
-        codeLogic: CodeLogic,
-        iCureDAO: ICureLiteDAOImpl,
-        allDaos: List<GenericDAO<*>>,
-        allInternalDaos: List<InternalDAO<*>>,
-        couchDbProperties: CouchDbLiteProperties,
-        authenticationLiteProperties: AuthenticationLiteProperties,
-        allObjectStorageLogic: List<IcureObjectStorage<*>>,
-        allObjectStorageMigrationLogic: List<IcureObjectStorageMigration<*>>,
-        datastoreInstanceProvider: DatastoreInstanceProvider,
-        externalViewsConfig: ExternalViewsConfig,
-        daoConfig: LiteDAOConfig
-    ) = ApplicationRunner {
-        //Check that core types have corresponding codes
-        log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
+	@Bean
+	@Profile("app")
+	fun performStartupTasks(
+		@Qualifier("threadPoolTaskExecutor") taskExecutor: TaskExecutor,
+		userLogic: UserLogic,
+		iCureLogic: ICureLogic,
+		codeLogic: CodeLogic,
+		iCureDAO: ICureLiteDAOImpl,
+		allDaos: List<GenericDAO<*>>,
+		allInternalDaos: List<InternalDAO<*>>,
+		couchDbProperties: CouchDbLiteProperties,
+		authenticationLiteProperties: AuthenticationLiteProperties,
+		allObjectStorageLogic: List<IcureObjectStorage<*>>,
+		allObjectStorageMigrationLogic: List<IcureObjectStorageMigration<*>>,
+		datastoreInstanceProvider: DatastoreInstanceProvider,
+		externalViewsConfig: ExternalViewsConfig,
+		daoConfig: LiteDAOConfig
+	) = ApplicationRunner {
+		//Check that core types have corresponding codes
+		log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
 
-        runBlocking {
-            if (!couchDbProperties.skipDesignDocumentUpdate) {
-	            iCureDAO.setCouchDbConfigProperty(datastoreInstanceProvider.getInstanceAndGroup(), "ken", "batch_channels", "${daoConfig.backgroundIndexationWorkers}")
-                allDaos.forEach { dao ->
-                    dao.forceInitStandardDesignDocument(
-                        datastoreInstanceProvider.getInstanceAndGroup(),
-                        true,
-                        partition = Partitions.Main,
-                        ignoreIfUnchanged = true
-                    )
-                }
-                allInternalDaos.forEach { dao ->
-                    dao.forceInitStandardDesignDocument(true)
-                }
-	            createPartitionedDesignDocAndWarmupIfNeeded(allDaos, iCureDAO, externalViewsConfig.repos, datastoreInstanceProvider.getInstanceAndGroup(), daoConfig)
-                allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
-                allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
-            }
+		runBlocking {
+			if (!couchDbProperties.skipDesignDocumentUpdate) {
+				iCureDAO.setCouchDbConfigProperty(datastoreInstanceProvider.getInstanceAndGroup(), "ken", "batch_channels", "${daoConfig.backgroundIndexationWorkers}")
+				allDaos.forEach { dao ->
+					dao.forceInitStandardDesignDocument(
+						datastoreInstanceProvider.getInstanceAndGroup(),
+						true,
+						partition = Partitions.Main,
+						ignoreIfUnchanged = true
+					)
+				}
+				allInternalDaos.forEach { dao ->
+					dao.forceInitStandardDesignDocument(true)
+				}
+				createPartitionedDesignDocAndWarmupIfNeeded(allDaos, iCureDAO, externalViewsConfig.repos, datastoreInstanceProvider.getInstanceAndGroup(), daoConfig)
+				allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
+				allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
+			}
 
-            if (authenticationLiteProperties.createAdminUser && suspendRetry(10) { userLogic.listUsers(PaginationOffset(1), true).filterIsInstance<ViewRowWithDoc<String, Nothing, User>>().toList().isEmpty() } ) {
-                val password = UUID.randomUUID().toString().substring(0,13).replace("-","")
-                userLogic.createUser(User(id = UUID.randomUUID().toString(), login = "admin", passwordHash = password, type =  Users.Type.database, status = Users.Status.ACTIVE))
+			if (authenticationLiteProperties.createAdminUser && suspendRetry(10) { userLogic.listUsers(PaginationOffset(1), true).filterIsInstance<ViewRowWithDoc<String, Nothing, User>>().toList().isEmpty() } ) {
+				val password = UUID.randomUUID().toString().substring(0,13).replace("-","")
+				userLogic.createUser(User(id = UUID.randomUUID().toString(), login = "admin", passwordHash = password, type =  Users.Type.database, status = Users.Status.ACTIVE))
 
-                log.warn("Default admin user created with password $password")
-            }
-        }
+				log.warn("Default admin user created with password $password")
+			}
+		}
 
-        taskExecutor.execute {
-            listOf(
-                AddressType::class.java,
-                DocumentType::class.java,
-                DocumentStatus::class.java,
-                Gender::class.java,
-                InsuranceStatus::class.java,
-                PartnershipStatus::class.java,
-                PartnershipType::class.java,
-                PaymentType::class.java,
-                PersonalStatus::class.java,
-                TelecomType::class.java,
-                Confidentiality::class.java,
-                Visibility::class.java
-            ).forEach { runBlocking { codeLogic.importCodesFromEnum(it) } }
-        }
+		taskExecutor.execute {
+			listOf(
+				AddressType::class.java,
+				DocumentType::class.java,
+				DocumentStatus::class.java,
+				Gender::class.java,
+				InsuranceStatus::class.java,
+				PartnershipStatus::class.java,
+				PartnershipType::class.java,
+				PaymentType::class.java,
+				PersonalStatus::class.java,
+				TelecomType::class.java,
+				Confidentiality::class.java,
+				Visibility::class.java
+			).forEach { runBlocking { codeLogic.importCodesFromEnum(it) } }
+		}
 
-        if (couchDbProperties.populateDatabaseFromLocalXmls) {
-            taskExecutor.execute {
-                log.info("Importing codes from local xmls")
-                val resolver = PathMatchingResourcePatternResolver(javaClass.classLoader)
-                resolver.getResources("classpath*:/org/taktik/icure/db/codes/**.xml").forEach {
-                    val md5 = it.filename!!.replace(Regex(".+\\.([0-9a-f]{20}[0-9a-f]+)\\.xml"), "$1")
-                    runBlocking { codeLogic.importCodesFromXml(md5, it.filename!!.replace(Regex("(.+)\\.[0-9a-f]{20}[0-9a-f]+\\.xml"), "$1"), it.inputStream) }
-                }
-                log.info("Import completed")
-            }
-        }
+		if (couchDbProperties.populateDatabaseFromLocalXmls) {
+			taskExecutor.execute {
+				log.info("Importing codes from local xmls")
+				val resolver = PathMatchingResourcePatternResolver(javaClass.classLoader)
+				resolver.getResources("classpath*:/org/taktik/icure/db/codes/**.xml").forEach {
+					val md5 = it.filename!!.replace(Regex(".+\\.([0-9a-f]{20}[0-9a-f]+)\\.xml"), "$1")
+					runBlocking { codeLogic.importCodesFromXml(md5, it.filename!!.replace(Regex("(.+)\\.[0-9a-f]{20}[0-9a-f]+\\.xml"), "$1"), it.inputStream) }
+				}
+				log.info("Import completed")
+			}
+		}
 
-        log.info("icure (" + iCureLogic.getVersion() + ") is started")
-    }
+		log.info("icure (" + iCureLogic.getVersion() + ") is started")
+	}
 
-    @OptIn(DelicateCoroutinesApi::class)
-    fun createPartitionedDesignDocAndWarmupIfNeeded(
-        genericDAOs: List<GenericDAO<*>>,
-        iCureDAO: ICureLiteDAOImpl,
-        externalViewRepositories: Map<String, String>,
-        datastoreInformation: IDatastoreInformation,
-        daoConfig: LiteDAOConfig
-    ) = GlobalScope.launch {
+	@OptIn(DelicateCoroutinesApi::class)
+	fun createPartitionedDesignDocAndWarmupIfNeeded(
+		genericDAOs: List<GenericDAO<*>>,
+		iCureDAO: ICureLiteDAOImpl,
+		externalViewRepositories: Map<String, String>,
+		datastoreInformation: IDatastoreInformation,
+		daoConfig: LiteDAOConfig
+	) = GlobalScope.launch {
 
-        suspend fun isIndexingWithDebouncing(): Boolean {
-            val firstAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
-            delay(1L.seconds.inWholeMilliseconds)
-            val secondAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
-            delay(1L.seconds.inWholeMilliseconds)
-            val thirdAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
-            return  firstAttempt || secondAttempt || thirdAttempt
-        }
+		suspend fun isIndexingWithDebouncing(): Boolean {
+			val firstAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
+			delay(1L.seconds.inWholeMilliseconds)
+			val secondAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
+			delay(1L.seconds.inWholeMilliseconds)
+			val thirdAttempt = iCureDAO.getIndexingStatus(datastoreInformation).isNotEmpty()
+			return  firstAttempt || secondAttempt || thirdAttempt
+		}
 
-        suspend fun warmupPartitionAndCheckForCompletion(
-            dao: GenericDAO<*>,
-            datastoreInformation: IDatastoreInformation,
-            partition: Partitions
-        ): Boolean = runCatching {
-            dao.warmupPartition(datastoreInformation, partition)
-            true
-        }.getOrDefault(false)
+		suspend fun warmupPartitionAndCheckForCompletion(
+			dao: GenericDAO<*>,
+			datastoreInformation: IDatastoreInformation,
+			partition: Partitions
+		): Boolean = runCatching {
+			dao.warmupPartition(datastoreInformation, partition)
+			true
+		}.getOrDefault(false)
 
-        // The design documents need to be created. If they are not warmed up manually, background indexation will be
-        // started by CouchDB
-        listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
-            log.info("Creating $partition design docs.")
-            genericDAOs.forEach {
-                it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
-            }
-        }
+		// The design documents need to be created. If they are not warmed up manually, background indexation will be
+		// started by CouchDB
+		listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+			log.info("Creating $partition design docs.")
+			genericDAOs.forEach {
+				it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
+			}
+		}
 
-        // Warm up a view will trigger foreground indexation, that will occupy all the resources in the system.
-        listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
-            genericDAOs.filter { dao ->
-                daoConfig.forceForegroundIndexation
-                    || daoConfig.viewsToIndexAtStartup.contains("${dao.entityClass.simpleName}_$partition")
-            }.forEach { dao ->
-                while(isIndexingWithDebouncing()) {
-                    delay(1L.minutes.inWholeMilliseconds)
-                }
-                log.info("Warming up ${dao.entityClass.simpleName}_$partition design doc")
-                while(!warmupPartitionAndCheckForCompletion(dao, datastoreInformation, partition)) {
-                    delay(1L.seconds.inWholeMilliseconds)
-                }
-            }
-        }
+		// Warm up a view will trigger foreground indexation, that will occupy all the resources in the system.
+		listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+			genericDAOs.filter { dao ->
+				daoConfig.forceForegroundIndexation
+					|| daoConfig.viewsToIndexAtStartup.contains("${dao.entityClass.simpleName}_$partition")
+			}.forEach { dao ->
+				while(isIndexingWithDebouncing()) {
+					delay(1L.minutes.inWholeMilliseconds)
+				}
+				log.info("Warming up ${dao.entityClass.simpleName}_$partition design doc")
+				while(!warmupPartitionAndCheckForCompletion(dao, datastoreInformation, partition)) {
+					delay(1L.seconds.inWholeMilliseconds)
+				}
+			}
+		}
 
-        log.info("Starting indexation of external views")
-        genericDAOs.forEach {
-            while(isIndexingWithDebouncing()) {
-                delay(1L.minutes.inWholeMilliseconds)
-            }
-            log.info("Indexing external design docs for ${it::class.java.simpleName}")
-            it.forceInitExternalDesignDocument(datastoreInformation, externalViewRepositories, updateIfExists = true, dryRun = false, ignoreIfUnchanged = true)
-        }
+		log.info("Starting indexation of external views")
+		genericDAOs.forEach {
+			while(isIndexingWithDebouncing()) {
+				delay(1L.minutes.inWholeMilliseconds)
+			}
+			log.info("Indexing external design docs for ${it::class.java.simpleName}")
+			it.forceInitExternalDesignDocument(datastoreInformation, externalViewRepositories, updateIfExists = true, dryRun = false, ignoreIfUnchanged = true)
+		}
 
-        log.info("Indexation of external design docs completed")
-    }
+		log.info("Indexation of external design docs completed")
+	}
 
-    @Component
-    @Profile("cmd")
-    class Commander(val applicationContext: ConfigurableApplicationContext) : CommandLineRunner {
-        private val log = LoggerFactory.getLogger(this.javaClass)
+	@Component
+	@Profile("cmd")
+	class Commander(val applicationContext: ConfigurableApplicationContext) : CommandLineRunner {
+		private val log = LoggerFactory.getLogger(this.javaClass)
 
-        @ExperimentalCoroutinesApi
-        override fun run(vararg args: String) {
-            if (args.firstOrNull() != "cmd") {
-                throw IllegalStateException("first argument should be profile cmd")
-            }
-            val tailArgs = args.drop(1)
-            log.info("icure commander started. Executing ${tailArgs.firstOrNull()}")
+		@ExperimentalCoroutinesApi
+		override fun run(vararg args: String) {
+			if (args.firstOrNull() != "cmd") {
+				throw IllegalStateException("first argument should be profile cmd")
+			}
+			val tailArgs = args.drop(1)
+			log.info("icure commander started. Executing ${tailArgs.firstOrNull()}")
 
-            // TODO: Add support for plugins from build time added jars
-            // when (tailArgs.firstOrNull()) {
-            //
-            // }
-            applicationContext.close()
+			// TODO: Add support for plugins from build time added jars
+			// when (tailArgs.firstOrNull()) {
+			//
+			// }
+			applicationContext.close()
 
-            runBlocking {
-                //Give time for the application to close
-                delay(30000)
-                exitProcess(0)
-            }
-        }
-    }
+			runBlocking {
+				//Give time for the application to close
+				delay(30000)
+				exitProcess(0)
+			}
+		}
+	}
 }
 
 fun main(args: Array<String>) {
-    val profile = args.firstOrNull() ?: "app"
-    SpringApplicationBuilder(ICureBackendApplication::class.java)
-        .profiles(profile)
-        .web(if (profile == "app") WebApplicationType.REACTIVE else WebApplicationType.NONE)
-        .run(*args)
+	val profile = args.firstOrNull() ?: "app"
+	SpringApplicationBuilder(ICureBackendApplication::class.java)
+		.profiles(profile)
+		.web(if (profile == "app") WebApplicationType.REACTIVE else WebApplicationType.NONE)
+		.run(*args)
 }

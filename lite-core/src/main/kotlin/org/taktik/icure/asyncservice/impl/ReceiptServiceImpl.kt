@@ -6,7 +6,10 @@ import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.ReceiptLogic
 import org.taktik.icure.asyncservice.ReceiptService
+import org.taktik.icure.entities.AccessLog
 import org.taktik.icure.entities.Receipt
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.embed.ReceiptBlobType
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -44,4 +47,20 @@ class ReceiptServiceImpl(
 	override fun getReceipts(receiptIds: List<String>): Flow<Receipt> = receiptLogic.getEntities(receiptIds)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Receipt>> = receiptLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = receiptLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Receipt> = receiptLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Receipt,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Receipt> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			receiptLogic.getBypassingCache(entity.id, rev)
+		}
+		return receiptLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = receiptLogic.solveConflicts(limit, ids)
 }

@@ -11,6 +11,8 @@ import org.taktik.icure.asyncservice.DocumentService
 import org.taktik.icure.domain.BatchUpdateDocumentInfo
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
 import org.taktik.icure.exceptions.NotFoundRequestException
@@ -68,8 +70,6 @@ class DocumentServiceImpl(
 
 	override fun getDocuments(documentIds: List<String>): Flow<Document> = documentLogic.getDocuments(documentIds)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?): Flow<IdAndRev> = documentLogic.solveConflicts(limit, ids)
-
 	override suspend fun getDocumentsByExternalUuid(documentId: String): List<Document> = documentLogic.getDocumentsByExternalUuid(documentId)
 	override fun deleteDocuments(ids: List<IdAndRev>): Flow<Document> = documentLogic.deleteEntities(ids)
 
@@ -85,4 +85,20 @@ class DocumentServiceImpl(
 	override fun matchDocumentsBy(filter: AbstractFilter<Document>): Flow<String> = documentLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Document>> = documentLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = documentLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Document> = documentLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Document,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Document> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			documentLogic.getBypassingCache(entity.id, rev)
+		}
+		return documentLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = documentLogic.solveConflicts(limit, ids)
 }

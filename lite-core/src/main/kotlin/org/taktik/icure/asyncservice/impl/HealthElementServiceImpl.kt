@@ -11,6 +11,8 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.HealthElement
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -63,9 +65,6 @@ class HealthElementServiceImpl(
 	override suspend fun addDelegations(healthElementId: String, delegations: List<Delegation>): HealthElement? =
 		healthElementLogic.addDelegations(healthElementId, delegations)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = healthElementLogic.solveConflicts(limit, ids)
-
-
 	override fun filter(
 		paginationOffset: PaginationOffset<Nothing>,
 		filter: FilterChain<HealthElement>
@@ -79,4 +78,20 @@ class HealthElementServiceImpl(
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<HealthElement>> =
 		healthElementLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = healthElementLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<HealthElement> = healthElementLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: HealthElement,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<HealthElement> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			healthElementLogic.getBypassingCache(entity.id, rev)
+		}
+		return healthElementLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = healthElementLogic.solveConflicts(limit, ids)
 }

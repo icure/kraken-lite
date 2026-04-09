@@ -13,6 +13,8 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Contact
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.data.LabelledOccurence
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.embed.Service
@@ -92,8 +94,6 @@ class ContactServiceImpl(
 		filter: FilterChain<Service>
 	): Flow<Service> = contactLogic.filterServices(paginationOffset, filter)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = contactLogic.solveConflicts(limit, ids)
-
 	override fun listContactsByOpeningDate(
 		hcPartyId: String,
 		startOpeningDate: Long,
@@ -113,4 +113,20 @@ class ContactServiceImpl(
 	override fun matchServicesBy(filter: AbstractFilter<Service>): Flow<String> = contactLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Contact>> = contactLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = contactLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Contact> = contactLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Contact,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Contact> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			contactLogic.getBypassingCache(entity.id, rev)
+		}
+		return contactLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = contactLogic.solveConflicts(limit, ids)
 }

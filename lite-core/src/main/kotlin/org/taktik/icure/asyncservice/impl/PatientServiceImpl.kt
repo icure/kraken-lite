@@ -13,6 +13,8 @@ import org.taktik.icure.db.Sorting
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Patient
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -99,8 +101,6 @@ class PatientServiceImpl(
 
 	override suspend fun getByExternalId(externalId: String): Patient? = patientLogic.getByExternalId(externalId)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = patientLogic.solveConflicts(limit, ids)
-
 	@Suppress("DEPRECATION")
 	@Deprecated("A DataOwner may now have multiple AES Keys. Use getAesExchangeKeysForDelegate instead")
 	override suspend fun getHcPartyKeysForDelegate(healthcarePartyId: String): Map<String, String> = patientLogic.getHcPartyKeysForDelegate(healthcarePartyId)
@@ -158,4 +158,20 @@ class PatientServiceImpl(
 	override fun matchPatientsBy(filter: AbstractFilter<Patient>): Flow<String> = patientLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Patient>> = patientLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = patientLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Patient> = patientLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Patient,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Patient> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			patientLogic.getBypassingCache(entity.id, rev)
+		}
+		return patientLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = patientLogic.solveConflicts(limit, ids)
 }

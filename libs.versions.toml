@@ -1,6 +1,6 @@
 [versions]
 sonarqube = "3.3"
-kmehr = "26.3.0-geaa8e88d29"
+kmehr = "26.4.0-g9031a74bd8"
 kotest = "5.9.1"
 logback = "1.5.18"
 
@@ -18,7 +18,7 @@ kotestFrameworkApi = { group = "io.kotest", name = "kotest-framework-api", versi
 slf4jApi = { group = "org.slf4j", name = "slf4j-api", version = "2.0.17" }
 logbackClassic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
 logbackCore = { group = "ch.qos.logback", name = "logback-core", version.ref = "logback" }
-micrometerObservation = { group = "io.micrometer", name = "micrometer-observation", version = "1.15.1" }
+micrometerObservation = { group = "io.micrometer", name = "micrometer-observation", version = "1.15.10" }
 
 [bundles]
 reactorLibs = ["reactorCore", "reactorTools", "reactorNetty"]
