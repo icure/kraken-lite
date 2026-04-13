@@ -1,5 +1,6 @@
 plugins {
 	id("org.jetbrains.kotlin.jvm") version coreLibs.versions.kotlin
+	`kotlin-dsl`
 }
 
 repositories {
