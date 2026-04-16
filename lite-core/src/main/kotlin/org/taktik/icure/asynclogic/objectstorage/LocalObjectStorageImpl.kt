@@ -18,6 +18,7 @@ import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.springframework.stereotype.Service
 import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.Receipt
 import org.taktik.icure.entities.base.HasDataAttachments
 import org.taktik.icure.properties.ObjectStorageProperties
 import org.taktik.icure.utils.toByteArray
@@ -35,7 +36,7 @@ interface LocalObjectStorageBean<T : HasDataAttachments<T>> : LocalObjectStorage
 
 private class LocalObjectStorageImpl<T : HasDataAttachments<T>>(
 	private val objectStorageProperties: ObjectStorageProperties,
-	private val entityPath: String
+	private val entityPath: ObjectStorageEntityGroupName
 ) : LocalObjectStorageBean<T> {
 	companion object {
 		private val log = LoggerFactory.getLogger(LocalObjectStorageImpl::class.java)
@@ -143,7 +144,7 @@ private class LocalObjectStorageImpl<T : HasDataAttachments<T>>(
 
 	private fun toFolderPath(documentId: String) = Paths.get(
 		objectStorageProperties.cacheLocation,
-		entityPath,
+		entityPath.name,
 		*(documentId.chunked(2).take(3) + documentId).toTypedArray()
 	)
 
@@ -163,5 +164,13 @@ class DocumentLocalObjectStorageImpl(
 	objectStorageProperties: ObjectStorageProperties
 ) : DocumentLocalObjectStorage, LocalObjectStorageBean<Document> by LocalObjectStorageImpl(
 	objectStorageProperties,
-	"documents"
+	ObjectStorageEntityGroupName.documents
+)
+
+@Service
+class ReceiptLocalObjectStorageImpl(
+	objectStorageProperties: ObjectStorageProperties
+) : ReceiptLocalObjectStorage, LocalObjectStorageBean<Receipt> by LocalObjectStorageImpl(
+	objectStorageProperties,
+	ObjectStorageEntityGroupName.receipts
 )

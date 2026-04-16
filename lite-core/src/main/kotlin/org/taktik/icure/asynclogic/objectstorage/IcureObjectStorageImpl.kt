@@ -23,6 +23,7 @@ import org.taktik.icure.asyncdao.objectstorage.ObjectStorageTasksDAO
 import org.taktik.icure.asynclogic.AsyncSessionLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.Receipt
 import org.taktik.icure.entities.base.HasDataAttachments
 import org.taktik.icure.entities.objectstorage.ObjectStorageTask
 import org.taktik.icure.entities.objectstorage.ObjectStorageTaskType
@@ -157,4 +158,18 @@ class DocumentObjectStorageImpl(
 	localObjectStorage,
 	sessionInformationProvider,
 	Document::class.java
+)
+
+@Service
+class ReceiptObjectStorageImpl(
+	objectStorageTasksDao: ObjectStorageTasksDAO,
+	objectStorageClient: ReceiptObjectStorageClient,
+	localObjectStorage: ReceiptLocalObjectStorage,
+	sessionInformationProvider: SessionInformationProvider,
+) : ReceiptObjectStorage, ScheduledIcureObjectStorage<Receipt> by IcureObjectStorageImpl(
+	objectStorageTasksDao,
+	objectStorageClient,
+	localObjectStorage,
+	sessionInformationProvider,
+	Receipt::class.java
 )

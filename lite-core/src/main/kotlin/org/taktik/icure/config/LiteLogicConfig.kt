@@ -97,6 +97,7 @@ import org.taktik.icure.asynclogic.impl.UserLogicImpl
 import org.taktik.icure.asynclogic.impl.filter.Filters
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentLoader
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentModificationLogic
+import org.taktik.icure.asynclogic.objectstorage.ReceiptDataAttachmentLoader
 import org.taktik.icure.entities.Agenda
 import org.taktik.icure.entities.CalendarItem
 import org.taktik.icure.entities.CalendarItemType
@@ -571,6 +572,7 @@ class LiteLogicConfig {
 		fixer: Fixer,
 		filters: Filters,
 		@Qualifier("receiptMerger") merger: Merger<Receipt>,
+		attachmentLoader: ReceiptDataAttachmentLoader,
 	): ReceiptLogic = ReceiptLogicImpl(
 		receiptDAO = receiptDAO,
 		exchangeDataMapLogic = exchangeDataMapLogic,
@@ -578,7 +580,8 @@ class LiteLogicConfig {
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
 		filters = filters,
-		merger = merger
+		merger = merger,
+		attachmentLoader = attachmentLoader
 	)
 
 	@Bean
