@@ -1,6 +1,7 @@
 package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
+import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
@@ -63,4 +64,31 @@ class ReceiptServiceImpl(
 		limit: Int?,
 		ids: List<String>?
 	): Flow<MergeResult> = receiptLogic.solveConflicts(limit, ids)
+
+	override suspend fun putReceiptAttachmentInfo(
+		receiptId: String,
+		receiptRev: String,
+		blobType: ReceiptBlobType,
+		compressionAlgorithm: String?,
+		triedCompressionAlgorithmsVersion: String?,
+		realDataSize: Long?,
+		storedDataSize: Long,
+		data: Flow<DataBuffer>
+	): Receipt =
+		receiptLogic.putReceiptAttachmentInfo(
+			receiptId,
+			receiptRev,
+			blobType,
+			compressionAlgorithm,
+			triedCompressionAlgorithmsVersion,
+			realDataSize,
+			storedDataSize,
+			data
+		)
+
+	override fun getDataAttachmentByBlobType(
+		receiptId: String,
+		blobType: ReceiptBlobType
+	): Flow<DataBuffer> =
+		receiptLogic.getDataAttachmentByBlobType(receiptId, blobType)
 }

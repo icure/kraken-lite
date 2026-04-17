@@ -3,6 +3,7 @@ package org.taktik.icure.asynclogic.objectstorage
 import kotlinx.coroutines.flow.Flow
 import org.springframework.core.io.buffer.DataBuffer
 import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.Receipt
 import org.taktik.icure.entities.base.HasDataAttachments
 
 /**
@@ -59,3 +60,4 @@ interface LocalObjectStorage<T : HasDataAttachments<T>> {
 }
 
 interface DocumentLocalObjectStorage : LocalObjectStorage<Document>
+interface ReceiptLocalObjectStorage : LocalObjectStorage<Receipt>
