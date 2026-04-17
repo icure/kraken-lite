@@ -3,6 +3,7 @@ package org.taktik.icure.asynclogic.objectstorage
 import kotlinx.coroutines.flow.Flow
 import org.springframework.core.io.buffer.DataBuffer
 import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.Receipt
 import org.taktik.icure.entities.base.HasDataAttachments
 
 /**
@@ -12,7 +13,7 @@ interface ObjectStorageClient<T : HasDataAttachments<T>> {
 	/**
 	 * Unique name of the type/group of entities for this client.
 	 */
-	val entityGroupName: String
+	val entityGroupName: ObjectStorageEntityGroupName
 
 	/**
 	 * Stores an attachment in the attachment storage service.
@@ -74,3 +75,4 @@ interface ObjectStorageClient<T : HasDataAttachments<T>> {
 }
 
 interface DocumentObjectStorageClient : ObjectStorageClient<Document>
+interface ReceiptObjectStorageClient : ObjectStorageClient<Receipt>

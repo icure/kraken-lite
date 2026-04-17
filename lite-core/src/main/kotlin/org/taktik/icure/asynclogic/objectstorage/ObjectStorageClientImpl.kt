@@ -27,6 +27,7 @@ import org.springframework.web.reactive.function.client.awaitBody
 import org.springframework.web.reactive.function.client.bodyToFlow
 import org.taktik.icure.asynclogic.utils.CloudAuthenticationLogic
 import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.Receipt
 import org.taktik.icure.entities.base.HasDataAttachments
 import org.taktik.icure.properties.ObjectStorageProperties
 import org.taktik.icure.utils.toByteArray
@@ -42,7 +43,7 @@ interface ObjectStorageClientBean<T : HasDataAttachments<T>> : ObjectStorageClie
 private class ObjectStorageClientImpl<T : HasDataAttachments<T>>(
 	private val objectStorageProperties: ObjectStorageProperties,
 	private val cloudAuthenticationLogic: CloudAuthenticationLogic,
-	override val entityGroupName: String
+	override val entityGroupName: ObjectStorageEntityGroupName
 ) : ObjectStorageClientBean<T> {
 	companion object {
 		private const val NEXT_BYTE_HEADER = "Next-Byte"
@@ -156,7 +157,7 @@ private class ObjectStorageClientImpl<T : HasDataAttachments<T>>(
 		this.header("Authorization", cloudAuthenticationLogic.userAuthenticationHeader(userId))
 
 	private fun attachmentRoute(entityId: String, attachmentId: String): String =
-		listOf("rest", "v1", "objectstorage", entityGroupName, entityId, attachmentId).joinToString("/")
+		listOf("rest", "v1", "objectstorage", entityGroupName.name, entityId, attachmentId).joinToString("/")
 
 	/**
 	 * Represents the status of an object which may be stored in the object storage service.
@@ -195,5 +196,14 @@ class DocumentObjectStorageClientImpl(
 ) : DocumentObjectStorageClient, ObjectStorageClientBean<Document> by ObjectStorageClientImpl(
 	objectStorageProperties,
 	cloudAuthenticationLogic,
-	"documents"
+	ObjectStorageEntityGroupName.documents
+)
+
+class ReceiptObjectStorageClientImpl(
+	objectStorageProperties: ObjectStorageProperties,
+	cloudAuthenticationLogic: CloudAuthenticationLogic
+) : ReceiptObjectStorageClient, ObjectStorageClientBean<Receipt> by ObjectStorageClientImpl(
+	objectStorageProperties,
+	cloudAuthenticationLogic,
+	ObjectStorageEntityGroupName.receipts
 )

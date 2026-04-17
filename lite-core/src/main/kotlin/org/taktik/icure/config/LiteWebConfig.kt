@@ -35,11 +35,9 @@ class LiteWebFluxConfigurer(
 ) : SharedWebFluxConfiguration() {
 
 	override fun getJackson2JsonEncoder(): Jackson2JsonEncoder {
-		val objectMapper = if (liteConfig.isConfiguredForCardinalModel()) {
-			cardinalObjectMapper
-		} else {
-			legacyObjectMapper
-		}
+		val objectMapper = liteConfig.getConfiguredCardinalVersion()?.let { cardinalVersion ->
+			cardinalMappers.getForVersion(cardinalVersion)
+		} ?: legacyObjectMapper
 		return try {
 			pluginsManager.newInstance<Jackson2JsonEncoder>(
 				"org.taktik.icure.spring.encoder.PaginatedJackson2JsonEncoder",

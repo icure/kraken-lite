@@ -17,6 +17,7 @@ import org.springframework.core.io.buffer.DataBufferUtils
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.taktik.icure.entities.base.HasDataAttachments
 import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.Receipt
 import org.taktik.icure.properties.ExternalServicesProperties
 import org.taktik.icure.utils.toByteArray
 
@@ -28,7 +29,7 @@ import org.taktik.icure.utils.toByteArray
  * @param checkUser verifies if a user can actually use this client, for testing purposes.
  */
 class FakeObjectStorageClient<T : HasDataAttachments<T>>(
-	override val entityGroupName: String,
+	override val entityGroupName: ObjectStorageEntityGroupName,
 	externalServicesProperties: ExternalServicesProperties,
 	private val eventsChannel: Channel<ObjectStoreEvent>?,
 	private val checkUser: (String) -> Boolean
@@ -46,7 +47,18 @@ class FakeObjectStorageClient<T : HasDataAttachments<T>>(
 			checkUser: (String) -> Boolean
 		): DocumentObjectStorageClient =
 			object : DocumentObjectStorageClient, ObjectStorageClient<Document> by FakeObjectStorageClient(
-				"documents",
+				ObjectStorageEntityGroupName.documents,
+				externalServicesProperties,
+				eventsChannel,
+				checkUser
+			) {}
+		fun receipt(
+			externalServicesProperties: ExternalServicesProperties,
+			eventsChannel: Channel<ObjectStoreEvent>?,
+			checkUser: (String) -> Boolean
+		): ReceiptObjectStorageClient =
+			object : ReceiptObjectStorageClient, ObjectStorageClient<Receipt> by FakeObjectStorageClient(
+				ObjectStorageEntityGroupName.receipts,
 				externalServicesProperties,
 				eventsChannel,
 				checkUser

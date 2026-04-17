@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration
 import org.taktik.icure.asynclogic.objectstorage.DocumentObjectStorageClient
 import org.taktik.icure.asynclogic.objectstorage.DocumentObjectStorageClientImpl
 import org.taktik.icure.asynclogic.objectstorage.FakeObjectStorageClient
+import org.taktik.icure.asynclogic.objectstorage.ReceiptObjectStorage
+import org.taktik.icure.asynclogic.objectstorage.ReceiptObjectStorageClient
+import org.taktik.icure.asynclogic.objectstorage.ReceiptObjectStorageClientImpl
 import org.taktik.icure.asynclogic.utils.CloudAuthenticationLogic
 import org.taktik.icure.properties.ExternalServicesProperties
 import org.taktik.icure.properties.ObjectStorageProperties
@@ -24,7 +27,7 @@ class ObjectStorageConfig {
 		@Autowired(required=false) @Qualifier("fakeObjectStorageClientUserCheck") fakeObjectStorageClientUserCheck: ((String) -> Boolean)?
 	): DocumentObjectStorageClient =
 		if (externalServicesProperties.useFakes) {
-			log.warn("Using fake object storage client. This should be done only for testing purposes.")
+			log.warn("Using fake object storage client for documents. This should be done only for testing purposes.")
 			FakeObjectStorageClient.document(
 				externalServicesProperties,
 				null,
@@ -33,4 +36,23 @@ class ObjectStorageConfig {
 		} else {
 			DocumentObjectStorageClientImpl(objectStorageProperties, cloudAuthenticationLogic)
 		}
+
+	@Bean
+	fun receiptObjectStorageClient(
+		objectStorageProperties: ObjectStorageProperties,
+		cloudAuthenticationLogic: CloudAuthenticationLogic,
+		externalServicesProperties: ExternalServicesProperties,
+		@Autowired(required=false) @Qualifier("fakeObjectStorageClientUserCheck") fakeObjectStorageClientUserCheck: ((String) -> Boolean)?
+	): ReceiptObjectStorageClient =
+		if (externalServicesProperties.useFakes) {
+			log.warn("Using fake object storage client for receipts. This should be done only for testing purposes.")
+			FakeObjectStorageClient.receipt(
+				externalServicesProperties,
+				null,
+				fakeObjectStorageClientUserCheck ?: { true }
+			)
+		} else {
+			ReceiptObjectStorageClientImpl(objectStorageProperties, cloudAuthenticationLogic)
+		}
+
 }
