@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true" scanPeriod="30 seconds">
+    <shutdownHook class="ch.qos.logback.core.hook.DefaultShutdownHook"/>
     <include resource="org/springframework/boot/logging/logback/defaults.xml" />
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
@@ -8,6 +9,24 @@
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
             <level>TRACE</level>
         </filter>
+    </appender>
+
+    <property scope="local" name="logFilePath" value="${logging.file.name:-_DISABLED_}" />
+    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${logging.file.name}</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <fileNamePattern>${logging.file.name}.%d{yyyy-MM-dd}.%i.log.gz</fileNamePattern>
+            <maxFileSize>100MB</maxFileSize>
+            <maxHistory>7</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${FILE_LOG_PATTERN}</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
     </appender>
 
 
@@ -44,4 +63,24 @@
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
     </root>
+
+    <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+        <key>logFilePath</key>
+        <value>_DISABLED_</value>
+    </condition>
+    <if>
+        <then>
+            <root level="INFO">
+                <appender-ref ref="CONSOLE" />
+            </root>
+        </then>
+        <else>
+            <root level="INFO">
+                <appender-ref ref="CONSOLE" />
+            </root>
+            <root level="INFO">
+                <appender-ref ref="ROLLING_FILE" />
+            </root>
+        </else>
+    </if>
 </configuration>
