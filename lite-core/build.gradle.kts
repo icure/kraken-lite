@@ -168,7 +168,6 @@ tasks.withType<BootJar> {
 
 
 dependencies {
-    implementation("org.codehaus.janino:janino:3.1.12")
     implementation(project(":kraken-common:logic"))
     implementation(project(":kraken-common:mapper"))
     implementation(project(":kraken-common:dto"))

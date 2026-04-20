@@ -64,11 +64,23 @@
         <appender-ref ref="CONSOLE" />
     </root>
 
-    <if condition='!property("logFilePath").equals("_DISABLED_")'>
+    <condition class="ch.qos.logback.core.boolex.PropertyEqualityCondition">
+        <key>logFilePath</key>
+        <value>_DISABLED_</value>
+    </condition>
+    <if>
         <then>
+            <root level="INFO">
+                <appender-ref ref="CONSOLE" />
+            </root>
+        </then>
+        <else>
+            <root level="INFO">
+                <appender-ref ref="CONSOLE" />
+            </root>
             <root level="INFO">
                 <appender-ref ref="ROLLING_FILE" />
             </root>
-        </then>
+        </else>
     </if>
 </configuration>
