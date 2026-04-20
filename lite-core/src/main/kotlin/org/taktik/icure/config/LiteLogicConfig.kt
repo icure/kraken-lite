@@ -97,7 +97,25 @@ import org.taktik.icure.asynclogic.impl.UserLogicImpl
 import org.taktik.icure.asynclogic.impl.filter.Filters
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentLoader
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentModificationLogic
+import org.taktik.icure.asynclogic.objectstorage.ReceiptDataAttachmentLoader
+import org.taktik.icure.entities.Agenda
+import org.taktik.icure.entities.CalendarItem
+import org.taktik.icure.entities.CalendarItemType
+import org.taktik.icure.entities.Contact
+import org.taktik.icure.entities.Device
+import org.taktik.icure.entities.Document
+import org.taktik.icure.entities.Form
+import org.taktik.icure.entities.HealthElement
+import org.taktik.icure.entities.HealthcareParty
+import org.taktik.icure.entities.Insurance
+import org.taktik.icure.entities.Invoice
+import org.taktik.icure.entities.Message
+import org.taktik.icure.entities.Patient
+import org.taktik.icure.entities.Place
+import org.taktik.icure.entities.Receipt
 import org.taktik.icure.entities.User
+import org.taktik.icure.entities.base.Code
+import org.taktik.icure.mergers.Merger
 import org.taktik.icure.security.SessionAccessControlKeysProvider
 import org.taktik.icure.security.credentials.SecretValidator
 import org.taktik.icure.security.user.GlobalUserUpdater
@@ -118,12 +136,12 @@ class LiteLogicConfig {
 	@Bean
 	fun liteFixer(
 		sessionInformationProvider: SessionInformationProvider,
-		liteConfig: LiteConfig
+		liteConfig: LiteCardinalVersionConfig
 	): Fixer = FixerImpl(
 		fixedValueProvider = CommonFixedValueProvider(
 			dataOwnerProvider = sessionInformationProvider
 		),
-		forceSkipLegacyFixing = liteConfig.useCardinalDataModel
+		forceSkipLegacyFixing = liteConfig.isConfiguredForCardinalModel()
 	)
 
 	@Bean
@@ -133,7 +151,8 @@ class LiteLogicConfig {
 		secretValidator: SecretValidator,
 		filters: Filters,
 		cloudUserEnhancer: UserEnhancer,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("userMerger") merger: Merger<User>,
 	): UserLogic = UserLogicImpl(
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		filters = filters,
@@ -146,7 +165,8 @@ class LiteLogicConfig {
 			override fun tryingUpdates(updatedUsers: Flow<User>): Flow<User> = updatedUsers
 			override suspend fun tryPurge(localId: String, localRev: String) { }
 			override suspend fun tryPurge(userIds: List<IdAndRev>) { }
-		}
+		},
+		userMerger = merger
 	)
 
 	@Bean
@@ -154,12 +174,14 @@ class LiteLogicConfig {
 		insuranceDAO: InsuranceDAO,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		fixer: Fixer,
-		filters: Filters
+		filters: Filters,
+		@Qualifier("insuranceMerger") merger: Merger<Insurance>,
 	): InsuranceLogic = InsuranceLogicImpl(
 		insuranceDAO = insuranceDAO,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
-		filters = filters
+		filters = filters,
+		merger = merger
 	)
 
 	@Bean
@@ -184,12 +206,14 @@ class LiteLogicConfig {
 		codeDAO: CodeDAO,
 		filters: Filters,
 		fixer: Fixer,
-		datastoreInstanceProvider: DatastoreInstanceProvider
+		datastoreInstanceProvider: DatastoreInstanceProvider,
+		@Qualifier("codeMerger") merger: Merger<Code>,
 	): CodeLogic = CodeLogicImpl(
 		codeDAO = codeDAO,
 		filters = filters,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		codeMerger = merger
 	)
 
 	@Bean
@@ -197,12 +221,14 @@ class LiteLogicConfig {
 		calendarItemTypeDAO: CalendarItemTypeDAO,
 		filters: Filters,
 		fixer: Fixer,
-		datastoreInstanceProvider: DatastoreInstanceProvider
+		datastoreInstanceProvider: DatastoreInstanceProvider,
+		@Qualifier("calendarItemTypeMerger") merger: Merger<CalendarItemType>,
 	): CalendarItemTypeLogic = CalendarItemTypeLogicImpl(
 		calendarItemTypeDAO = calendarItemTypeDAO,
 		filters = filters,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		merger = merger
 	)
 
 	@Bean
@@ -234,14 +260,16 @@ class LiteLogicConfig {
 		sessionLogic: SessionInformationProvider,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		filters: Filters,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("contactMerger") merger: Merger<Contact>,
 	): ContactLogic = ContactLogicImpl(
 		contactDAO = contactDAO,
 		exchangeDataMapLogic = exchangeDataMapLogic,
 		sessionLogic = sessionLogic,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		filters = filters,
-		fixer = fixer
+		fixer = fixer,
+		contactMerger = merger
 	)
 
 	@Bean
@@ -254,6 +282,7 @@ class LiteLogicConfig {
 		@Qualifier("documentDataAttachmentLoader") attachmentLoader: DocumentDataAttachmentLoader,
 		fixer: Fixer,
 		filters: Filters,
+		@Qualifier("documentMerger") merger: Merger<Document>,
 	): DocumentLogic = DocumentLogicImpl(
 		documentDAO = documentDAO,
 		sessionLogic = sessionLogic,
@@ -262,7 +291,8 @@ class LiteLogicConfig {
 		attachmentModificationLogic = attachmentModificationLogic,
 		attachmentLoader = attachmentLoader,
 		fixer = fixer,
-		filters = filters
+		filters = filters,
+		documentMerger = merger
 	)
 
 	@Bean
@@ -273,13 +303,15 @@ class LiteLogicConfig {
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		fixer: Fixer,
 		filters: Filters,
+		@Qualifier("formMerger") merger: Merger<Form>,
 	): FormLogic = FormLogicImpl(
 		formDAO = formDAO,
 		exchangeDataMapLogic = exchangeDataMapLogic,
 		sessionLogic = sessionLogic,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
-		filters = filters
+		filters = filters,
+		formMerger = merger
 	)
 
 	@Bean
@@ -289,14 +321,16 @@ class LiteLogicConfig {
 		sessionLogic: SessionInformationProvider,
 		exchangeDataMapLogic: ExchangeDataMapLogic,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("healthElementMerger") merger: Merger<HealthElement>,
 	): HealthElementLogic = HealthElementLogicImpl(
 		filters = filters,
 		healthElementDAO = healthElementDAO,
 		sessionLogic = sessionLogic,
 		exchangeDataMapLogic = exchangeDataMapLogic,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		healthElementMerger = merger
 	)
 
 	@Bean
@@ -310,7 +344,8 @@ class LiteLogicConfig {
 		sessionLogic: SessionInformationProvider,
 		exchangeDataMapLogic: ExchangeDataMapLogic,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("invoiceMerger") merger: Merger<Invoice>,
 	): InvoiceLogic = InvoiceLogicImpl(
 		filters = filters,
 		userLogic = userLogic,
@@ -321,7 +356,8 @@ class LiteLogicConfig {
 		sessionLogic = sessionLogic,
 		exchangeDataMapLogic = exchangeDataMapLogic,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		invoiceMerger = merger
 	)
 
 	@Bean
@@ -332,7 +368,8 @@ class LiteLogicConfig {
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		filters: Filters,
 		userLogic: UserLogic,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("messageMerger") merger: Merger<Message>,
 	): MessageLogic = MessageLogicImpl(
 		messageDAO = messageDAO,
 		exchangeDataMapLogic = exchangeDataMapLogic,
@@ -340,7 +377,8 @@ class LiteLogicConfig {
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		filters = filters,
 		userLogic = userLogic,
-		fixer = fixer
+		fixer = fixer,
+		messageMerger = merger
 	)
 
 	@Bean
@@ -350,14 +388,16 @@ class LiteLogicConfig {
 		filters: Filters,
 		exchangeDataMapLogic: ExchangeDataMapLogic,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("patientMerger") merger: Merger<Patient>,
 	): PatientLogic = PatientLogicImpl(
 		sessionLogic = sessionLogic,
 		patientDAO = patientDAO,
 		filters = filters,
 		exchangeDataMapLogic = exchangeDataMapLogic,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		patientMerger = merger
 	)
 
 	@Bean
@@ -365,12 +405,14 @@ class LiteLogicConfig {
 		placeDAO: PlaceDAO,
 		filters: Filters,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("placeMerger") merger: Merger<Place>,
 	): PlaceLogic = PlaceLogicImpl(
 		placeDAO = placeDAO,
 		filters = filters,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		merger = merger
 	)
 
 	@Bean
@@ -378,12 +420,14 @@ class LiteLogicConfig {
 		filters: Filters,
 		healthcarePartyDAO: HealthcarePartyDAO,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("healthcarePartyMerger") merger: Merger<HealthcareParty>,
 	): HealthcarePartyLogic = HealthcarePartyLogicImpl(
 		filters = filters,
 		healthcarePartyDAO = healthcarePartyDAO,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		merger = merger
 	)
 
 	@Bean
@@ -391,12 +435,14 @@ class LiteLogicConfig {
 		filters: Filters,
 		deviceDAO: DeviceDAO,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
-		fixer: Fixer
+		fixer: Fixer,
+		@Qualifier("deviceMerger") merger: Merger<Device>,
 	): DeviceLogic = DeviceLogicImpl(
 		filters = filters,
 		deviceDAO = deviceDAO,
 		datastoreInstanceProvider = datastoreInstanceProvider,
-		fixer = fixer
+		fixer = fixer,
+		merger = merger
 	)
 
 	@Bean
@@ -418,13 +464,15 @@ class LiteLogicConfig {
 		sdkVersionConfig: SdkVersionConfig,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		fixer: Fixer,
-		filters: Filters
+		filters: Filters,
+		@Qualifier("agendaMerger") merger: Merger<Agenda>,
 	): AgendaLogic = AgendaLogicImpl(
 		agendaDAO = agendaDAO,
 		sdkVersionConfig = sdkVersionConfig,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
-		filters = filters
+		filters = filters,
+		merger = merger
 	)
 
 
@@ -437,7 +485,8 @@ class LiteLogicConfig {
 		sessionLogic: SessionInformationProvider,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		fixer: Fixer,
-		filters: Filters
+		filters: Filters,
+		@Qualifier("calendarItemMerger") merger: Merger<CalendarItem>,
 	): CalendarItemLogic = CalendarItemLogicImpl(
 		calendarItemDAO = calendarItemDAO,
 		userDAO = userDAO,
@@ -446,7 +495,8 @@ class LiteLogicConfig {
 		sessionLogic = sessionLogic,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
-		filters = filters
+		filters = filters,
+		merger = merger
 	)
 
 	@Bean
@@ -520,14 +570,18 @@ class LiteLogicConfig {
 		sessionLogic: SessionInformationProvider,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		fixer: Fixer,
-		filters: Filters
+		filters: Filters,
+		@Qualifier("receiptMerger") merger: Merger<Receipt>,
+		attachmentLoader: ReceiptDataAttachmentLoader,
 	): ReceiptLogic = ReceiptLogicImpl(
 		receiptDAO = receiptDAO,
 		exchangeDataMapLogic = exchangeDataMapLogic,
 		sessionLogic = sessionLogic,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
-		filters = filters
+		filters = filters,
+		merger = merger,
+		attachmentLoader = attachmentLoader
 	)
 
 	@Bean

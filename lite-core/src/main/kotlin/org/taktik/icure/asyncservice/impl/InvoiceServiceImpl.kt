@@ -12,6 +12,8 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Invoice
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.data.LabelledOccurence
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.embed.InvoiceType
@@ -120,8 +122,6 @@ class InvoiceServiceImpl(
 
 	override fun listInvoicesHcpsByStatus(status: String, from: Long?, to: Long?, hcpIds: List<String>): Flow<Invoice> = invoiceLogic.listInvoicesHcpsByStatus(status, from, to, hcpIds)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = invoiceLogic.solveConflicts(limit, ids)
-
 	override suspend fun getTarificationsCodesOccurrences(
 		hcPartyId: String,
 		minOccurrences: Long
@@ -150,4 +150,20 @@ class InvoiceServiceImpl(
 	override fun undeleteInvoices(invoiceIds: List<IdAndRev>): Flow<Invoice> = invoiceLogic.undeleteEntities(invoiceIds)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Invoice>> = invoiceLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = invoiceLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Invoice> = invoiceLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Invoice,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Invoice> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			invoiceLogic.getBypassingCache(entity.id, rev)
+		}
+		return invoiceLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = invoiceLogic.solveConflicts(limit, ids)
 }

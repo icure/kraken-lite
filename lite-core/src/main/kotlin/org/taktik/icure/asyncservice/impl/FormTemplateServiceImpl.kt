@@ -7,6 +7,7 @@ import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.FormTemplateLogic
 import org.taktik.icure.asyncservice.FormTemplateService
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.FormTemplate
 
 @Service
@@ -31,8 +32,13 @@ class FormTemplateServiceImpl(
 		formTemplateGuid: String
 	): Flow<FormTemplate> = formTemplateLogic.getFormTemplatesByGuid(userId, specialityCode, formTemplateGuid)
 
-	override fun getFormTemplatesBySpecialty(specialityCode: String, loadLayout: Boolean): Flow<FormTemplate> = formTemplateLogic.getFormTemplatesBySpecialty(specialityCode, loadLayout)
+	@Suppress("DEPRECATION")
+	@Deprecated("Use matchFormTemplatesBy with a FormTemplateBySpecialtyFilter instead")
+	override fun getFormTemplatesBySpecialty(specialityCode: String, loadLayout: Boolean): Flow<FormTemplate> =
+		formTemplateLogic.getFormTemplatesBySpecialty(specialityCode, loadLayout)
 	override fun getFormTemplatesByUser(userId: String, loadLayout: Boolean): Flow<FormTemplate> = formTemplateLogic.getFormTemplatesByUser(userId, loadLayout)
+	override fun matchFormTemplatesBy(filter: AbstractFilter<FormTemplate>): Flow<String> =
+		formTemplateLogic.matchEntitiesBy(filter)
 
 	override suspend fun undeleteFormTemplate(
 		formTemplateId: String,

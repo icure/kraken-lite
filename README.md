@@ -15,12 +15,12 @@ git submodule update
 
 After that, if the operation completes successfully, the repository and all its submodules will be correctly initialized. 
 
-## Configuring Lite to work with Cardinal >= 2.0.0
-If you are using kraken lite with Cardinal SDK version 2.0.0 or greater, you need to configure the serialization to skip
-the legacy fields. To do so, you have to set the following property:
+## Configuring Lite to work with a specific version of Cardinal
+If you want to configure the kraken lite to work with a specific version of the SDK, you can do so by setting the 
+following optional property:
 
 ```bash
--Dicure.model.useCardinalDataModel=true
+-Dicure.model.cardinalVersion=<YOUR_CARDINAL_VERSION>
 ```
 
 ## Migration steps (for SDK version >=8)

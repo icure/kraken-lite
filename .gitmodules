@@ -1,3 +1,6 @@
 [submodule "kraken-common"]
 	path = kraken-common
 	url = https://github.com/icure/kraken-common.git
+[submodule "ksp-json-processor"]
+	path = ksp-json-processor
+	url = https://github.com/icure/ksp-json-processor.git

@@ -12,6 +12,8 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.HealthcareParty
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 
 @Service
@@ -87,4 +89,20 @@ class HealthcarePartyServiceImpl(
 
 	override fun modifyHealthcareParties(entities: Collection<HealthcareParty>): Flow<HealthcareParty> = healthcarePartyLogic.modifyEntities(entities)
 	override fun matchHealthcarePartiesBy(filter: AbstractFilter<HealthcareParty>): Flow<String> = healthcarePartyLogic.matchEntitiesBy(filter)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = healthcarePartyLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<HealthcareParty> = healthcarePartyLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: HealthcareParty,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<HealthcareParty> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			healthcarePartyLogic.getBypassingCache(entity.id, rev)
+		}
+		return healthcarePartyLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = healthcarePartyLogic.solveConflicts(limit, ids)
 }

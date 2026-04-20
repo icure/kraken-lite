@@ -8,6 +8,8 @@ import org.taktik.icure.asynclogic.PlaceLogic
 import org.taktik.icure.asyncservice.PlaceService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Place
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 
 @Service
@@ -28,4 +30,19 @@ class PlaceServiceImpl(
 	override fun undeletePlaces(placeIds: List<IdAndRev>): Flow<Place> = placeLogic.undeleteEntities(placeIds)
 	override suspend fun purgePlace(placeId: String, rev: String): DocIdentifier = placeLogic.purgeEntity(placeId, rev).let { DocIdentifier(it.id, it.rev) }
 	override fun purgePlaces(placeIds: List<IdAndRev>): Flow<DocIdentifier> = placeLogic.purgeEntities(placeIds)
+	override fun getConflictingEntitiesIds(): Flow<String> = placeLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Place> = placeLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Place,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Place> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			placeLogic.getBypassingCache(entity.id, rev)
+		}
+		return placeLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = placeLogic.solveConflicts(limit, ids)
 }

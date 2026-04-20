@@ -4,10 +4,7 @@
 
 package org.taktik.icure.config
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.KotlinFeature
-import com.fasterxml.jackson.module.kotlin.KotlinModule
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.codec.json.Jackson2JsonEncoder
@@ -34,15 +31,13 @@ class LiteWebConfig {
 @EnableWebFlux
 class LiteWebFluxConfigurer(
 	private val pluginsManager: PluginsManager,
-	private val liteConfig: LiteConfig
+	private val liteConfig: LiteCardinalVersionConfig
 ) : SharedWebFluxConfiguration() {
 
 	override fun getJackson2JsonEncoder(): Jackson2JsonEncoder {
-		val objectMapper = if (liteConfig.useCardinalDataModel) {
-			cardinalObjectMapper
-		} else {
-			legacyObjectMapper
-		}
+		val objectMapper = liteConfig.getConfiguredCardinalVersion()?.let { cardinalVersion ->
+			cardinalMappers.getForVersion(cardinalVersion)
+		} ?: legacyObjectMapper
 		return try {
 			pluginsManager.newInstance<Jackson2JsonEncoder>(
 				"org.taktik.icure.spring.encoder.PaginatedJackson2JsonEncoder",

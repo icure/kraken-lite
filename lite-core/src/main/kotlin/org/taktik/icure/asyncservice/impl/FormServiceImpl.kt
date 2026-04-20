@@ -8,6 +8,8 @@ import org.taktik.icure.asynclogic.FormLogic
 import org.taktik.icure.asyncservice.FormService
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.Form
+import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.embed.Delegation
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -55,7 +57,6 @@ class FormServiceImpl(
 
 	override suspend fun addDelegations(formId: String, delegations: List<Delegation>): Form? = formLogic.addDelegations(formId, delegations)
 
-	override fun solveConflicts(limit: Int?, ids: List<String>?) = formLogic.solveConflicts(limit, ids)
 	override fun listFormsByLogicalUuid(formUuid: String, descending: Boolean): Flow<Form> = formLogic.listFormsByLogicalUuid(formUuid, descending)
 
 	override fun listFormsByUniqueId(lid: String, descending: Boolean): Flow<Form> = formLogic.listFormsByUniqueId(lid, descending)
@@ -66,4 +67,20 @@ class FormServiceImpl(
 	override fun matchFormsBy(filter: AbstractFilter<Form>): Flow<String> = formLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Form>> = formLogic.bulkShareOrUpdateMetadata(requests)
+
+	override fun getConflictingEntitiesIds(): Flow<String> = formLogic.getConflictingEntitiesIds()
+	override fun getConflictsFor(entityId: String): Flow<Form> = formLogic.getConflictsFor(entityId)
+	override suspend fun declareConflictWinner(
+		entity: Form,
+		conflictsToPurge: List<String>
+	): ConflictResolutionResult<Form> {
+		val conflicts = conflictsToPurge.mapNotNull { rev ->
+			formLogic.getBypassingCache(entity.id, rev)
+		}
+		return formLogic.declareConflictWinner(entity, conflicts)
+	}
+	override fun solveConflicts(
+		limit: Int?,
+		ids: List<String>?
+	): Flow<MergeResult> = formLogic.solveConflicts(limit, ids)
 }
