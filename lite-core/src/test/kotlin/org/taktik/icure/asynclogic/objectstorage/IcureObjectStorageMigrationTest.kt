@@ -24,8 +24,8 @@ import org.taktik.icure.asyncdao.DocumentDAO
 import org.taktik.icure.asyncdao.objectstorage.ObjectStorageMigrationTasksDAO
 import org.taktik.icure.asyncdao.objectstorage.ObjectStorageTasksDAO
 import org.taktik.icure.asynclogic.SessionInformationProvider
-import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
-import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
+import org.taktik.icure.datastore.DatastoreInstanceProvider
+import org.taktik.icure.datastore.IDatastoreInformation
 import org.taktik.icure.asynclogic.objectstorage.testutils.FakeObjectStorageMigrationTasksDAO
 import org.taktik.icure.asynclogic.objectstorage.testutils.FakeObjectStorageTasksDAO
 import org.taktik.icure.asynclogic.objectstorage.testutils.attachment1
@@ -69,7 +69,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		resetTestLocalStorageDirectory()
 		documentDAO = mockk()
 		objectStorageClient = FakeObjectStorageClient(
-			"documents",
+			ObjectStorageEntityGroupName.documents,
 			ExternalServicesProperties(true, true),
 			null
 		) { it == userId }

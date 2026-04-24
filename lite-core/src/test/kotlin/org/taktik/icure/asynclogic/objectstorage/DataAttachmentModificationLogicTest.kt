@@ -20,8 +20,8 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.core.io.buffer.DataBuffer
 import org.taktik.commons.uti.UTI
 import org.taktik.icure.asyncdao.DocumentDAO
-import org.taktik.icure.asynclogic.datastore.DatastoreInstanceProvider
-import org.taktik.icure.asynclogic.datastore.IDatastoreInformation
+import org.taktik.icure.datastore.DatastoreInstanceProvider
+import org.taktik.icure.datastore.IDatastoreInformation
 import org.taktik.icure.asynclogic.objectstorage.DataAttachmentChange
 import org.taktik.icure.asynclogic.objectstorage.impl.DocumentDataAttachmentModificationLogicImpl
 import org.taktik.icure.asynclogic.objectstorage.testutils.SIZE_LIMIT
@@ -184,13 +184,17 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			expectedCouchDbCreations = mapOf(sampleDocument.mainAttachmentKey to (smallAttachment to sampleUtis))
 		)
 		dataAttachmentModificationLogic.updateAttachments(
-			sampleDocument,
+			sampleDocument.id,
+			sampleDocument.rev,
 			mapOf(
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-					smallAttachment.byteSizeDataBufferFlow(),
-					smallAttachment.size.toLong(),
-					sampleUtis,
-					false
+                    data = smallAttachment.byteSizeDataBufferFlow(),
+                    size = smallAttachment.size.toLong(),
+                    utis = sampleUtis,
+                    dataIsEncrypted = false,
+                    compressionAlgorithm = null,
+                    triedCompressionAlgorithmsVersion = null,
+                    realDataSize = smallAttachment.size.toLong()
 				)
 			)
 		)
@@ -203,13 +207,17 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			expectedObjectStorageCreations = mapOf(sampleDocument.mainAttachmentKey to (bigAttachment to sampleUtis))
 		)
 		dataAttachmentModificationLogic.updateAttachments(
-			sampleDocument,
+			sampleDocument.id,
+			sampleDocument.rev,
 			mapOf(
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-					bigAttachment.byteSizeDataBufferFlow(),
-					bigAttachment.size.toLong(),
-					sampleUtis,
-					false
+                    data = bigAttachment.byteSizeDataBufferFlow(),
+                    size = bigAttachment.size.toLong(),
+                    utis = sampleUtis,
+                    dataIsEncrypted = false,
+                    compressionAlgorithm = null,
+                    triedCompressionAlgorithmsVersion = null,
+                    realDataSize = bigAttachment.size.toLong()
 				)
 			)
 		)
@@ -220,13 +228,17 @@ class DataAttachmentModificationLogicTest : StringSpec({
 		coEvery { icureObjectStorage.preStore(any(), any(), any(), any()) } throws ObjectStorageException("Could not pre-store")
 		shouldThrow<ObjectStorageException> {
 			dataAttachmentModificationLogic.updateAttachments(
-				sampleDocument,
+				sampleDocument.id,
+				sampleDocument.rev,
 				mapOf(
 					sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-						bigAttachment.byteSizeDataBufferFlow(),
-						bigAttachment.size.toLong(),
-						sampleUtis,
-						false
+                        data = bigAttachment.byteSizeDataBufferFlow(),
+                        size = bigAttachment.size.toLong(),
+                        utis = sampleUtis,
+                        dataIsEncrypted = false,
+                        compressionAlgorithm = null,
+                        triedCompressionAlgorithmsVersion = null,
+                        realDataSize = smallAttachment.size.toLong()
 					)
 				)
 			)
@@ -251,7 +263,8 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			expectedObjectStorageDeletions = mapOf(key2 to storeId)
 		)
 		dataAttachmentModificationLogic.updateAttachments(
-			document,
+			document.id,
+			document.rev,
 			mapOf(
 				key1 to DataAttachmentChange.Delete,
 				key2 to DataAttachmentChange.Delete
@@ -262,7 +275,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 
 	"Updating attachment should fail without any changes if there is a request to delete a non-existing attachment" {
 		shouldThrow<IllegalArgumentException> {
-			dataAttachmentModificationLogic.updateAttachments(sampleDocument, mapOf(key1 to DataAttachmentChange.Delete))
+			dataAttachmentModificationLogic.updateAttachments(sampleDocument.id, sampleDocument.rev,mapOf(key1 to DataAttachmentChange.Delete))
 		}
 	}
 
@@ -297,12 +310,25 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			expectedObjectStorageDeletions = mapOf(key3 to storeId1, key4 to storeId2),
 		)
 		dataAttachmentModificationLogic.updateAttachments(
-			document,
+			document.id,
+			document.rev,
 			mapOf(
-				key1 to DataAttachmentChange.CreateOrUpdate(small1.byteSizeDataBufferFlow(), small1.size.toLong(), sampleUtis, false),
-				key2 to DataAttachmentChange.CreateOrUpdate(big1.byteSizeDataBufferFlow(), big1.size.toLong(), sampleUtis, false),
-				key3 to DataAttachmentChange.CreateOrUpdate(small2.byteSizeDataBufferFlow(), small2.size.toLong(), sampleUtis, false),
-				key4 to DataAttachmentChange.CreateOrUpdate(big2.byteSizeDataBufferFlow(), big2.size.toLong(), sampleUtis, false),
+				key1 to DataAttachmentChange.CreateOrUpdate(small1.byteSizeDataBufferFlow(), small1.size.toLong(), sampleUtis, false,
+					compressionAlgorithm = null,
+					triedCompressionAlgorithmsVersion = null,
+					realDataSize = small1.size.toLong()),
+				key2 to DataAttachmentChange.CreateOrUpdate(big1.byteSizeDataBufferFlow(), big1.size.toLong(), sampleUtis, false,
+					compressionAlgorithm = null,
+					triedCompressionAlgorithmsVersion = null,
+					realDataSize = big1.size.toLong()),
+				key3 to DataAttachmentChange.CreateOrUpdate(small2.byteSizeDataBufferFlow(), small2.size.toLong(), sampleUtis, false,
+					compressionAlgorithm = null,
+					triedCompressionAlgorithmsVersion = null,
+					realDataSize = small2.size.toLong()),
+				key4 to DataAttachmentChange.CreateOrUpdate(big2.byteSizeDataBufferFlow(), big2.size.toLong(), sampleUtis, false,
+					compressionAlgorithm = null,
+					triedCompressionAlgorithmsVersion = null,
+					realDataSize = big2.size.toLong()),
 			)
 		)
 		verify()
@@ -329,10 +355,19 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			expectedCouchDbDeletions = mapOf(key2 to toDeleteId)
 		)
 		dataAttachmentModificationLogic.updateAttachments(
-			document,
+			document.id,
+			document.rev,
 			mapOf(
 				key2 to DataAttachmentChange.Delete,
-				key4 to DataAttachmentChange.CreateOrUpdate(bigAttachment.byteSizeDataBufferFlow(), bigAttachment.size.toLong(), sampleUtis, false),
+				key4 to DataAttachmentChange.CreateOrUpdate(
+                    data = bigAttachment.byteSizeDataBufferFlow(),
+                    size = bigAttachment.size.toLong(),
+                    utis = sampleUtis,
+                    dataIsEncrypted = false,
+                    compressionAlgorithm = null,
+                    triedCompressionAlgorithmsVersion = null,
+                    realDataSize = smallAttachment.size.toLong()
+                ),
 			)
 		).shouldNotBeNull().apply { author shouldBe sampleAuthor }
 		verify()
@@ -349,8 +384,12 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			expectedObjectStorageDeletions = mapOf(key1 to existingId)
 		)
 		dataAttachmentModificationLogic.updateAttachments(
-			document,
-			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), newUtis, false))
+			document.id,
+			document.rev,
+			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), newUtis, false,
+				compressionAlgorithm = null,
+				triedCompressionAlgorithmsVersion = null,
+				realDataSize = smallAttachment.size.toLong()))
 		)
 		verify()
 	}
@@ -365,8 +404,12 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			expectedObjectStorageDeletions = mapOf(key1 to existingId)
 		)
 		dataAttachmentModificationLogic.updateAttachments(
-			document,
-			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), null, false))
+			document.id,
+			document.rev,
+			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), null, false,
+				compressionAlgorithm = null,
+				triedCompressionAlgorithmsVersion = null,
+				realDataSize = smallAttachment.size.toLong()))
 		)
 		verify()
 	}

@@ -67,7 +67,7 @@ fun StringSpec.testObjectSTorageWith(externalServicesProperties: ExternalService
 		resetTestLocalStorageDirectory()
 		eventsChannel = Channel(Channel.UNLIMITED)
 		objectStorageClient = FakeObjectStorageClient(
-			"documents",
+			ObjectStorageEntityGroupName.documents,
 			externalServicesProperties,
 			eventsChannel
 		) { it == userId }

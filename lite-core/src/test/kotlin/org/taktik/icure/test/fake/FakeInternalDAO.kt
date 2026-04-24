@@ -9,11 +9,15 @@ import kotlinx.coroutines.flow.map
 import org.apache.http.HttpStatus
 import org.taktik.couchdb.BulkUpdateResult
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.Option
 import org.taktik.couchdb.entity.Versionable
 import org.taktik.couchdb.exception.CouchDbConflictException
 import org.taktik.couchdb.exception.CouchDbException
+import org.taktik.couchdb.id.Identifiable
 import org.taktik.icure.asyncdao.InternalDAO
+import org.taktik.icure.asyncdao.results.BulkSaveResult
+import org.taktik.icure.db.PaginationOffset
 
 class FakeInternalDAO<T : Versionable<String>> : InternalDAO<T> {
 	private val latestEntitiesMap = ConcurrentHashMap<String, T>()
@@ -56,11 +60,11 @@ class FakeInternalDAO<T : Versionable<String>> : InternalDAO<T> {
 			save(entity)
 		} else throw CouchDbException("Trying to update a non-existing entity", HttpStatus.SC_NOT_FOUND, "Fake internal dao")
 
-	override fun save(entities: Flow<T>): Flow<DocIdentifier> = flow {
-		entities.collect { save(it).also { updatedEntity -> emit(DocIdentifier(updatedEntity.id, updatedEntity.rev)) } }
+	override fun save(entities: Flow<T>) = flow {
+		entities.collect { save(it).also { updatedEntity -> emit(BulkSaveResult.Success(it)) } }
 	}
 
-	override fun save(entities: List<T>): Flow<DocIdentifier> =
+	override fun save(entities: List<T>): Flow<BulkSaveResult<T>> =
 		save(entities.asFlow())
 
 	override suspend fun purge(entity: T): DocIdentifier =
@@ -79,13 +83,17 @@ class FakeInternalDAO<T : Versionable<String>> : InternalDAO<T> {
 		}
 	}
 
-	override suspend fun remove(entity: T): DocIdentifier =
-		purge(entity)
+	override suspend fun remove(entity: T): T =
+		purge(entity).let { entity }
 
 	override fun remove(entities: Flow<T>): Flow<BulkUpdateResult> =
 		purge(entities)
 
 	override suspend fun forceInitStandardDesignDocument(updateIfExists: Boolean) {
 		// Do nothing
+	}
+
+	override fun getEntityIdsPaginated(paginationOffset: PaginationOffset<Nothing>): Flow<ViewQueryResultEvent> {
+		TODO("Not yet implemented")
 	}
 }
