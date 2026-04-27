@@ -1,11 +1,6 @@
 package org.taktik.icure.asynclogic.objectstorage
 
-import org.taktik.icure.exceptions.ICureException
-
-/**
- * Exception thrown if there is an error with the storage of an attachment to object storage.
- */
-open class ObjectStorageException(msg: String, cause: Throwable? = null) : ICureException(msg, cause)
+import org.taktik.icure.exceptions.objectstorage.ObjectStorageException
 
 /**
  * Exception thrown when the object storage service can't be reached.
@@ -19,7 +14,6 @@ class UnreachableObjectStorageException(cause: Throwable?) : ObjectStorageExcept
 class UnavailableObjectException(message: String, cause: Throwable?) : ObjectStorageException(message, cause)
 
 /**
- * Exception thrown when an attempt to store some content fails because there is an object being stored or fully stored with the
- * same id but with a different content hash, or because the declared hash doesn't match the provided content.
+ * Exception thrown when an attempt to store some content fails because there is an issue with the local object storage.
  */
-class ObjectHashConflictException(message: String, cause: Throwable?) : ObjectStorageException(message, cause)
+class LocalObjectStorageException(message: String, cause: Throwable?) : ObjectStorageException(message, cause)

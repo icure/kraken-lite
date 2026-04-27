@@ -1,10 +1,8 @@
 import com.github.jk1.license.render.CsvReportRenderer
 import com.github.jk1.license.render.ReportRenderer
-import org.icure.task.CleanCouchDockerTask
-import org.icure.task.StartCouchDockerTask
 import org.springframework.boot.gradle.tasks.bundling.BootJar
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
 
 val repoUsername: String by project
 val repoPassword: String by project
