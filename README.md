@@ -1,5 +1,14 @@
 # Kraken Lite
-This is a lite, open-source version of the kraken.  
+This is a lite, open-source version of kraken, the backend for [cardinal SDK](https://github.com/icure/cardinal-sdk).
+
+> [!NOTE]
+> Unless you have specific needs for a local installations you might want to instead use the [Cardinal Cockpit](https://cockpit.icure.dev/) to setup a free-for-development environment on our cloud.
+
+## Why kraken-lite
+
+Kraken-lite allows to access most of the cardinal backend features on a local installation. Data can be synchronised with other installations or with the cloud thanks to couchDB's replication protocol.
+
+It is not a replacement for kraken-cloud, and should be installed only on devices that are only accessible to privileged users.
 
 ## How to clone this repository
 This repository depends on a git submodule, `kraken-common`, so it is important to correctly initialize it immediately after cloning, to avoid compilation errors.  
