@@ -116,7 +116,7 @@ class FakeObjectStorageClient<T : HasDataAttachments<T>>(
 		return if (available) {
 			entityToAttachments[entity.id]?.get(attachmentId)?.asFlow()
 				?: throw IllegalStateException("Document does not exist. Available attachments: $attachmentsKeys")
-		} else throw ObjectStorageException("Storage service is unavailable", null)
+		} else throw LocalObjectStorageException("Storage service is unavailable", null)
 	}
 
 	override suspend fun checkAvailable(entity: T, attachmentId: String, userId: String): Boolean {

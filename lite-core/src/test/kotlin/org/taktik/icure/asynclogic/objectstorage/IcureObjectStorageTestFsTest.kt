@@ -31,6 +31,7 @@ import org.taktik.icure.asynclogic.objectstorage.testutils.testObjectStorageProp
 import org.taktik.icure.entities.Document
 import org.taktik.icure.entities.objectstorage.ObjectStorageTask
 import org.taktik.icure.entities.objectstorage.ObjectStorageTaskType
+import org.taktik.icure.exceptions.objectstorage.ObjectStorageException
 import org.taktik.icure.properties.ExternalServicesProperties
 import org.taktik.icure.test.newId
 import org.taktik.icure.test.setCurrentUserData

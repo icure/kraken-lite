@@ -1,6 +1,5 @@
 package org.taktik.icure.asynclogic.objectstorage
 
-import java.nio.ByteBuffer
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.inspectors.forAll
@@ -14,15 +13,10 @@ import io.mockk.coVerify
 import io.mockk.just
 import io.mockk.mockk
 import io.mockk.slot
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import org.springframework.core.io.buffer.DataBuffer
 import org.taktik.commons.uti.UTI
 import org.taktik.icure.asyncdao.DocumentDAO
-import org.taktik.icure.datastore.DatastoreInstanceProvider
-import org.taktik.icure.datastore.IDatastoreInformation
-import org.taktik.icure.asynclogic.objectstorage.DataAttachmentChange
 import org.taktik.icure.asynclogic.objectstorage.impl.DocumentDataAttachmentModificationLogicImpl
 import org.taktik.icure.asynclogic.objectstorage.testutils.SIZE_LIMIT
 import org.taktik.icure.asynclogic.objectstorage.testutils.attachment1
@@ -38,17 +32,21 @@ import org.taktik.icure.asynclogic.objectstorage.testutils.key4
 import org.taktik.icure.asynclogic.objectstorage.testutils.modify
 import org.taktik.icure.asynclogic.objectstorage.testutils.sampleUtis
 import org.taktik.icure.asynclogic.objectstorage.testutils.smallAttachment
-import org.taktik.icure.asynclogic.objectstorage.testutils.testLocalStorageDirectory
 import org.taktik.icure.asynclogic.objectstorage.testutils.testObjectStorageProperties
+import org.taktik.icure.datastore.DatastoreInstanceProvider
+import org.taktik.icure.datastore.IDatastoreInformation
 import org.taktik.icure.entities.Document
-import org.taktik.icure.entities.objectstorage.DataAttachment
 import org.taktik.icure.entities.embed.DeletedAttachment
+import org.taktik.icure.entities.objectstorage.DataAttachment
+import org.taktik.icure.exceptions.objectstorage.ObjectStorageException
 import org.taktik.icure.properties.ObjectStorageProperties
+import org.taktik.icure.test.newId
+import org.taktik.icure.test.randomUri
 import org.taktik.icure.test.shouldContainExactly
 import org.taktik.icure.utils.toByteArray
+import java.io.IOException
+import java.nio.ByteBuffer
 
-@FlowPreview
-@ExperimentalCoroutinesApi
 class DataAttachmentModificationLogicTest : StringSpec({
 	val datastoreInfo = object : IDatastoreInformation {
 		override fun getFullIdFor(entityId: String): String = entityId
@@ -73,7 +71,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 
 	fun supportAttachmentUpdate(
 		initialDocument: Document,
-		expectedCouchDbCreations: Map<String, Pair<ByteArray, List<String>>> = emptyMap(),
+		expectedCouchDbCreations: Map<String, Triple<ByteArray, List<String>, Boolean>> = emptyMap(),
 		expectedObjectStorageCreations: Map<String, Pair<ByteArray, List<String>>> = emptyMap(),
 		expectedCouchDbDeletions: Map<String, String> = emptyMap(),
 		expectedObjectStorageDeletions: Map<String, String> = emptyMap()
@@ -88,6 +86,9 @@ class DataAttachmentModificationLogicTest : StringSpec({
 				nextRev(arg(3))
 			}
 		}
+		coEvery {
+			dao.get(datastoreInfo, initialDocument.id)
+		} returns initialDocument
 		expectedCouchDbDeletions.forEach { (_, attachmentId) ->
 			coEvery {
 				dao.deleteAttachment(datastoreInfo, initialDocument.id, any(), attachmentId)
@@ -115,27 +116,31 @@ class DataAttachmentModificationLogicTest : StringSpec({
 					- expectedObjectStorageDeletions.keys
 					- expectedCouchDbCreations.keys
 					- expectedObjectStorageCreations.keys
-				)
+					)
 				deletedAttachments shouldContainAll initialDocument.deletedAttachments
-				// Must first delete couchdb attachments
-				rev shouldBe expectedCouchDbDeletions.toList().fold(initialDocument.rev) { rev, _ -> nextRev(rev) }
+				// Must first upload couchdb attachments
+				rev shouldBe expectedCouchDbCreations.toList().fold(initialDocument.rev) { rev, _ -> nextRev(rev) }
 				// There should not be unexpected attachments or deleted attachments
 				dataAttachments.keys shouldBe (initialDocument.dataAttachments.keys
 					- expectedCouchDbDeletions.keys
 					- expectedObjectStorageDeletions.keys
 					+ expectedCouchDbCreations.keys
 					+ expectedObjectStorageCreations.keys
-				)
+					)
 				deletedAttachments.size shouldBe (initialDocument.deletedAttachments.size
 					+ (expectedCouchDbDeletions.keys + expectedObjectStorageDeletions.keys).size
-				)
+					)
 			}
 			expectedCouchDbCreations.forEach { (attachmentKey, expected) ->
-				val (expectedContent, expectedUtis) = expected
+				val (expectedContent, expectedUtis, dataEncrypted) = expected
 				savedDocument.captured.dataAttachments[attachmentKey].shouldNotBeNull().apply {
 					couchDbData.getValue(couchDbAttachmentId.shouldNotBeNull()).let { (mimeType, flow) ->
 						flow.toByteArray() shouldContainExactly expectedContent
-						mimeType shouldBe mimeTypeOf(expectedUtis)
+						if (dataEncrypted) {
+							mimeType shouldBe "application/octet-stream"
+						} else {
+							mimeType shouldBe mimeTypeOf(expectedUtis)
+						}
 					}
 					objectStoreAttachmentId shouldBe null
 					utis shouldBe expectedUtis
@@ -181,20 +186,20 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	"Creation of a small attachments should trigger the creation of a new couchdb attachment" {
 		val verify = supportAttachmentUpdate(
 			sampleDocument,
-			expectedCouchDbCreations = mapOf(sampleDocument.mainAttachmentKey to (smallAttachment to sampleUtis))
+			expectedCouchDbCreations = mapOf(sampleDocument.mainAttachmentKey to Triple(smallAttachment, sampleUtis, false))
 		)
 		dataAttachmentModificationLogic.updateAttachments(
 			sampleDocument.id,
 			sampleDocument.rev,
 			mapOf(
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-                    data = smallAttachment.byteSizeDataBufferFlow(),
-                    size = smallAttachment.size.toLong(),
-                    utis = sampleUtis,
-                    dataIsEncrypted = false,
-                    compressionAlgorithm = null,
-                    triedCompressionAlgorithmsVersion = null,
-                    realDataSize = smallAttachment.size.toLong()
+					smallAttachment.byteSizeDataBufferFlow(),
+					smallAttachment.size.toLong(),
+					sampleUtis,
+					false,
+					null,
+					null,
+					null
 				)
 			)
 		)
@@ -211,13 +216,13 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			sampleDocument.rev,
 			mapOf(
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-                    data = bigAttachment.byteSizeDataBufferFlow(),
-                    size = bigAttachment.size.toLong(),
-                    utis = sampleUtis,
-                    dataIsEncrypted = false,
-                    compressionAlgorithm = null,
-                    triedCompressionAlgorithmsVersion = null,
-                    realDataSize = bigAttachment.size.toLong()
+					bigAttachment.byteSizeDataBufferFlow(),
+					bigAttachment.size.toLong(),
+					sampleUtis,
+					false,
+					null,
+					null,
+					null
 				)
 			)
 		)
@@ -225,20 +230,21 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"If a big attachment could not be pre-stored the update operation should fail without any changes" {
-		coEvery { icureObjectStorage.preStore(any(), any(), any(), any()) } throws ObjectStorageException("Could not pre-store")
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
+		coEvery { icureObjectStorage.preStore(any(), any(), any(), any()) } throws LocalObjectStorageException("Could not pre-store", IOException())
 		shouldThrow<ObjectStorageException> {
 			dataAttachmentModificationLogic.updateAttachments(
 				sampleDocument.id,
 				sampleDocument.rev,
 				mapOf(
 					sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-                        data = bigAttachment.byteSizeDataBufferFlow(),
-                        size = bigAttachment.size.toLong(),
-                        utis = sampleUtis,
-                        dataIsEncrypted = false,
-                        compressionAlgorithm = null,
-                        triedCompressionAlgorithmsVersion = null,
-                        realDataSize = smallAttachment.size.toLong()
+						bigAttachment.byteSizeDataBufferFlow(),
+						bigAttachment.size.toLong(),
+						sampleUtis,
+						false,
+						null,
+						null,
+						null
 					)
 				)
 			)
@@ -274,8 +280,13 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"Updating attachment should fail without any changes if there is a request to delete a non-existing attachment" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		shouldThrow<IllegalArgumentException> {
-			dataAttachmentModificationLogic.updateAttachments(sampleDocument.id, sampleDocument.rev,mapOf(key1 to DataAttachmentChange.Delete))
+			dataAttachmentModificationLogic.updateAttachments(
+				sampleDocument.id,
+				sampleDocument.rev,
+				mapOf(key1 to DataAttachmentChange.Delete)
+			)
 		}
 	}
 
@@ -299,8 +310,8 @@ class DataAttachmentModificationLogicTest : StringSpec({
 		val verify = supportAttachmentUpdate(
 			document,
 			expectedCouchDbCreations = mapOf(
-				key1 to (small1 to sampleUtis),
-				key3 to (small2 to sampleUtis),
+				key1 to Triple(small1, sampleUtis, false),
+				key3 to Triple(small2, sampleUtis, false),
 			),
 			expectedObjectStorageCreations = mapOf(
 				key2 to (big1 to sampleUtis),
@@ -313,22 +324,10 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			document.id,
 			document.rev,
 			mapOf(
-				key1 to DataAttachmentChange.CreateOrUpdate(small1.byteSizeDataBufferFlow(), small1.size.toLong(), sampleUtis, false,
-					compressionAlgorithm = null,
-					triedCompressionAlgorithmsVersion = null,
-					realDataSize = small1.size.toLong()),
-				key2 to DataAttachmentChange.CreateOrUpdate(big1.byteSizeDataBufferFlow(), big1.size.toLong(), sampleUtis, false,
-					compressionAlgorithm = null,
-					triedCompressionAlgorithmsVersion = null,
-					realDataSize = big1.size.toLong()),
-				key3 to DataAttachmentChange.CreateOrUpdate(small2.byteSizeDataBufferFlow(), small2.size.toLong(), sampleUtis, false,
-					compressionAlgorithm = null,
-					triedCompressionAlgorithmsVersion = null,
-					realDataSize = small2.size.toLong()),
-				key4 to DataAttachmentChange.CreateOrUpdate(big2.byteSizeDataBufferFlow(), big2.size.toLong(), sampleUtis, false,
-					compressionAlgorithm = null,
-					triedCompressionAlgorithmsVersion = null,
-					realDataSize = big2.size.toLong()),
+				key1 to DataAttachmentChange.CreateOrUpdate(small1.byteSizeDataBufferFlow(), small1.size.toLong(), sampleUtis, false, null, null, null),
+				key2 to DataAttachmentChange.CreateOrUpdate(big1.byteSizeDataBufferFlow(), big1.size.toLong(), sampleUtis, false, null, null, null),
+				key3 to DataAttachmentChange.CreateOrUpdate(small2.byteSizeDataBufferFlow(), small2.size.toLong(), sampleUtis, false, null, null, null),
+				key4 to DataAttachmentChange.CreateOrUpdate(big2.byteSizeDataBufferFlow(), big2.size.toLong(), sampleUtis, false, null, null, null),
 			)
 		)
 		verify()
@@ -359,15 +358,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			document.rev,
 			mapOf(
 				key2 to DataAttachmentChange.Delete,
-				key4 to DataAttachmentChange.CreateOrUpdate(
-                    data = bigAttachment.byteSizeDataBufferFlow(),
-                    size = bigAttachment.size.toLong(),
-                    utis = sampleUtis,
-                    dataIsEncrypted = false,
-                    compressionAlgorithm = null,
-                    triedCompressionAlgorithmsVersion = null,
-                    realDataSize = smallAttachment.size.toLong()
-                ),
+				key4 to DataAttachmentChange.CreateOrUpdate(bigAttachment.byteSizeDataBufferFlow(), bigAttachment.size.toLong(), sampleUtis, false, null, null, null),
 			)
 		).shouldNotBeNull().apply { author shouldBe sampleAuthor }
 		verify()
@@ -380,16 +371,13 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			.withDataAttachments(mapOf(key1 to DataAttachment(null, existingId, sampleUtis)))
 		val verify = supportAttachmentUpdate(
 			document,
-			expectedCouchDbCreations = mapOf(key1 to (smallAttachment to newUtis)),
+			expectedCouchDbCreations = mapOf(key1 to Triple(smallAttachment, newUtis, false)),
 			expectedObjectStorageDeletions = mapOf(key1 to existingId)
 		)
 		dataAttachmentModificationLogic.updateAttachments(
 			document.id,
 			document.rev,
-			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), newUtis, false,
-				compressionAlgorithm = null,
-				triedCompressionAlgorithmsVersion = null,
-				realDataSize = smallAttachment.size.toLong()))
+			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), newUtis, false, null, null, null))
 		)
 		verify()
 	}
@@ -400,16 +388,13 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			.withDataAttachments(mapOf(key1 to DataAttachment(null, existingId, sampleUtis)))
 		val verify = supportAttachmentUpdate(
 			document,
-			expectedCouchDbCreations = mapOf(key1 to (smallAttachment to sampleUtis)),
+			expectedCouchDbCreations = mapOf(key1 to Triple(smallAttachment, sampleUtis, false)),
 			expectedObjectStorageDeletions = mapOf(key1 to existingId)
 		)
 		dataAttachmentModificationLogic.updateAttachments(
 			document.id,
 			document.rev,
-			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), null, false,
-				compressionAlgorithm = null,
-				triedCompressionAlgorithmsVersion = null,
-				realDataSize = smallAttachment.size.toLong()))
+			mapOf(key1 to DataAttachmentChange.CreateOrUpdate(smallAttachment.byteSizeDataBufferFlow(), smallAttachment.size.toLong(), null, false, null, null, null))
 		)
 		verify()
 	}
@@ -492,5 +477,28 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			validUpdates.addNewAttachment(),
 			setOf(key4)
 		) shouldBe validUpdates
+	}
+
+	"If the data is marked as encrypted the mime type for the couchdb attachment should be octet stream" {
+		val verify = supportAttachmentUpdate(
+			sampleDocument,
+			expectedCouchDbCreations = mapOf(sampleDocument.mainAttachmentKey to Triple(smallAttachment, sampleUtis, true))
+		)
+		dataAttachmentModificationLogic.updateAttachments(
+			sampleDocument.id,
+			sampleDocument.rev,
+			mapOf(
+				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
+					smallAttachment.byteSizeDataBufferFlow(),
+					smallAttachment.size.toLong(),
+					sampleUtis,
+					true,
+					null,
+					null,
+					null
+				)
+			)
+		)
+		verify()
 	}
 })

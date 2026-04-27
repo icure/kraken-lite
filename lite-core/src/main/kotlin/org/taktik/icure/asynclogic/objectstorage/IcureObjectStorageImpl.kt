@@ -17,10 +17,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.core.io.buffer.DataBuffer
-import org.springframework.security.authentication.AuthenticationServiceException
 import org.springframework.stereotype.Service
 import org.taktik.icure.asyncdao.objectstorage.ObjectStorageTasksDAO
-import org.taktik.icure.asynclogic.AsyncSessionLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.entities.Document
 import org.taktik.icure.entities.Receipt
@@ -65,7 +63,7 @@ private class IcureObjectStorageImpl<T : HasDataAttachments<T>>(
 			ensureUserLogged()
 			localObjectStorage.store(entity, attachmentId, content)
 		} catch (e: Exception) {
-			throw ObjectStorageException("Could not store attachment to local cache", e)
+			throw LocalObjectStorageException("Could not store attachment to local cache", e)
 		}
 
 	override suspend fun scheduleStoreAttachment(entity: T, attachmentId: String) =
