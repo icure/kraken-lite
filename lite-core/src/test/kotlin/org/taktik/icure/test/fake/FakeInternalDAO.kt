@@ -84,7 +84,7 @@ class FakeInternalDAO<T : Versionable<String>> : InternalDAO<T> {
 	}
 
 	override suspend fun remove(entity: T): T =
-		purge(entity).let { entity }
+		purge(entity).let { it.rev?.let { rev -> entity.withIdRev(null, rev) as T } ?: entity }
 
 	override fun remove(entities: Flow<T>): Flow<BulkUpdateResult> =
 		purge(entities)
