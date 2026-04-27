@@ -118,7 +118,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 				)
 				deletedAttachments shouldContainAll initialDocument.deletedAttachments
 				// Must first delete couchdb attachments
-				rev shouldBe expectedCouchDbDeletions.toList().fold(initialDocument.rev) { rev, _ -> nextRev(rev) }
+				rev shouldBe (expectedCouchDbDeletions.keys + expectedCouchDbCreations.keys).toList().fold(initialDocument.rev) { rev, _ -> nextRev(rev) }
 				// There should not be unexpected attachments or deleted attachments
 				dataAttachments.keys shouldBe (initialDocument.dataAttachments.keys
 					- expectedCouchDbDeletions.keys
@@ -179,6 +179,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"Creation of a small attachments should trigger the creation of a new couchdb attachment" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		val verify = supportAttachmentUpdate(
 			sampleDocument,
 			expectedCouchDbCreations = mapOf(sampleDocument.mainAttachmentKey to (smallAttachment to sampleUtis))
@@ -188,13 +189,13 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			sampleDocument.rev,
 			mapOf(
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-                    data = smallAttachment.byteSizeDataBufferFlow(),
-                    size = smallAttachment.size.toLong(),
-                    utis = sampleUtis,
-                    dataIsEncrypted = false,
-                    compressionAlgorithm = null,
-                    triedCompressionAlgorithmsVersion = null,
-                    realDataSize = smallAttachment.size.toLong()
+					data = smallAttachment.byteSizeDataBufferFlow(),
+					size = smallAttachment.size.toLong(),
+					utis = sampleUtis,
+					dataIsEncrypted = false,
+					compressionAlgorithm = null,
+					triedCompressionAlgorithmsVersion = null,
+					realDataSize = smallAttachment.size.toLong()
 				)
 			)
 		)
@@ -202,6 +203,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"Creation of a big attachments should trigger the creation of a new object store attachment (in normal conditions)" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		val verify = supportAttachmentUpdate(
 			sampleDocument,
 			expectedObjectStorageCreations = mapOf(sampleDocument.mainAttachmentKey to (bigAttachment to sampleUtis))
@@ -211,13 +213,13 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			sampleDocument.rev,
 			mapOf(
 				sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-                    data = bigAttachment.byteSizeDataBufferFlow(),
-                    size = bigAttachment.size.toLong(),
-                    utis = sampleUtis,
-                    dataIsEncrypted = false,
-                    compressionAlgorithm = null,
-                    triedCompressionAlgorithmsVersion = null,
-                    realDataSize = bigAttachment.size.toLong()
+					data = bigAttachment.byteSizeDataBufferFlow(),
+					size = bigAttachment.size.toLong(),
+					utis = sampleUtis,
+					dataIsEncrypted = false,
+					compressionAlgorithm = null,
+					triedCompressionAlgorithmsVersion = null,
+					realDataSize = bigAttachment.size.toLong()
 				)
 			)
 		)
@@ -225,6 +227,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"If a big attachment could not be pre-stored the update operation should fail without any changes" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		coEvery { icureObjectStorage.preStore(any(), any(), any(), any()) } throws ObjectStorageException("Could not pre-store")
 		shouldThrow<ObjectStorageException> {
 			dataAttachmentModificationLogic.updateAttachments(
@@ -232,13 +235,13 @@ class DataAttachmentModificationLogicTest : StringSpec({
 				sampleDocument.rev,
 				mapOf(
 					sampleDocument.mainAttachmentKey to DataAttachmentChange.CreateOrUpdate(
-                        data = bigAttachment.byteSizeDataBufferFlow(),
-                        size = bigAttachment.size.toLong(),
-                        utis = sampleUtis,
-                        dataIsEncrypted = false,
-                        compressionAlgorithm = null,
-                        triedCompressionAlgorithmsVersion = null,
-                        realDataSize = smallAttachment.size.toLong()
+						data = bigAttachment.byteSizeDataBufferFlow(),
+						size = bigAttachment.size.toLong(),
+						utis = sampleUtis,
+						dataIsEncrypted = false,
+						compressionAlgorithm = null,
+						triedCompressionAlgorithmsVersion = null,
+						realDataSize = smallAttachment.size.toLong()
 					)
 				)
 			)
@@ -247,6 +250,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"Updating attachments should support deletion of existing attachments" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		val couchId = "existingCouchDb"
 		val storeId = "existingObjectStore"
 		val document = sampleDocument
@@ -274,12 +278,14 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"Updating attachment should fail without any changes if there is a request to delete a non-existing attachment" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		shouldThrow<IllegalArgumentException> {
 			dataAttachmentModificationLogic.updateAttachments(sampleDocument.id, sampleDocument.rev,mapOf(key1 to DataAttachmentChange.Delete))
 		}
 	}
 
 	"Updating attachments should trigger deletion of previous attachments" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		val small1 = smallAttachment.modify(1)
 		val small2 = smallAttachment.modify(2)
 		val big1 = bigAttachment.modify(1)
@@ -335,6 +341,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"Attachment update should not affect other data and other attachments" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		val toDeleteId = "toDelete"
 		val sampleAuthor = "me"
 		val document = sampleDocument
@@ -360,20 +367,21 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			mapOf(
 				key2 to DataAttachmentChange.Delete,
 				key4 to DataAttachmentChange.CreateOrUpdate(
-                    data = bigAttachment.byteSizeDataBufferFlow(),
-                    size = bigAttachment.size.toLong(),
-                    utis = sampleUtis,
-                    dataIsEncrypted = false,
-                    compressionAlgorithm = null,
-                    triedCompressionAlgorithmsVersion = null,
-                    realDataSize = smallAttachment.size.toLong()
-                ),
+					data = bigAttachment.byteSizeDataBufferFlow(),
+					size = bigAttachment.size.toLong(),
+					utis = sampleUtis,
+					dataIsEncrypted = false,
+					compressionAlgorithm = null,
+					triedCompressionAlgorithmsVersion = null,
+					realDataSize = smallAttachment.size.toLong()
+				),
 			)
 		).shouldNotBeNull().apply { author shouldBe sampleAuthor }
 		verify()
 	}
 
 	"Updating an attachment should allow to change the utis" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		val existingId = "existing"
 		val newUtis = listOf(htmlUti)
 		val document = sampleDocument
@@ -395,6 +403,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 	}
 
 	"Updated attachment should reuse the existing uti values if no new utis were provided" {
+		coEvery { dao.get(datastoreInfo, sampleDocument.id) } returns sampleDocument
 		val existingId = "existing"
 		val document = sampleDocument
 			.withDataAttachments(mapOf(key1 to DataAttachment(null, existingId, sampleUtis)))
