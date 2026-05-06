@@ -15,7 +15,7 @@ class LiteCardinalVersionConfig : CardinalVersionConfig {
 
 	override suspend fun getUserCardinalVersion(): SemanticVersion? = getConfiguredCardinalVersion()
 
-	override suspend fun shouldUseCardinalModel(): Boolean = isConfiguredForCardinalModel()
+	override suspend fun useLegacyDataModelCompatibility(): Boolean = !isConfiguredForCardinalModel()
 
 	fun getConfiguredCardinalVersion(): SemanticVersion? = cardinalVersion?.let {
 		SemanticVersion(it)

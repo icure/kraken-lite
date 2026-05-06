@@ -487,6 +487,7 @@ class LiteLogicConfig {
 		fixer: Fixer,
 		filters: Filters,
 		@Qualifier("calendarItemMerger") merger: Merger<CalendarItem>,
+		cardinalVersionConfig: CardinalVersionConfig
 	): CalendarItemLogic = CalendarItemLogicImpl(
 		calendarItemDAO = calendarItemDAO,
 		userDAO = userDAO,
@@ -496,7 +497,8 @@ class LiteLogicConfig {
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
 		filters = filters,
-		merger = merger
+		merger = merger,
+		cardinalVersionConfig = cardinalVersionConfig
 	)
 
 	@Bean
