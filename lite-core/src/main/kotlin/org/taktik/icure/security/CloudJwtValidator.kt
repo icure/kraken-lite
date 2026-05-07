@@ -17,6 +17,7 @@ import kotlin.text.matches
 class CloudJwtValidator(
 	private val liteAuthProperties: LiteAuthProperties,
 	private val httpClient: WebClient,
+	private val jwtDecoder: JwtDecoder,
 ) {
 	private val cloudHostPatterns = liteAuthProperties.knownCloudJwtIssuers.map(CloudHostPattern::parse)
 
@@ -42,7 +43,7 @@ class CloudJwtValidator(
 			.toList()
 			.joinToString()
 			.let { JwtKeyUtils.decodePublicKeyFromString(it) }
-		val claims = JwtDecoder.validateAndGetClaims(cloudToken, validationKey, liteAuthProperties.validationSkewSeconds)
+		val claims = jwtDecoder.validateAndGetClaims(cloudToken, validationKey, liteAuthProperties.validationSkewSeconds)
 		return claims.getValue(USER_ID) as String
 	}
 }
