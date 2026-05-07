@@ -109,12 +109,6 @@ class LiteDesignDocumentProvider(
             } ?: throw IllegalStateException("No design doc for $baseId can be found at this time")
         }.id
 
-    private fun View.normalizedMap() = map
-        .replace("map\\s*=\\s*function\\s*".toRegex(), "function")
-        .replace("\r?\n".toRegex(), "")
-        .replace("\\s+".toRegex(), " ")
-        .replace(" == ", " === ")
-        .replace("[ ;]$".toRegex(), "")
 
     /**
      * Checks if all the [View]s defined in [other] exist in the receiver [DesignDocument] and did not have any
@@ -130,7 +124,7 @@ class LiteDesignDocumentProvider(
     private infix fun DesignDocument.equipollent(other: DesignDocument): Boolean =
         views.entries.all { (viewName, view) ->
             other.views[viewName]?.let {
-                it.reduce == view.reduce && it.normalizedMap() == view.normalizedMap()
+                it.reduce == view.reduce && it.normalizedMap == view.normalizedMap
             } ?: false
         }
 
