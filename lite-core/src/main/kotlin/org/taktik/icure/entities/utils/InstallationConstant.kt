@@ -12,13 +12,12 @@ import org.taktik.icure.entities.embed.RevisionInfo
  * @param value string representation of the value of the constant.
  */
 data class InstallationConstant(
-	@JsonProperty("_id") override val id: String,
-	@JsonProperty("_rev") override val rev: String? = null,
-	@JsonProperty("deleted") override val deletionDate: Long? = null,
-	@JsonProperty("rev_history") override val revHistory: Map<String, String>? = null,
-	@JsonProperty("_attachments") override val attachments: Map<String, Attachment>? = null,
-	@JsonProperty("_revs_info") override val revisionsInfo: List<RevisionInfo>? = null,
-	@JsonProperty("_conflicts") override val conflicts: List<String>? = null,
+	@param:JsonProperty("_id") override val id: String,
+	@param:JsonProperty("_rev") override val rev: String? = null,
+	@param:JsonProperty("deleted") override val deletionDate: Long? = null,
+	@param:JsonProperty("_attachments") override val attachments: Map<String, Attachment>? = null,
+	@param:JsonProperty("_revs_info") override val revisionsInfo: List<RevisionInfo>? = null,
+	@param:JsonProperty("_conflicts") override val conflicts: List<String>? = null,
 	val value: String? = null
 ) : StoredDocument {
 	override fun withIdRev(id: String?, rev: String): InstallationConstant =

@@ -26,6 +26,11 @@ class ReceiptServiceImpl(
 	override fun modifyReceipts(receipts: List<Receipt>): Flow<Receipt> = receiptLogic.modifyEntities(receipts)
 
 	override fun listReceiptsByReference(ref: String): Flow<Receipt> = receiptLogic.listReceiptsByReference(ref)
+	override fun listReceiptsBetweenDates(
+		start: Long?,
+		end: Long?,
+		descending: Boolean
+	): Flow<Receipt> = receiptLogic.listReceiptsBetweenDates(start, end, descending)
 
 	override fun getAttachment(receiptId: String, attachmentId: String): Flow<ByteBuffer> = receiptLogic.getAttachment(receiptId, attachmentId)
 

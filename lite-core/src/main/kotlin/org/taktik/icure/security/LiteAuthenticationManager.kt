@@ -86,7 +86,7 @@ class LiteAuthenticationManagerImpl(
 		) to jwtRefreshDetails.jwtDuration
 	}
 
-	override suspend fun checkAuthentication(fullGroupAndId: String, password: String) {
+	override suspend fun checkAuthenticationLocal(fullGroupAndId: String, password: String) {
 		if (password.length < authenticationProperties.minPasswordLength && !password.matches(TOKEN_REGEX)) {
 			throw BadCredentialsException("Password too short")
 		}
