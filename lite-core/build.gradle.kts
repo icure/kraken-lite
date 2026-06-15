@@ -204,6 +204,9 @@ dependencies {
     implementation(coreLibs.googleApiClient)
     implementation(coreLibs.websocketCommons)
 
+    implementation(liteLibs.logbackCore)
+    implementation(liteLibs.logbackClassic)
+
     testImplementation(coreLibs.jupiter)
     testImplementation(coreLibs.mockk)
     testImplementation(coreLibs.springBootTest)

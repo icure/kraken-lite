@@ -100,10 +100,11 @@ subprojects {
 				force(coreLibs.springWebflux)
 				force(coreLibs.springdocCommon)
 
-				force("io.netty:netty-resolver:4.1.131.Final")
- 				force("io.netty:netty-resolver-dns-native-macos:4.1.131.Final")
+				force("io.netty:netty-resolver:4.1.124.Final")
+				force("io.netty:netty-resolver-dns-native-macos:4.1.122.Final")
+				force("com.fasterxml.jackson:jackson-bom:2.19.1")
+				force("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
 				force("com.google.devtools.ksp:symbol-processing-api:2.2.0-2.0.2")
-				force("com.nimbusds:nimbus-jose-jwt:9.37.4")
 			}
 		}
 	}
