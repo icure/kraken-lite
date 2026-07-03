@@ -10,6 +10,7 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.Agenda
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
 import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 
@@ -49,6 +50,7 @@ class AgendaServiceImpl(
 	}
 	override fun solveConflicts(
 		limit: Int?,
-		ids: List<String>?
-	): Flow<MergeResult> = agendaLogic.solveConflicts(limit, ids)
+		ids: List<String>?,
+		strategy: ConflictResolutionStrategy,
+	): Flow<MergeResult> = agendaLogic.solveConflicts(limit, ids, strategy)
 }

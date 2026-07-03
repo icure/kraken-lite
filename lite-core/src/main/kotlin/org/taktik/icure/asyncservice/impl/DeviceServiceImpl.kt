@@ -11,6 +11,7 @@ import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Device
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
 import org.taktik.icure.entities.conflicts.MergeResult
 
 @Service
@@ -64,6 +65,7 @@ class DeviceServiceImpl(
 	}
 	override fun solveConflicts(
 		limit: Int?,
-		ids: List<String>?
-	): Flow<MergeResult> = deviceLogic.solveConflicts(limit, ids)
+		ids: List<String>?,
+		strategy: ConflictResolutionStrategy
+	): Flow<MergeResult> = deviceLogic.solveConflicts(limit, ids, strategy)
 }

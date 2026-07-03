@@ -110,7 +110,8 @@ class LiteAuthenticationManagerImpl(
 		groupId: String?,
 		applicationId: String?,
 		scopeDataOwner: String?,
-		cacheJwtRefreshDetails: Boolean
+		cacheJwtRefreshDetails: Boolean,
+		requestedSchemaVersion: Int?
 	): JwtAuthentication {
 		require(scopeDataOwner == null) {
 			"It is not possible to use the scope of another data owner in kraken lite"

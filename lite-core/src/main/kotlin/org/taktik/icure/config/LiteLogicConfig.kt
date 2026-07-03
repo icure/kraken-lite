@@ -207,12 +207,14 @@ class LiteLogicConfig {
 		filters: Filters,
 		fixer: Fixer,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
+		cardinalVersionConfig: CardinalVersionConfig,
 		@Qualifier("codeMerger") merger: Merger<Code>,
 	): CodeLogic = CodeLogicImpl(
 		codeDAO = codeDAO,
 		filters = filters,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
+		cardinalVersionConfig = cardinalVersionConfig,
 		codeMerger = merger
 	)
 
@@ -235,12 +237,14 @@ class LiteLogicConfig {
 	fun tarificationLogic(
 		tarificationDAO: TarificationDAO,
 		fixer: Fixer,
+		cardinalVersionConfig: LiteCardinalVersionConfig,
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		filters: Filters
 	): TarificationLogic = TarificationLogicImpl(
 		tarificationDAO = tarificationDAO,
 		datastoreInstanceProvider = datastoreInstanceProvider,
 		fixer = fixer,
+		cardinalVersionConfig = cardinalVersionConfig,
 		filters = filters
 	)
 

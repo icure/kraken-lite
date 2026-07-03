@@ -9,6 +9,7 @@ import org.taktik.icure.asyncservice.PlaceService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.Place
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
 import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 
@@ -43,6 +44,7 @@ class PlaceServiceImpl(
 	}
 	override fun solveConflicts(
 		limit: Int?,
-		ids: List<String>?
-	): Flow<MergeResult> = placeLogic.solveConflicts(limit, ids)
+		ids: List<String>?,
+		strategy: ConflictResolutionStrategy
+	): Flow<MergeResult> = placeLogic.solveConflicts(limit, ids, strategy)
 }

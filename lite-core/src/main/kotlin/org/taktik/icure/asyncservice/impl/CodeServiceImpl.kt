@@ -14,6 +14,7 @@ import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.base.Code
 import org.taktik.icure.entities.base.CodeStub
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
 import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 import java.io.InputStream
@@ -123,6 +124,7 @@ class CodeServiceImpl(
 	}
 	override fun solveConflicts(
 		limit: Int?,
-		ids: List<String>?
-	): Flow<MergeResult> = codeLogic.solveConflicts(limit, ids)
+		ids: List<String>?,
+		strategy: ConflictResolutionStrategy
+	): Flow<MergeResult> = codeLogic.solveConflicts(limit, ids, strategy)
 }

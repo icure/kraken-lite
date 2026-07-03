@@ -7,8 +7,10 @@ import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.InsuranceLogic
 import org.taktik.icure.asyncservice.InsuranceService
 import org.taktik.icure.db.PaginationOffset
+import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.Insurance
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
 import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.pagination.PaginationElement
 
@@ -44,6 +46,7 @@ class InsuranceServiceImpl(
 	override fun modifyInsurances(insurances: List<Insurance>): Flow<Insurance> = insuranceLogic.modifyEntities(insurances)
 
 	override fun getInsurances(ids: Set<String>): Flow<Insurance> = insuranceLogic.getInsurances(ids)
+	override fun matchInsurancesBy(filter: AbstractFilter<Insurance>): Flow<String> = insuranceLogic.matchEntitiesBy(filter)
 
 	override fun getAllInsurances(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = insuranceLogic.getAllInsurances(paginationOffset)
 
@@ -60,6 +63,7 @@ class InsuranceServiceImpl(
 	}
 	override fun solveConflicts(
 		limit: Int?,
-		ids: List<String>?
-	): Flow<MergeResult> = insuranceLogic.solveConflicts(limit, ids)
+		ids: List<String>?,
+		strategy: ConflictResolutionStrategy
+	): Flow<MergeResult> = insuranceLogic.solveConflicts(limit, ids, strategy)
 }

@@ -31,8 +31,9 @@ class LiteWebConfig {
 @EnableWebFlux
 class LiteWebFluxConfigurer(
 	private val pluginsManager: PluginsManager,
-	private val liteConfig: LiteCardinalVersionConfig
-) : SharedWebFluxConfiguration() {
+	private val liteConfig: LiteCardinalVersionConfig,
+	cardinalMappersProvider: CardinalMappersProvider
+) : SharedWebFluxConfiguration(cardinalMappersProvider) {
 
 	override fun getJackson2JsonEncoder(): Jackson2JsonEncoder {
 		val objectMapper = liteConfig.getConfiguredCardinalVersion()?.let { cardinalVersion ->
