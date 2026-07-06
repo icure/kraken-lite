@@ -11,6 +11,7 @@ import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.entities.CalendarItem
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
 import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
@@ -44,6 +45,20 @@ class CalendarItemServiceImpl(
 		endDate: Long,
 		agendaId: String
 	): Flow<CalendarItem> = calendarItemLogic.getCalendarItemByPeriodAndAgendaId(startDate, endDate, agendaId, false)
+
+	override fun collectFrequenciesByPeriodAndHcPartyId(
+		startDate: Long,
+		endDate: Long,
+		hcPartyId: String,
+		extensionInDays: Int?
+	): Flow<Pair<Long, Long>> = calendarItemLogic.collectFrequenciesByPeriodAndHcPartyId(startDate, endDate, hcPartyId, extensionInDays)
+
+	override fun collectFrequenciesByPeriodAndAgendaId(
+		startDate: Long,
+		endDate: Long,
+		agendaId: String,
+		extensionInDays: Int?
+	): Flow<Pair<Long, Long>> = calendarItemLogic.collectFrequenciesByPeriodAndAgendaId(startDate, endDate, agendaId, extensionInDays)
 
 	override fun findCalendarItemIdsByDataOwnerPatientStartTime(
 		dataOwnerId: String,
@@ -93,6 +108,7 @@ class CalendarItemServiceImpl(
 	}
 	override fun solveConflicts(
 		limit: Int?,
-		ids: List<String>?
-	): Flow<MergeResult> = calendarItemLogic.solveConflicts(limit, ids)
+		ids: List<String>?,
+		strategy: ConflictResolutionStrategy
+	): Flow<MergeResult> = calendarItemLogic.solveConflicts(limit, ids, strategy)
 }

@@ -20,7 +20,8 @@ import org.taktik.icure.asyncdao.impl.MedicalLocationDAOImpl
 import org.taktik.icure.asyncdao.impl.MessageDAOImpl
 import org.taktik.icure.asyncdao.impl.UserDAOImpl
 import org.taktik.icure.cache.ConfiguredCacheProvider
-import org.taktik.icure.cache.EntityCacheFactory
+import org.taktik.icure.dao.DesignDocSchemaProvider
+import org.taktik.icure.dao.QueryProvider
 import org.taktik.icure.security.CouchDbCredentialsProvider
 
 @Configuration
@@ -50,6 +51,20 @@ class LiteDAOConfig : DaoConfig {
 	@Value("\${icure.dao.backgroundIndexationWorkers:1}")
 	var backgroundIndexationWorkers: Int = 1
 
+	@Value("\${icure.dao.indexBuiltInViews:true}")
+	var indexBuiltInViews: Boolean = true
+
+	override val queryProviderCompatibilityMode = true
+
+	@Bean
+	@Profile("app")
+	fun designDocQueryProvider(
+		designDocSchemaProvider: DesignDocSchemaProvider,
+	): QueryProvider = QueryProvider(
+		designDocSchemaProvider = designDocSchemaProvider,
+		failOnMissingView = !queryProviderCompatibilityMode
+	)
+
 	fun setLiteConfig(propertyName: String, value: Boolean) {
 		when(propertyName) {
 			USE_DATA_OWNER_PARTITION -> {
@@ -68,13 +83,15 @@ class LiteDAOConfig : DaoConfig {
 		@Qualifier("healthdataCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
 		idGenerator: IDGenerator,
 		entityCacheFactory: ConfiguredCacheProvider,
-		designDocumentProvider: DesignDocumentProvider
+		designDocumentProvider: DesignDocumentProvider,
+		queryProvider: QueryProvider
 	): MessageDAO = MessageDAOImpl(
 		couchDbDispatcher = couchDbDispatcher,
 		idGenerator = idGenerator,
 		entityCacheFactory = entityCacheFactory,
 		designDocumentProvider = designDocumentProvider,
-		daoConfig = this
+		daoConfig = this,
+		queryProvider = queryProvider
 	)
 
 	@Bean
@@ -83,13 +100,15 @@ class LiteDAOConfig : DaoConfig {
 		@Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
 		idGenerator: IDGenerator,
 		entityCacheFactory: ConfiguredCacheProvider,
-		designDocumentProvider: DesignDocumentProvider
+		designDocumentProvider: DesignDocumentProvider,
+		queryProvider: QueryProvider
 	): MedicalLocationDAO = MedicalLocationDAOImpl(
 		couchDbDispatcher = couchDbDispatcher,
 		idGenerator = idGenerator,
 		entityCacheFactory = entityCacheFactory,
 		designDocumentProvider = designDocumentProvider,
-		daoConfig = this
+		daoConfig = this,
+		queryProvider = queryProvider
 	)
 
 	@Bean
@@ -98,13 +117,15 @@ class LiteDAOConfig : DaoConfig {
 		@Qualifier("baseCouchDbDispatcher") couchDbDispatcher: CouchDbDispatcher,
 		idGenerator: IDGenerator,
 		entityCacheFactory: ConfiguredCacheProvider,
-		designDocumentProvider: DesignDocumentProvider
+		designDocumentProvider: DesignDocumentProvider,
+		queryProvider: QueryProvider
 	): UserDAO = UserDAOImpl(
 		couchDbDispatcher = couchDbDispatcher,
 		idGenerator = idGenerator,
 		entityCacheFactory = entityCacheFactory,
 		designDocumentProvider = designDocumentProvider,
-		daoConfig = this
+		daoConfig = this,
+		queryProvider = queryProvider
 	)
 
 	@Bean

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Repository
 import org.taktik.couchdb.annotation.View
 import org.taktik.couchdb.dao.DesignDocumentProvider
 import org.taktik.couchdb.entity.ComplexKey
-import org.taktik.couchdb.id.IDGenerator
 import org.taktik.couchdb.queryViewIncludeDocsNoValue
 import org.taktik.icure.asyncdao.CouchDbDispatcher
 import org.taktik.icure.asyncdao.impl.InternalDAOImpl
@@ -22,18 +21,14 @@ import org.taktik.icure.entities.objectstorage.ObjectStorageTask
 @View(name = "all", map = "function(doc) { if (doc.java_type == 'org.taktik.icure.entities.objectstorage.ObjectStorageTask' && !doc.deleted) emit( null, doc._id )}")
 class ObjectStorageTasksDAOImpl(
 	@Qualifier("systemCouchDbDispatcher") systemCouchDbDispatcher: CouchDbDispatcher,
-	idGenerator: IDGenerator,
 	datastoreInstanceProvider: DatastoreInstanceProvider,
 	designDocumentProvider: DesignDocumentProvider
 ) : InternalDAOImpl<ObjectStorageTask>(
-		ObjectStorageTask::class.java,
-		systemCouchDbDispatcher,
-		idGenerator,
-		datastoreInstanceProvider,
-		designDocumentProvider
-	),
-	ObjectStorageTasksDAO
-{
+	entityClass = ObjectStorageTask::class.java,
+	couchDbDispatcher = systemCouchDbDispatcher,
+	datastoreInstanceProvider = datastoreInstanceProvider,
+	designDocumentProvider = designDocumentProvider
+), ObjectStorageTasksDAO {
 	companion object {
 		private const val BY_ENTITY_CLASS_ENTITY_ID_ATTACHMENT_ID = "by_entityclass_entityid_attachmentid"
 		private const val BY_ENTITY_CLASS = "by_entityclass"

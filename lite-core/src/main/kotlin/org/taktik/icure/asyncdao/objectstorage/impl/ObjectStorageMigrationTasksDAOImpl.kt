@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.map
 import org.springframework.stereotype.Repository
 import org.taktik.couchdb.annotation.View
 import org.taktik.couchdb.dao.DesignDocumentProvider
-import org.taktik.couchdb.id.IDGenerator
 import org.taktik.couchdb.queryViewIncludeDocsNoValue
 import org.taktik.icure.asyncdao.CouchDbDispatcher
 import org.taktik.icure.asyncdao.impl.InternalDAOImpl
@@ -19,15 +18,13 @@ import org.taktik.icure.entities.objectstorage.ObjectStorageMigrationTask
 @View(name = "all", map = "function(doc) { if (doc.java_type == 'org.taktik.icure.entities.objectstorage.ObjectStorageMigrationTask' && !doc.deleted) emit( null, doc._id )}")
 class ObjectStorageMigrationTasksDAOImpl(
 	systemCouchDbDispatcher: CouchDbDispatcher,
-	idGenerator: IDGenerator,
 	datastoreInstanceProvider: DatastoreInstanceProvider,
 	designDocumentProvider: DesignDocumentProvider
 ) : InternalDAOImpl<ObjectStorageMigrationTask>(
-		ObjectStorageMigrationTask::class.java,
-		systemCouchDbDispatcher,
-		idGenerator,
-		datastoreInstanceProvider,
-		designDocumentProvider
+	entityClass = ObjectStorageMigrationTask::class.java,
+	couchDbDispatcher = systemCouchDbDispatcher,
+	datastoreInstanceProvider = datastoreInstanceProvider,
+	designDocumentProvider = designDocumentProvider
 	),
 	ObjectStorageMigrationTasksDAO
 {

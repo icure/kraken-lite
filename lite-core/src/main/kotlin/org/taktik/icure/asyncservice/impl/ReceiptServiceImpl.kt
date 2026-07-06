@@ -7,9 +7,9 @@ import org.taktik.couchdb.DocIdentifier
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.ReceiptLogic
 import org.taktik.icure.asyncservice.ReceiptService
-import org.taktik.icure.entities.AccessLog
 import org.taktik.icure.entities.Receipt
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
+import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
 import org.taktik.icure.entities.conflicts.MergeResult
 import org.taktik.icure.entities.embed.ReceiptBlobType
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
@@ -67,8 +67,9 @@ class ReceiptServiceImpl(
 	}
 	override fun solveConflicts(
 		limit: Int?,
-		ids: List<String>?
-	): Flow<MergeResult> = receiptLogic.solveConflicts(limit, ids)
+		ids: List<String>?,
+		strategy: ConflictResolutionStrategy
+	): Flow<MergeResult> = receiptLogic.solveConflicts(limit, ids, strategy)
 
 	override suspend fun putReceiptAttachmentInfo(
 		receiptId: String,

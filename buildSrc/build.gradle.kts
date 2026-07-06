@@ -7,6 +7,7 @@ repositories {
 	mavenCentral()
 	maven { url = uri("https://maven.taktik.be/content/groups/public") }
 	maven { url = uri("https://jitpack.io") }
+	maven { url = uri("https://maven.pkg.github.com/icure/sdk-codegen") }
 }
 
 version = "0.0.1-SNAPSHOT"
@@ -23,8 +24,20 @@ java {
 	targetCompatibility = JavaVersion.VERSION_21
 }
 
+kotlin {
+	compilerOptions {
+		if (System.getProperty("idea.active") == "true") {
+			freeCompilerArgs = listOf("-Xdebug")
+		}
+	}
+}
+
 dependencies {
-	implementation(coreLibs.bundles.kotlinxCoroutinesLibs)
-	implementation("org.jetbrains.kotlin.plugin.serialization:org.jetbrains.kotlin.plugin.serialization.gradle.plugin:2.2.0")
-	implementation("com.icure:multiplatform-codegen-library:1.7.5")
+	implementation(coreLibs.guava)
+	implementation(coreLibs.jacksonKotlin)
+	implementation(coreLibs.jacksonDatabind)
+	implementation(coreLibs.kotlinxSerializationPlugin)
+	implementation(coreLibs.kotlinMultiplatformPlugin)
+	implementation(coreLibs.kotlinxCoroutinesCore)
+	implementation("com.icure:kraken-codegen-library:1.8.4")
 }
