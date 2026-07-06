@@ -1,6 +1,6 @@
 [versions]
 sonarqube = "3.3"
-kmehr = "26.6.1-g86ad5d736b"
+kmehr = "26.6.2-gc4a525d6ad"
 kotest = "5.9.1"
 logback = "1.5.25"
 
