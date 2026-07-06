@@ -10,7 +10,7 @@ import java.util.jar.JarFile
 
 @Component
 class PluginsManager(
-	@Value("\${icure.lite.plugins.sourceFolder:#{null}}") private val sourceFolder: String? = null
+	@param:Value("\${icure.lite.plugins.sourceFolder:#{null}}") private val sourceFolder: String? = null
 ) {
 	private val log = LoggerFactory.getLogger(this.javaClass)
 

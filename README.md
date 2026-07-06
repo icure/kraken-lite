@@ -110,6 +110,29 @@ curl -X POST http://localhost:16043/rest/v2/icure/dd/Contact?warmup=true
 This will trigger the indexation and warmup (for older CouchDB versions) for all the Design Documents of the Contact 
 entity of any partition.
 
+### Custom Design Documents
+Kraken-lite supports the new custom design documents mechanism, that allow to only create and index the desired view
+for each entity.
+To define the custom DesignDocs, you need to set up the following properties:
+The url of the public repository containing the views: 
+```bash
+-Dbuiltin-views-repository=https://github.com/icure/kraken-builtin-views
+```
+Then you have to define the views to include for each entity, as a property for each entity that associates the name of 
+the entity to the list of views:
+```bash
+-Dicure.designdoc.lite.views-by-entity.Contact=all,service_by_all_delegates_code_prefix,by_all_delegates_code,by_service_latest
+-Dicure.designdoc.lite.views-by-entity.Document=all,conflicts
+-Dicure.designdoc.lite.views-by-entity.HealthElement=all,conflicts
+```
+The views will be automatically indexed in background. You can set up foreground indexation for all the views of a single
+entity or for all the entity as described in the previous section.
+
+You can disable the creation of the design document defined in the code of kraken-lite by setting up the following property
+```bash
+-Dicure.dao.indexBuiltInViews=false
+```
+
 ### Kraken-lite authentication
 
 All the endpoints on kraken-lite needs authentication. The only endpoints that can be accessed without authentication are:
