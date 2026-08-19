@@ -34,6 +34,7 @@ import org.taktik.icure.asyncdao.MessageDAO
 import org.taktik.icure.asyncdao.PatientDAO
 import org.taktik.icure.asyncdao.PlaceDAO
 import org.taktik.icure.asyncdao.ReceiptDAO
+import org.taktik.icure.asyncdao.RelatedPersonDAO
 import org.taktik.icure.asyncdao.SecureDelegationKeyMapDAO
 import org.taktik.icure.asyncdao.TarificationDAO
 import org.taktik.icure.asyncdao.UserDAO
@@ -61,6 +62,7 @@ import org.taktik.icure.asynclogic.MessageLogic
 import org.taktik.icure.asynclogic.PatientLogic
 import org.taktik.icure.asynclogic.PlaceLogic
 import org.taktik.icure.asynclogic.ReceiptLogic
+import org.taktik.icure.asynclogic.RelatedPersonLogic
 import org.taktik.icure.asynclogic.SecureDelegationKeyMapLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.asynclogic.TarificationLogic
@@ -90,6 +92,7 @@ import org.taktik.icure.asynclogic.impl.MessageLogicImpl
 import org.taktik.icure.asynclogic.impl.PatientLogicImpl
 import org.taktik.icure.asynclogic.impl.PlaceLogicImpl
 import org.taktik.icure.asynclogic.impl.ReceiptLogicImpl
+import org.taktik.icure.asynclogic.impl.RelatedPersonLogicImpl
 import org.taktik.icure.asynclogic.impl.SecureDelegationKeyMapLogicImpl
 import org.taktik.icure.asynclogic.impl.SessionInformationProviderImpl
 import org.taktik.icure.asynclogic.impl.TarificationLogicImpl
@@ -113,6 +116,7 @@ import org.taktik.icure.entities.Message
 import org.taktik.icure.entities.Patient
 import org.taktik.icure.entities.Place
 import org.taktik.icure.entities.Receipt
+import org.taktik.icure.entities.RelatedPerson
 import org.taktik.icure.entities.User
 import org.taktik.icure.entities.base.Code
 import org.taktik.icure.mergers.Merger
@@ -592,6 +596,25 @@ class LiteLogicConfig {
 		filters = filters,
 		merger = merger,
 		attachmentLoader = attachmentLoader
+	)
+
+	@Bean
+	fun relatedPersonLogic(
+		filters: Filters,
+		relatedPersonDAO: RelatedPersonDAO,
+		sessionLogic: SessionInformationProvider,
+		exchangeDataMapLogic: ExchangeDataMapLogic,
+		datastoreInstanceProvider: DatastoreInstanceProvider,
+		fixer: Fixer,
+		@Qualifier("relatedPersonMerger") merger: Merger<RelatedPerson>,
+	): RelatedPersonLogic = RelatedPersonLogicImpl(
+		filters = filters,
+		relatedPersonDAO = relatedPersonDAO,
+		sessionLogic = sessionLogic,
+		exchangeDataMapLogic = exchangeDataMapLogic,
+		datastoreInstanceProvider = datastoreInstanceProvider,
+		fixer = fixer,
+		relatedPersonMerger = merger,
 	)
 
 	@Bean

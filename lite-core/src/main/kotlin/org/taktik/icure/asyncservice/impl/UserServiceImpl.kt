@@ -85,7 +85,7 @@ class UserServiceImpl(
 
 	override suspend fun changeUserMobilePhone(
 		userId: String,
-		newMobilePhone: String,
+		newMobilePhone: String?,
 		previousMobilePhone: String?
 	): User = userLogic.changeUserMobilePhone(userId, newMobilePhone, previousMobilePhone)
 
