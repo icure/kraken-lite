@@ -39,5 +39,5 @@ dependencies {
 	implementation(coreLibs.kotlinxSerializationPlugin)
 	implementation(coreLibs.kotlinMultiplatformPlugin)
 	implementation(coreLibs.kotlinxCoroutinesCore)
-	implementation("com.icure:kraken-codegen-library:1.8.4")
+	implementation("com.icure:kraken-codegen-library:1.10.0")
 }
