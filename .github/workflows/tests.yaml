@@ -14,9 +14,9 @@ jobs:
   tests:
     name: full_test_suite
     # The e2e suite starts a CouchDB container and boots the jar as a child JVM, so it needs a runner
-    # with docker and some room: the github hosted linux runner provides both.
+    # with docker and some room: the GitHub hosted linux runner provides both.
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 20
 
     env:
       ORG_GRADLE_PROJECT_repoUsername: ${{ secrets.REPO_USERNAME }}
