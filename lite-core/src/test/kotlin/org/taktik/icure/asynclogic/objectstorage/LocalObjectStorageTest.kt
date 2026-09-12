@@ -20,11 +20,11 @@ import org.taktik.icure.asynclogic.objectstorage.testutils.resetTestLocalStorage
 import org.taktik.icure.asynclogic.objectstorage.testutils.sampleAttachments
 import org.taktik.icure.asynclogic.objectstorage.testutils.testObjectStorageProperties
 import org.taktik.icure.entities.Document
-import org.taktik.icure.properties.ObjectStorageProperties
 import org.taktik.icure.test.shouldContainExactly
 import org.taktik.icure.utils.toByteArray
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val SLOW_BYTES_DELAY = 100L
+private val slowBytesDelay = 100.milliseconds
 
 class LocalObjectStorageTest : StringSpec({
 	val cache: DocumentLocalObjectStorage =
@@ -54,15 +54,15 @@ class LocalObjectStorageTest : StringSpec({
 	}
 
 	"Store function should not complete until file is completely written" {
-		val dataFlow = bytes1.delayedBytesFlow(SLOW_BYTES_DELAY, 2)
+		val dataFlow = bytes1.delayedBytesFlow(slowBytesDelay, 2)
 		val writingJob = async {
 			cache.store(document1, attachment1, dataFlow)
 		}
-		delay(SLOW_BYTES_DELAY / 2)
+		delay(slowBytesDelay / 2)
 		writingJob.isCompleted shouldBe false
-		delay(SLOW_BYTES_DELAY)
+		delay(slowBytesDelay)
 		writingJob.isCompleted shouldBe false
-		withTimeout(SLOW_BYTES_DELAY) { writingJob.await() }
+		withTimeout(slowBytesDelay) { writingJob.await() }
 		cache.read(document1, attachment1)?.toByteArray(true) shouldContainExactly bytes1
 	}
 
@@ -75,19 +75,19 @@ class LocalObjectStorageTest : StringSpec({
 
 	"In case of concurrent writes to the same file other writes should join on the existing job" {
 		val dataFlow = flow {
-			delay(SLOW_BYTES_DELAY * 2)
+			delay(slowBytesDelay * 2)
 			emit(DefaultDataBufferFactory.sharedInstance.wrap(bytes1))
 		}
 		val writingJob = async { cache.store(document1, attachment1, dataFlow) }
-		delay(SLOW_BYTES_DELAY / 2)
+		delay(slowBytesDelay / 2)
 		// I'm doing illegal stuff for test purposes: same attachment id but different content (should never happen in real scenario)
 		val writingJob2 = async { cache.store(document1, attachment1, flowOf(DefaultDataBufferFactory.sharedInstance.wrap(bytes2))) }
 		val writingJob3 = async { cache.store(document1, attachment1, bytes3) }
-		delay(SLOW_BYTES_DELAY)
+		delay(slowBytesDelay)
 		writingJob.isCompleted shouldBe false
 		writingJob2.isCompleted shouldBe false
 		writingJob3.isCompleted shouldBe false
-		withTimeout(SLOW_BYTES_DELAY) {
+		withTimeout(slowBytesDelay) {
 			writingJob.await()
 			writingJob2.await()
 			writingJob3.await()

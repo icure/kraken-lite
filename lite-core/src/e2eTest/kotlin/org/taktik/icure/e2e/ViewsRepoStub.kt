@@ -16,57 +16,57 @@ import java.util.zip.ZipOutputStream
  */
 class ViewsRepoStub private constructor(private val server: HttpServer) : AutoCloseable {
 
-    val repoUrl: String get() = "http://localhost:${server.address.port}/views-repo"
+	val repoUrl: String get() = "http://localhost:${server.address.port}/views-repo"
 
-    override fun close() = server.stop(0)
+	override fun close() = server.stop(0)
 
-    companion object {
+	companion object {
 
-        /**
-         * @param viewsByEntity entity directory name to (view name to map function).
-         */
-        fun start(viewsByEntity: Map<String, Map<String, String>>): ViewsRepoStub {
-            val archive = buildArchive(viewsByEntity)
-            val server = HttpServer.create(InetSocketAddress("localhost", 0), 0)
+		/**
+		 * @param viewsByEntity entity directory name to (view name to map function).
+		 */
+		fun start(viewsByEntity: Map<String, Map<String, String>>): ViewsRepoStub {
+			val archive = buildArchive(viewsByEntity)
+			val server = HttpServer.create(InetSocketAddress("localhost", 0), 0)
 
-            server.createContext("/views-repo/archive/refs/heads/main.zip") { exchange ->
-                exchange.responseHeaders.add("Content-Type", "application/zip")
-                exchange.sendResponseHeaders(200, archive.size.toLong())
-                exchange.responseBody.use { it.write(archive) }
-            }
-            server.start()
-            return ViewsRepoStub(server)
-        }
+			server.createContext("/views-repo/archive/refs/heads/main.zip") { exchange ->
+				exchange.responseHeaders.add("Content-Type", "application/zip")
+				exchange.sendResponseHeaders(200, archive.size.toLong())
+				exchange.responseBody.use { it.write(archive) }
+			}
+			server.start()
+			return ViewsRepoStub(server)
+		}
 
-        /**
-         * Mirrors the layout of a GitHub source archive: everything sits under a single root directory, which
-         * the downloader strips with `substringAfter('/')`.
-         */
-        private fun buildArchive(viewsByEntity: Map<String, Map<String, String>>): ByteArray =
-            ByteArrayOutputStream().also { bytes ->
-                ZipOutputStream(bytes).use { zip ->
-                    viewsByEntity.forEach { (entity, views) ->
-                        val descriptors = views.keys.associateWith { viewName ->
-                            mapOf(
-                                "map" to "$viewName.js",
-                                "reduce" to null,
-                                "weight" to 1,
-                                "affinities" to emptyList<String>(),
-                                "libResources" to emptyMap<String, String>(),
-                            )
-                        }
-                        zip.write("views-repo-main/$entity/views.json", objectMapper.writeValueAsString(mapOf("views" to descriptors)))
-                        views.forEach { (viewName, map) ->
-                            zip.write("views-repo-main/$entity/$viewName.js", map)
-                        }
-                    }
-                }
-            }.toByteArray()
+		/**
+		 * Mirrors the layout of a GitHub source archive: everything sits under a single root directory, which
+		 * the downloader strips with `substringAfter('/')`.
+		 */
+		private fun buildArchive(viewsByEntity: Map<String, Map<String, String>>): ByteArray =
+			ByteArrayOutputStream().also { bytes ->
+				ZipOutputStream(bytes).use { zip ->
+					viewsByEntity.forEach { (entity, views) ->
+						val descriptors = views.keys.associateWith { viewName ->
+							mapOf(
+								"map" to "$viewName.js",
+								"reduce" to null,
+								"weight" to 1,
+								"affinities" to emptyList<String>(),
+								"libResources" to emptyMap<String, String>(),
+							)
+						}
+						zip.write("views-repo-main/$entity/views.json", objectMapper.writeValueAsString(mapOf("views" to descriptors)))
+						views.forEach { (viewName, map) ->
+							zip.write("views-repo-main/$entity/$viewName.js", map)
+						}
+					}
+				}
+			}.toByteArray()
 
-        private fun ZipOutputStream.write(path: String, content: String) {
-            putNextEntry(ZipEntry(path))
-            write(content.toByteArray())
-            closeEntry()
-        }
-    }
+		private fun ZipOutputStream.write(path: String, content: String) {
+			putNextEntry(ZipEntry(path))
+			write(content.toByteArray())
+			closeEntry()
+		}
+	}
 }

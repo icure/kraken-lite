@@ -41,8 +41,9 @@ import org.taktik.icure.entities.objectstorage.ObjectStorageMigrationTask
 import org.taktik.icure.properties.ExternalServicesProperties
 import org.taktik.icure.test.newId
 import org.taktik.icure.test.setCurrentUserData
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val TEST_MIGRATION_DELAY = 300L
+private val testMigrationDelay = 300.milliseconds
 
 @ExperimentalCoroutinesApi
 class IcureObjectStorageMigrationTest : StringSpec({
@@ -52,7 +53,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 	val datastoreInstanceProvider = object : DatastoreInstanceProvider {
 		override suspend fun getInstanceAndGroup(): IDatastoreInformation = datastoreInfo
 	}
-	val objectStorageProperties = testObjectStorageProperties(migrationDelayMs = TEST_MIGRATION_DELAY)
+	val objectStorageProperties = testObjectStorageProperties(migrationDelayMs = testMigrationDelay.inWholeMilliseconds)
 	val localStorage = DocumentLocalObjectStorageImpl(objectStorageProperties)
 	val sessionLogic = mockk<SessionInformationProvider>()
 	lateinit var documentDAO: DocumentDAO
@@ -70,7 +71,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		documentDAO = mockk()
 		objectStorageClient = FakeObjectStorageClient(
 			ObjectStorageEntityGroupName.documents,
-			ExternalServicesProperties(true, true),
+			ExternalServicesProperties(useFakes = true, storeFakeObjectStorageInRam = true),
 			null
 		) { it == userId }
 		storageTasksDAO = FakeObjectStorageTasksDAO()
@@ -151,7 +152,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 						couchDbAttachmentId shouldBe attachment1
 						objectStoreAttachmentId shouldBe null
 						key shouldBe doc.mainAttachmentKey
-						deletionTime.shouldNotBeNull() shouldBeGreaterThanOrEqual (System.currentTimeMillis() - TEST_MIGRATION_DELAY)
+						deletionTime.shouldNotBeNull() shouldBeGreaterThanOrEqual (System.currentTimeMillis() - testMigrationDelay.inWholeMilliseconds)
 					}
 				}
 			)
@@ -171,11 +172,11 @@ class IcureObjectStorageMigrationTest : StringSpec({
 	"Migration tasks should be delayed by a configurable amount then remove the couchdb attachment without any additional modifications" {
 		setupSuccessfulMigrationDocumentDAOMock()
 		migrate()
-		delay(TEST_MIGRATION_DELAY / 2)
+		delay(testMigrationDelay / 2)
 		coVerify(exactly = 0) { documentDAO.get(datastoreInfo, any(), *anyVararg()) }
 		migrationTasksDAO.getEntities().toList() shouldHaveSize 1
 		icureObjectStorageMigration.isMigrating(document1, attachment1) shouldBe true
-		delay(TEST_MIGRATION_DELAY)
+		delay(testMigrationDelay)
 		verifyMigrationCompletedSuccessfully()
 	}
 
@@ -183,7 +184,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		setupSuccessfulMigrationDocumentDAOMock()
 		objectStorageClient.available = false
 		migrate()
-		delay(TEST_MIGRATION_DELAY * 3 / 2)
+		delay(testMigrationDelay * 3 / 2)
 		icureObjectStorageMigration.isMigrating(document1, attachment1) shouldBe true
 		coVerify(exactly = 1) { documentDAO.get(datastoreInfo, any(), *anyVararg()) }
 		coVerify(exactly = 0) {
@@ -192,7 +193,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		}
 		objectStorageClient.available = true
 		icureObjectStorage.rescheduleFailedStorageTasks()
-		delay(TEST_MIGRATION_DELAY)
+		delay(testMigrationDelay)
 		verifyMigrationCompletedSuccessfully()
 	}
 
@@ -200,7 +201,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		coEvery { documentDAO.getAttachment(datastoreInfo, migrationDocument.id, attachment1) } returns flowOf(ByteBuffer.wrap(bytes1))
 		coEvery { documentDAO.get(datastoreInfo, migrationDocument.id) } returns sampleMigrationUpdateDocument.withIdRev(null, "2")
 		migrate()
-		delay(TEST_MIGRATION_DELAY * 3 / 2)
+		delay(testMigrationDelay * 3 / 2)
 		verifyMigrationCompletedUnsuccessfully()
 	}
 
@@ -215,7 +216,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		)
 		coEvery { documentDAO.getAttachment(datastoreInfo, document1.id, attachment2) } returns flowOf(ByteBuffer.wrap(bytes2))
 		migrate()
-		delay(TEST_MIGRATION_DELAY * 3 / 2)
+		delay(testMigrationDelay * 3 / 2)
 		verifyMigrationCompletedUnsuccessfully()
 	}
 
@@ -224,7 +225,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		coEvery { documentDAO.get(datastoreInfo, document1.id) } returns migrationDocument
 		coEvery { documentDAO.deleteAttachment(datastoreInfo, document1.id, "0", attachment1) } throws CouchDbConflictException("Document update conflict", SC_CONFLICT, "Conflict")
 		migrate()
-		delay(TEST_MIGRATION_DELAY * 3  / 2)
+		delay(testMigrationDelay * 3  / 2)
 		icureObjectStorageMigration.isMigrating(document1, attachment1) shouldBe true
 		coVerify(exactly = 1) { documentDAO.deleteAttachment(datastoreInfo, document1.id, "0", attachment1) }
 		migrationTasksDAO.getEntities().toList() shouldHaveSize 1
@@ -234,7 +235,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 			secondArg<Document>().rev shouldBe "11"
 			sampleMigrationUpdateDocument.withIdRev(null, "12")
 		}
-		delay(TEST_MIGRATION_DELAY)
+		delay(testMigrationDelay)
 		coVerify(exactly = 1) { documentDAO.deleteAttachment(datastoreInfo, document1.id, "10", attachment1) }
 		coVerify(exactly = 1) { documentDAO.save(datastoreInfo, any()) }
 		migrationTasksDAO.getEntities().toList().shouldBeEmpty()
@@ -252,7 +253,7 @@ class IcureObjectStorageMigrationTest : StringSpec({
 		)
 		coEvery { documentDAO.get(datastoreInfo, document1.id) } returns Document(document1.id, rev = "1")
 		icureObjectStorageMigration.rescheduleStoredMigrationTasks()
-		delay(TEST_MIGRATION_DELAY / 2)
+		delay(testMigrationDelay / 2)
 		coVerify { documentDAO.get(datastoreInfo, document1.id) }
 		migrationTasksDAO.getEntities().toList().shouldBeEmpty()
 		icureObjectStorageMigration.isMigrating(document1, attachment1) shouldBe false

@@ -14,7 +14,6 @@ import org.taktik.couchdb.entity.Attachment
 import org.taktik.icure.asyncdao.DocumentDAO
 import org.taktik.icure.datastore.DatastoreInstanceProvider
 import org.taktik.icure.datastore.IDatastoreInformation
-import org.taktik.icure.asynclogic.datastore.impl.DatastoreInstanceProviderImpl
 import org.taktik.icure.asynclogic.objectstorage.impl.DocumentDataAttachmentLoaderImpl
 import org.taktik.icure.asynclogic.objectstorage.testutils.MIGRATION_SIZE_LIMIT
 import org.taktik.icure.asynclogic.objectstorage.testutils.SIZE_LIMIT
