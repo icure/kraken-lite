@@ -118,7 +118,7 @@ class ICureBackendApplication {
 		iCureLogic: ICureLogic,
 		codeLogic: CodeLogic,
 		iCureDAO: ICureLiteDAOImpl,
-		allDaos: List<GenericDAOImpl<*>>,
+		allDaos: List<GenericDAO<*>>,
 		allInternalDaos: List<InternalDAO<*>>,
 		couchDbProperties: CouchDbLiteProperties,
 		authenticationLiteProperties: AuthenticationLiteProperties,
@@ -134,12 +134,17 @@ class ICureBackendApplication {
 
 		runBlocking {
 			if (!couchDbProperties.skipDesignDocumentUpdate) {
-				iCureDAO.setCouchDbConfigProperty(datastoreInstanceProvider.getInstanceAndGroup(), "ken", "batch_channels", "${daoConfig.backgroundIndexationWorkers}")
+				iCureDAO.setCouchDbConfigProperty(
+					datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
+					section = "ken",
+					key = "batch_channels",
+					newValue = "${daoConfig.backgroundIndexationWorkers}"
+				)
 				if (daoConfig.indexBuiltInViews) {
 					allDaos.forEach { dao ->
 						dao.forceInitStandardDesignDocument(
-							datastoreInstanceProvider.getInstanceAndGroup(),
-							true,
+							datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
+							updateIfExists = true,
 							partition = Partitions.Main,
 							ignoreIfUnchanged = true
 						)
@@ -202,7 +207,7 @@ class ICureBackendApplication {
 
 	@OptIn(DelicateCoroutinesApi::class)
 	fun createPartitionedDesignDocAndWarmupIfNeeded(
-		genericDAOs: List<GenericDAOImpl<*>>,
+		genericDAOs: List<GenericDAO<*>>,
 		iCureDAO: ICureLiteDAOImpl,
 		externalViewRepositories: Map<String, String>,
 		datastoreInformation: IDatastoreInformation,
@@ -256,7 +261,7 @@ class ICureBackendApplication {
 		}
 
 		schemaProvider.initializeViewsAndCreateLocalSchema(
-			daoList = genericDAOs,
+			daoList = genericDAOs.filterIsInstance<GenericDAOImpl<*>>(),
 			datastoreInformation = datastoreInformation,
 			daoConfig = daoConfig,
 			isIndexing = ::isIndexingWithDebouncing,
