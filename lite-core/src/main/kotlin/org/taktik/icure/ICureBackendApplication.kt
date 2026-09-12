@@ -31,7 +31,6 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.core.task.TaskExecutor
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.stereotype.Component
-import org.taktik.couchdb.ViewRowWithDoc
 import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asyncdao.InternalDAO
 import org.taktik.icure.asyncdao.Partitions
@@ -62,6 +61,7 @@ import org.taktik.icure.entities.embed.PaymentType
 import org.taktik.icure.entities.embed.PersonalStatus
 import org.taktik.icure.entities.embed.TelecomType
 import org.taktik.icure.entities.embed.Visibility
+import org.taktik.icure.pagination.PaginationRowElement
 import org.taktik.icure.properties.AuthenticationLiteProperties
 import org.taktik.icure.properties.CouchDbLiteProperties
 import org.taktik.icure.utils.suspendRetry
@@ -165,7 +165,12 @@ class ICureBackendApplication {
 				allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
 			}
 
-			if (authenticationLiteProperties.createAdminUser && suspendRetry(10) { userLogic.listUsers(PaginationOffset(1), true).filterIsInstance<ViewRowWithDoc<String, Nothing, User>>().toList().isEmpty() } ) {
+			if (
+				authenticationLiteProperties.createAdminUser &&
+					suspendRetry(10) {
+						userLogic.listUsers(PaginationOffset(1), true)
+							.filterIsInstance<PaginationRowElement<*, *>>().toList().isEmpty() }
+			) {
 				val password = UUID.randomUUID().toString().substring(0,13).replace("-","")
 				userLogic.createUser(User(id = UUID.randomUUID().toString(), login = "admin", passwordHash = password, type =  Users.Type.database, status = Users.Status.ACTIVE))
 

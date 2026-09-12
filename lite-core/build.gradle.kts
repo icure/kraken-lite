@@ -100,6 +100,54 @@ tasks.withType<Test> {
     maxHeapSize = "16g"
 }
 
+// region End to end tests
+//
+// The e2e suite boots the real boot jar against a dockerised CouchDB, so it lives in its own source set and
+// its own task: `./gradlew :lite-core:build` must stay fast and must not require Docker.
+sourceSets {
+    create("e2eTest") {
+        compileClasspath += sourceSets["main"].output + sourceSets["test"].output
+        runtimeClasspath += sourceSets["main"].output + sourceSets["test"].output
+    }
+}
+
+configurations {
+    named("e2eTestImplementation") { extendsFrom(configurations["testImplementation"]) }
+    named("e2eTestRuntimeOnly") { extendsFrom(configurations["testRuntimeOnly"]) }
+}
+
+val startCouchDb by tasks.registering(org.icure.task.StartCouchDockerTask::class) {
+    description = "Starts the CouchDB container used by the end to end tests."
+}
+
+val cleanCouchDb by tasks.registering(org.icure.task.CleanCouchDockerTask::class) {
+    description = "Destroys the CouchDB container used by the end to end tests."
+}
+
+val e2eTest by tasks.registering(Test::class) {
+    group = "verification"
+    description = "Runs the end to end tests against a real kraken-lite jar."
+
+    testClassesDirs = sourceSets["e2eTest"].output.classesDirs
+    classpath = sourceSets["e2eTest"].runtimeClasspath
+
+    useJUnitPlatform()
+    minHeapSize = "512m"
+    maxHeapSize = "4g"
+    testLogging { showStandardStreams = true }
+
+    // The suite launches this jar as a child process.
+    dependsOn(tasks.named("bootJar"), startCouchDb)
+    finalizedBy(cleanCouchDb)
+
+    systemProperty("icure.e2e.jarDir", layout.buildDirectory.dir("libs").get().asFile.absolutePath)
+    systemProperty("icure.e2e.logDir", layout.buildDirectory.dir("e2e-logs").get().asFile.absolutePath)
+
+    // Deliberately NOT wired into `check`.
+    shouldRunAfter(tasks.named("test"))
+}
+// endregion
+
 publishing {
     publications {
         create<MavenPublication>("kraken-lite") {
