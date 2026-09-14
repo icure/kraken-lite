@@ -118,7 +118,7 @@ class ICureBackendApplication {
 		iCureLogic: ICureLogic,
 		codeLogic: CodeLogic,
 		iCureDAO: ICureLiteDAOImpl,
-		allDaos: List<GenericDAO<*>>,
+		allDaos: List<GenericDAOImpl<*>>,
 		allInternalDaos: List<InternalDAO<*>>,
 		couchDbProperties: CouchDbLiteProperties,
 		authenticationLiteProperties: AuthenticationLiteProperties,

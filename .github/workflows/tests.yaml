@@ -13,8 +13,6 @@ concurrency:
 jobs:
   tests:
     name: full_test_suite
-    # The e2e suite starts a CouchDB container and boots the jar as a child JVM, so it needs a runner
-    # with docker and some room: the GitHub hosted linux runner provides both.
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -29,8 +27,6 @@ jobs:
         with:
           submodules: 'recursive'
           token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          # The git-version plugin derives the project version from the tags, so the shallow clone
-          # the checkout action makes by default is not enough.
           fetch-depth: 0
 
       - name: Setup JDK
