@@ -1,0 +1,60 @@
+name: Tests
+
+on:
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: full_test_suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    env:
+      ORG_GRADLE_PROJECT_repoUsername: ${{ secrets.REPO_USERNAME }}
+      ORG_GRADLE_PROJECT_repoPassword: ${{ secrets.REPO_PASSWORD }}
+      GRADLE_OPTS: -Dorg.gradle.jvmargs=-Xmx4g
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: 'recursive'
+          token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew :lite-core:test
+
+      # Runs even when the unit tests fail, so a single run reports on both suites. `e2eTest` starts
+      # (and, as a finalizer, destroys) its own CouchDB container and depends on `bootJar`.
+      - name: End to end tests
+        if: ${{ !cancelled() }}
+        run: ./gradlew :lite-core:e2eTest
+
+      - name: Upload test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            lite-core/build/reports/tests/
+            lite-core/build/test-results/
+            lite-core/build/e2e-logs/
+          retention-days: 7
+          if-no-files-found: ignore

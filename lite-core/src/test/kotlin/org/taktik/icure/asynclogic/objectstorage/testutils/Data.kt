@@ -5,9 +5,9 @@ import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.collectIndexed
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
-import org.apache.commons.codec.digest.DigestUtils
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.taktik.icure.entities.Document
+import kotlin.time.Duration
 
 const val document1id = "document1"
 const val document2id = "document2"
@@ -35,7 +35,7 @@ val sampleAttachments by lazy {
 fun ByteArray.byteSizeDataBufferFlow() =
 	toList().asFlow().map { DefaultDataBufferFactory.sharedInstance.wrap(byteArrayOf(it)) }
 
-fun ByteArray.delayedBytesFlow(byteDelay: Long, maxDelays: Int) = flow {
+fun ByteArray.delayedBytesFlow(byteDelay: Duration, maxDelays: Int) = flow {
 	byteSizeDataBufferFlow().collectIndexed { i, data ->
 		if (i in 1..maxDelays) delay(byteDelay)
 		emit(data)
@@ -53,7 +53,6 @@ val migrationBigAttachment by lazy { (1 .. MIGRATION_SIZE_LIMIT * 3 / 2).map { i
 const val jsonUti = "public.json"
 const val htmlUti = "public.html"
 const val xmlUti = "public.xml"
-const val javascriptUti = "com.netscape.javascript-source"
 val sampleUtis by lazy { listOf(xmlUti, jsonUti) }
 
 const val key1 = "key1"

@@ -92,7 +92,7 @@ class LiteAuthenticationManagerImpl(
 		}
 		val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 		return listOfNotNull(userDAO.findUserOnUserDb(datastoreInformation, fullGroupAndId, false))
-			.filter { it.status == Users.Status.ACTIVE && it.deletionDate != null }.toSet()
+			.filter { it.status == Users.Status.ACTIVE && it.deletionDate == null }.toSet()
 			.sortedWith(compareBy({ it.groupId }, { it.id }))
 			.let { candidates ->
 				candidates.fold(false) { result, candidate ->

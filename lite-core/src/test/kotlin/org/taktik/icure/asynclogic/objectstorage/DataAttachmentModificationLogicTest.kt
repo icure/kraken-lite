@@ -39,9 +39,6 @@ import org.taktik.icure.entities.Document
 import org.taktik.icure.entities.embed.DeletedAttachment
 import org.taktik.icure.entities.objectstorage.DataAttachment
 import org.taktik.icure.exceptions.objectstorage.ObjectStorageException
-import org.taktik.icure.properties.ObjectStorageProperties
-import org.taktik.icure.test.newId
-import org.taktik.icure.test.randomUri
 import org.taktik.icure.test.shouldContainExactly
 import org.taktik.icure.utils.toByteArray
 import java.io.IOException

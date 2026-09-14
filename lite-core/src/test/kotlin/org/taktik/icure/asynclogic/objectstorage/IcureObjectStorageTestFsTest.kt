@@ -16,7 +16,6 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.withTimeout
 import org.springframework.core.io.buffer.DefaultDataBufferFactory
 import org.taktik.icure.asyncdao.objectstorage.ObjectStorageTasksDAO
-import org.taktik.icure.asynclogic.AsyncSessionLogic
 import org.taktik.icure.asynclogic.SessionInformationProvider
 import org.taktik.icure.asynclogic.objectstorage.FakeObjectStorageClient.ObjectStoreEvent
 import org.taktik.icure.asynclogic.objectstorage.testutils.FakeObjectStorageTasksDAO
@@ -37,22 +36,21 @@ import org.taktik.icure.test.newId
 import org.taktik.icure.test.setCurrentUserData
 import org.taktik.icure.test.shouldContainExactly
 import org.taktik.icure.utils.toByteArray
+import kotlin.time.Duration.Companion.milliseconds
 
-private const val STORAGE_TASK_TIMEOUT = 300L
-
-
+private val storageTaskTimeout = 300.milliseconds
 
 @ExperimentalCoroutinesApi
 class IcureObjectStorageTestRamTest : StringSpec({
-	testObjectSTorageWith(ExternalServicesProperties(true, true))
+	testObjectStorageWith(ExternalServicesProperties(useFakes = true, storeFakeObjectStorageInRam = true))
 })
 
 @ExperimentalCoroutinesApi
 class IcureObjectStorageTestFsTest : StringSpec({
-	testObjectSTorageWith(ExternalServicesProperties(true, false))
+	testObjectStorageWith(ExternalServicesProperties(useFakes = true, storeFakeObjectStorageInRam = false))
 })
 
-fun StringSpec.testObjectSTorageWith(externalServicesProperties: ExternalServicesProperties) {
+fun StringSpec.testObjectStorageWith(externalServicesProperties: ExternalServicesProperties) {
 	val objectStorageProperties = testObjectStorageProperties()
 	val localStorage = DocumentLocalObjectStorageImpl(objectStorageProperties)
 	val sessionLogic = mockk<SessionInformationProvider>()
@@ -97,9 +95,9 @@ fun StringSpec.testObjectSTorageWith(externalServicesProperties: ExternalService
 
 	"Object storage should be able to store, read, and delete attachments in the service" {
 		sampleAttachments.forEach { icureObjectStorage.preStore(it.first, it.second, flowOf(DefaultDataBufferFactory.sharedInstance.wrap(it.third)), it.third.size.toLong()) }
-		shouldThrow<TimeoutCancellationException> { withTimeout(20) { eventsChannel.receive() } }
+		shouldThrow<TimeoutCancellationException> { withTimeout(20.milliseconds) { eventsChannel.receive() } }
 		sampleAttachments.forEach { icureObjectStorage.scheduleStoreAttachment(it.first, it.second) }
-		withTimeout(STORAGE_TASK_TIMEOUT * sampleAttachments.size) {
+		withTimeout(storageTaskTimeout * sampleAttachments.size) {
 			sampleAttachments.map { eventsChannel.receive() } shouldContainExactlyInAnyOrder sampleAttachments.map {
 				ObjectStoreEvent(it.first.id, it.second, ObjectStoreEvent.Type.SUCCESSFUL_UPLOAD)
 			}
@@ -109,7 +107,7 @@ fun StringSpec.testObjectSTorageWith(externalServicesProperties: ExternalService
 		val deleted = sampleAttachments[1]
 		val remaining = sampleAttachments.filter { it !== deleted }
 		icureObjectStorage.scheduleDeleteAttachment(deleted.first, deleted.second)
-		withTimeout(STORAGE_TASK_TIMEOUT) {
+		withTimeout(storageTaskTimeout) {
 			eventsChannel.receive() shouldBe ObjectStoreEvent(deleted.first.id, deleted.second, ObjectStoreEvent.Type.SUCCESSFUL_DELETE)
 		}
 		objectStorageClient.attachmentsKeys shouldContainExactlyInAnyOrder remaining.map { it.first.id to it.second }
@@ -137,7 +135,7 @@ fun StringSpec.testObjectSTorageWith(externalServicesProperties: ExternalService
 			StorageTaskInfo(document1.id, attachment2, ObjectStorageTaskType.DELETE)
 		)
 		// Tasks execution will fail and they will still be stored
-		withTimeout(STORAGE_TASK_TIMEOUT * 2) {
+		withTimeout(storageTaskTimeout * 2) {
 			listOf(eventsChannel.receive(), eventsChannel.receive()) shouldContainExactlyInAnyOrder listOf(
 				ObjectStoreEvent(document1.id, attachment1, ObjectStoreEvent.Type.UNSUCCESSFUL_UPLOAD),
 				ObjectStoreEvent(document1.id, attachment2, ObjectStoreEvent.Type.UNSUCCESSFUL_DELETE)
@@ -146,12 +144,12 @@ fun StringSpec.testObjectSTorageWith(externalServicesProperties: ExternalService
 		storageTasksDAO.getTasksInfo() shouldContainExactlyInAnyOrder expectedTasks
 		objectStorageClient.available = true
 		// Tasks won't be re-executed automatically
-		delay(STORAGE_TASK_TIMEOUT)
+		delay(storageTaskTimeout)
 		storageTasksDAO.getTasksInfo() shouldContainExactlyInAnyOrder expectedTasks
 		icureObjectStorage.hasScheduledStorageTasks shouldBe false
 		// Now tasks should complete successfully
 		icureObjectStorage.rescheduleFailedStorageTasks()
-		withTimeout(STORAGE_TASK_TIMEOUT * 2) {
+		withTimeout(storageTaskTimeout * 2) {
 			listOf(eventsChannel.receive(), eventsChannel.receive()) shouldContainExactlyInAnyOrder listOf(
 				ObjectStoreEvent(document1.id, attachment1, ObjectStoreEvent.Type.SUCCESSFUL_UPLOAD),
 				ObjectStoreEvent(document1.id, attachment2, ObjectStoreEvent.Type.SUCCESSFUL_DELETE)
@@ -176,7 +174,7 @@ fun StringSpec.testObjectSTorageWith(externalServicesProperties: ExternalService
 		icureObjectStorage.rescheduleFailedStorageTasks()
 		while (icureObjectStorage.hasScheduledStorageTasks) {
 			println("Not done yet")
-			delay(100)
+			delay(100.milliseconds)
 		}
 		// Task has completed
 		var clientCallCount = 0
