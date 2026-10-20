@@ -64,6 +64,10 @@ class UserServiceImpl(
 	override fun modifyUsers(users: List<User>): Flow<User> = userLogic.modifyEntities(users)
 
 	override suspend fun setProperties(userId: String, properties: List<PropertyStub>): User? = userLogic.setProperties(userId, properties)
+	override suspend fun removeProperties(
+		userId: String,
+		propertyTypeIdentifiers: Set<String>
+	): User? = userLogic.removeProperties(userId, propertyTypeIdentifiers)
 
 	override suspend fun disableUser(userId: String): User? = userLogic.disableUser(userId)
 
