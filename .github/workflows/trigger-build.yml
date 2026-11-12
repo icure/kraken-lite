@@ -28,10 +28,12 @@ jobs:
                   git submodule update --remote --recursive kraken-lite
                   git add kraken-lite
 
-            - name: Commit if changed
+            - name: Commit if changed and tag
               run: |
+                  TAG="kraken-lite-${{ github.event.release.tag_name }}"
                   if ! git diff --cached --quiet; then
                     git commit -m "chore: Update submodule on release ${{ github.event.release.tag_name }}"
-                    git tag -a "kraken-lite-${{ github.event.release.tag_name }}" -m "Update submodule to kraken-lite version ${{ github.event.release.tag_name }}"
-                    git push --follow-tags
+                    git push origin HEAD:main
                   fi
+                  git tag -a "$TAG" -m "Update submodule to kraken-lite version ${{ github.event.release.tag_name }}"
+                  git push origin "$TAG"

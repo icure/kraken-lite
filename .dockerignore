@@ -1,0 +1,4 @@
+# Only the boot jar is needed in the build context.
+*
+!lite-core/build/libs/lite-core-*.jar
+lite-core/build/libs/*-plain.jar
