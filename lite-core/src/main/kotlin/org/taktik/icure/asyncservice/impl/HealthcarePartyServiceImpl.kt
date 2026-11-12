@@ -81,8 +81,6 @@ class HealthcarePartyServiceImpl(
 
 	override fun getHealthcarePartiesByParentId(parentId: String): Flow<HealthcareParty> = healthcarePartyLogic.getHealthcarePartiesByParentId(parentId)
 
-	override suspend fun getHcpHierarchyIds(sender: HealthcareParty): HashSet<String> = healthcarePartyLogic.getHcpHierarchyIds(sender)
-
 	override fun filterHealthcareParties(
 		paginationOffset: PaginationOffset<Nothing>,
 		filter: FilterChain<HealthcareParty>

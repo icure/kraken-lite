@@ -3,7 +3,7 @@ package org.taktik.icure.config
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
-import org.taktik.icure.config.CardinalVersionConfig.Companion.minCardinalModelVersion
+import org.taktik.icure.config.CardinalModelInfo.minCardinalModelVersion
 import org.taktik.icure.entities.utils.SemanticVersion
 
 @Profile("app")
@@ -15,7 +15,7 @@ class LiteCardinalVersionConfig : CardinalVersionConfig {
 
 	override suspend fun getUserCardinalVersion(): SemanticVersion? = getConfiguredCardinalVersion()
 
-	override suspend fun useLegacyDataModelCompatibility(): Boolean = !isConfiguredForCardinalModel()
+	override suspend fun forceLegacyDataModelCompatibility(): Boolean = !isConfiguredForCardinalModel()
 
 	fun getConfiguredCardinalVersion(): SemanticVersion? = cardinalVersion?.let {
 		SemanticVersion(it)

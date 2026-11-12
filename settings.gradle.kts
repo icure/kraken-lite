@@ -64,3 +64,12 @@ includeBuild("ksp-json-processor") {
 			.using(project(":library"))
 	}
 }
+
+includeBuild("./cardinal-support-libraries") {
+	dependencySubstitution {
+		substitute(module("com.icure:customentities-core"))
+			.using(project(":customentities-core"))
+		substitute(module("com.icure:utils-multiplatform"))
+			.using(project(":utils-multiplatform"))
+	}
+}

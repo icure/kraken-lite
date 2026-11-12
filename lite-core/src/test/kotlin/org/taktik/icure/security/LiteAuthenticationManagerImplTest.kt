@@ -158,7 +158,7 @@ class LiteAuthenticationManagerImplTest : StringSpec({
 			userId shouldBe "user-id"
 			dataOwnerId.shouldBeNull()
 			dataOwnerType.shouldBeNull()
-			hcpHierarchy shouldBe emptyList()
+			parentLinkedDataOwnerIds shouldBe emptySet()
 		}
 	}
 
@@ -174,7 +174,7 @@ class LiteAuthenticationManagerImplTest : StringSpec({
 		with(authentication.claims()) {
 			dataOwnerId shouldBe "hcp-id"
 			dataOwnerType shouldBe DataOwnerType.HCP
-			hcpHierarchy shouldBe listOf("parent-hcp")
+			parentLinkedDataOwnerIds shouldBe setOf("parent-hcp")
 		}
 	}
 

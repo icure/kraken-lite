@@ -69,6 +69,8 @@ class UserServiceImpl(
 		propertyTypeIdentifiers: Set<String>
 	): User? = userLogic.removeProperties(userId, propertyTypeIdentifiers)
 
+	override suspend fun deleteAuthenticationToken(userId: String, key: String): User = userLogic.deleteAuthenticationToken(userId, key)
+	override suspend fun deleteAllAuthenticationTokens(userId: String, keysToSkip: Set<String>): User = userLogic.deleteAllAuthenticationTokens(userId, keysToSkip)
 	override suspend fun disableUser(userId: String): User? = userLogic.disableUser(userId)
 
 	override suspend fun enableUser(userId: String): User? = userLogic.enableUser(userId)

@@ -36,8 +36,8 @@ dependencies {
 	implementation(coreLibs.guava)
 	implementation(coreLibs.jacksonKotlin)
 	implementation(coreLibs.jacksonDatabind)
-	implementation(coreLibs.kotlinxSerializationPlugin)
+//	implementation(coreLibs.kotlinxSerializationPlugin)
 	implementation(coreLibs.kotlinMultiplatformPlugin)
 	implementation(coreLibs.kotlinxCoroutinesCore)
-	implementation("com.icure:kraken-codegen-library:1.10.0")
+	implementation("com.icure:kraken-codegen-library:2.0.0")
 }

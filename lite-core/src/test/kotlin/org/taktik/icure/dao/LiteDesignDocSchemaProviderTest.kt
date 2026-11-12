@@ -20,6 +20,7 @@ import org.taktik.icure.asyncdao.CouchDbDispatcher
 import org.taktik.icure.asyncdao.GenericDAO
 import org.taktik.icure.asynclogic.datastore.impl.LocalDatastoreInformation
 import org.taktik.icure.config.LiteDAOConfig
+import org.taktik.icure.properties.LiteDAOProperties
 import org.taktik.icure.dao.repositories.GitHubRepoDownloader
 import org.taktik.icure.entities.Contact
 import org.taktik.icure.entities.base.Code
@@ -97,7 +98,7 @@ class LiteDesignDocSchemaProviderTest : StringSpec({
 		return Fixture(provider, created, daos, client)
 	}
 
-	suspend fun LiteDesignDocSchemaProvider.initialize(daos: List<TestDao<*>>, daoConfig: LiteDAOConfig = LiteDAOConfig()) =
+	suspend fun LiteDesignDocSchemaProvider.initialize(daos: List<TestDao<*>>, daoConfig: LiteDAOConfig = LiteDAOConfig(LiteDAOProperties())) =
 		initializeViewsAndCreateLocalSchema(
 			daoList = daos,
 			datastoreInformation = datastore,
@@ -277,7 +278,7 @@ class LiteDesignDocSchemaProviderTest : StringSpec({
 		)
 
 		// Neither forceForegroundIndexation nor viewsToIndexAtStartup mention Contact, so nothing is warmed up.
-		provider.initialize(daos, LiteDAOConfig())
+		provider.initialize(daos, LiteDAOConfig(LiteDAOProperties()))
 
 		verify(exactly = 0) { client.queryView(any(), any<Class<*>>(), any<Class<*>>(), any<Class<*>>(), any(), any(), any()) }
 	}

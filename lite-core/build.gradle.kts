@@ -4,27 +4,16 @@ import org.springframework.boot.gradle.tasks.bundling.BootJar
 import java.text.SimpleDateFormat
 import java.util.Date
 
-val repoUsername: String by project
-val repoPassword: String by project
-val mavenReleasesRepository: String by project
-val kmapVersion = "0.1.52-main.8d4a565b58"
-
 plugins {
     id("com.icure.kotlin-application-conventions")
-    kotlin("plugin.serialization")
 
     alias(coreLibs.plugins.springBootPlugin) apply(true)
     alias(coreLibs.plugins.springBootDependenciesManagement) apply(true)
     alias(coreLibs.plugins.kotlinAllOpen) apply(true)
     alias(coreLibs.plugins.kotlinSpring) apply(true)
-    alias(coreLibs.plugins.gitVersion) apply(true)
     alias(coreLibs.plugins.licenceReport) apply(true)
-    // alias(coreLibs.plugins.mavenRepository) apply(true)
 
     alias(liteLibs.plugins.sonarqube) apply(true)
-//    alias(liteLibs.plugins.dockerJava) apply(true)
-
-    `maven-publish`
 }
 
 licenseReport {
@@ -39,10 +28,10 @@ sonarqube {
     }
 }
 
-val gitVersion: String? by project
-
 group = "org.taktik.icure"
-version = gitVersion ?: "0.0.1-SNAPSHOT"
+if (version == Project.DEFAULT_VERSION) {
+    version = "0.0.1-SNAPSHOT"
+}
 
 tasks.withType<BootJar> {
     mainClass.set("org.taktik.icure.ICureBackendApplicationKt")
@@ -50,7 +39,7 @@ tasks.withType<BootJar> {
         attributes(mapOf(
             "Built-By" to System.getProperties()["user.name"],
             "Build-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(Date()),
-            "Build-Revision" to gitVersion,
+            "Build-Revision" to version,
             "Created-By" to "Gradle ${gradle.gradleVersion}",
             "Build-Jdk" to "${System.getProperties()["java.version"]} (${System.getProperties()["java.vendor"]} ${System.getProperties()["java.vm.version"]})",
             "Build-OS" to "${System.getProperties()["os.name"]} ${System.getProperties()["os.arch"]} ${System.getProperties()["os.version"]}"
@@ -148,33 +137,15 @@ val e2eTest by tasks.registering(Test::class) {
 }
 // endregion
 
-publishing {
-    publications {
-        create<MavenPublication>("kraken-lite") {
-            artifactId = "kraken-lite"
-            from(components["java"])
-        }
-    }
-
-    repositories {
-        maven {
-            name = "Taktik"
-            url = uri(mavenReleasesRepository)
-            credentials {
-                username = repoUsername
-                password = repoPassword
-            }
-        }
-    }
-}
-
 tasks.withType<JavaCompile>().configureEach {
     options.isIncremental = true
 }
 
-tasks.withType<JavaCompile> {
+tasks.withType<JavaCompile>().configureEach {
     options.isFork = true
-    options.fork("memoryMaximumSize" to "4096m")
+    options.forkOptions {
+        memoryMaximumSize = "4096m"
+    }
 }
 
 tasks.withType<PublishToMavenRepository> {
@@ -204,7 +175,7 @@ tasks.withType<BootJar> {
         attributes(mapOf(
             "Built-By"        to System.getProperties()["user.name"],
             "Build-Timestamp" to SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(Date()),
-            "Build-Revision"  to gitVersion,
+            "Build-Revision"  to version,
             "Created-By"      to "Gradle ${gradle.gradleVersion}",
             "Build-Jdk"       to "${System.getProperties()["java.version"]} (${System.getProperties()["java.vendor"]} ${System.getProperties()["java.vm.version"]})",
             "Build-OS"        to "${System.getProperties()["os.name"]} ${System.getProperties()["os.arch"]} ${System.getProperties()["os.version"]}"

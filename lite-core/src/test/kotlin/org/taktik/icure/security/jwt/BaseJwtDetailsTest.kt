@@ -25,13 +25,14 @@ class BaseJwtDetailsTest : StringSpec({
 		userId: String = "user-id",
 		dataOwnerId: String? = "hcp-id",
 		dataOwnerType: DataOwnerType? = DataOwnerType.HCP,
-		hcpHierarchy: List<String> = listOf("parent-hcp"),
+		parentLinkedDataOwnerIds: Set<String> = setOf("parent-hcp"),
 		authorities: Set<GrantedAuthority> = setOf(SimpleGrantedAuthority(ROLE_USER), SimpleGrantedAuthority(ROLE_HCP)),
 	) = BaseJwtDetails(
 		userId = userId,
 		dataOwnerId = dataOwnerId,
 		dataOwnerType = dataOwnerType,
-		hcpHierarchy = hcpHierarchy,
+		parentLinkedDataOwnerIds = parentLinkedDataOwnerIds,
+		simpleLinkedDataOwnerIds = emptySet(),
 		authorities = authorities,
 	)
 
@@ -43,7 +44,7 @@ class BaseJwtDetailsTest : StringSpec({
 			userId shouldBe original.userId
 			dataOwnerId shouldBe original.dataOwnerId
 			dataOwnerType shouldBe DataOwnerType.HCP
-			hcpHierarchy shouldBe original.hcpHierarchy
+			parentLinkedDataOwnerIds shouldBe original.parentLinkedDataOwnerIds
 			authorities.map { it.authority } shouldContainExactlyInAnyOrder listOf(ROLE_USER, ROLE_HCP)
 			this.expiration shouldBe expiration.epochSecond
 		}
@@ -101,7 +102,7 @@ class BaseJwtDetailsTest : StringSpec({
 				AUTHORITIES to listOf(ROLE_USER),
 				Jwt.StandardClaims.EXPIRES_AT to expiration,
 			),
-		).hcpHierarchy shouldBe emptyList()
+		).parentLinkedDataOwnerIds shouldBe emptySet()
 	}
 
 	"Non string entries in the claims collections should be ignored" {
@@ -115,15 +116,15 @@ class BaseJwtDetailsTest : StringSpec({
 				),
 			),
 		) {
-			hcpHierarchy shouldBe listOf("a", "b")
+			parentLinkedDataOwnerIds shouldBe setOf("a", "b")
 			authorities.map { it.authority } shouldBe listOf(ROLE_USER)
 		}
 	}
 
 	"An empty hcp hierarchy should round trip" {
-		val claims = details(hcpHierarchy = emptyList()).serializedClaims() +
+		val claims = details(parentLinkedDataOwnerIds = emptySet()).serializedClaims() +
 			(Jwt.StandardClaims.EXPIRES_AT to expiration)
-		BaseJwtDetails.fromClaims(claims).hcpHierarchy shouldBe emptyList()
+		BaseJwtDetails.fromClaims(claims).parentLinkedDataOwnerIds shouldBe emptySet()
 	}
 
 	"The data owner type claim should be written as an enum and read back as a string" {

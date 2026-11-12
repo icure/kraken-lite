@@ -4,9 +4,13 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.icure.asynclogic.ExchangeDataLogic
 import org.taktik.icure.asyncservice.ExchangeDataService
+import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.DataOwnerType
 import org.taktik.icure.entities.ExchangeData
+import org.taktik.icure.entities.requests.BulkExchangeDataPieceCreationRequest
+import org.taktik.icure.entities.requests.ExchangeDataPieceCreationRequest
+import org.taktik.icure.pagination.MultiKeyPaginationElement
 import org.taktik.icure.pagination.PaginationElement
 
 @Service
@@ -38,4 +42,62 @@ class ExchangeDataServiceImpl(
         counterpartsType: List<DataOwnerType>,
         ignoreOnEntryForFingerprint: String?
     ): Flow<String> = exchangeDataLogic.getParticipantCounterparts(dataOwnerId, counterpartsType, ignoreOnEntryForFingerprint)
+
+    override fun modifyExchangeDatas(exchangeDatas: List<ExchangeData>): Flow<ExchangeData> =
+        exchangeDataLogic.modifyExchangeDatas(exchangeDatas)
+
+    override fun findNonGroupPieceCounterparts(
+        dataOwnerId: String,
+        counterpartsTypes: List<DataOwnerType>,
+        ignoreOnEntryForFingerprint: String?,
+        startCounterpartId: String?,
+        limit: Int?,
+    ): Flow<PaginationElement> = exchangeDataLogic.findNonGroupPieceCounterparts(
+        dataOwnerId, counterpartsTypes, ignoreOnEntryForFingerprint, startCounterpartId, limit
+    )
+
+    override fun findExchangeDataGroupByIdForRecipients(
+        exchangeDataOrGroupId: String,
+        filterRecipients: List<String?>,
+        startDocumentId: String?,
+    ): Flow<MultiKeyPaginationElement<ExchangeData, String?>> =
+        exchangeDataLogic.findExchangeDataGroupByIdForRecipients(exchangeDataOrGroupId, filterRecipients, startDocumentId)
+
+    override fun findExchangeDataByParticipantForRecipients(
+        dataOwnerId: String,
+        filterRecipients: List<String?>,
+        startDocumentId: String?,
+    ): Flow<MultiKeyPaginationElement<ExchangeData, String?>> =
+        exchangeDataLogic.findExchangeDataByParticipantForRecipients(dataOwnerId, filterRecipients, startDocumentId)
+
+    override fun findExchangeDataByDelegatorDelegateForRecipients(
+        delegatorId: String,
+        delegateId: String,
+        filterRecipients: List<String?>,
+        startDocumentId: String?,
+    ): Flow<MultiKeyPaginationElement<ExchangeData, String?>> =
+        exchangeDataLogic.findExchangeDataByDelegatorDelegateForRecipients(delegatorId, delegateId, filterRecipients, startDocumentId)
+
+    override fun findExchangeDataGroupById(
+        exchangeDataOrGroupId: String,
+        paginationOffset: PaginationOffset<ComplexKey>,
+    ): Flow<PaginationElement> = exchangeDataLogic.findExchangeDataGroupById(exchangeDataOrGroupId, paginationOffset)
+
+    override fun createExchangeDataGroupPieces(
+        exchangeDataGroupId: String,
+        delegator: String,
+        delegate: String,
+        piecesByRecipient: Map<String, ExchangeDataPieceCreationRequest>,
+    ): Flow<ExchangeData> =
+        exchangeDataLogic.createExchangeDataGroupPieces(exchangeDataGroupId, delegator, delegate, piecesByRecipient)
+
+    override fun bulkCreateExchangeDataGroupPieces(
+        requests: List<BulkExchangeDataPieceCreationRequest>,
+    ): Flow<ExchangeData> = exchangeDataLogic.bulkCreateExchangeDataGroupPieces(requests)
+
+    override fun findMainExchangeDataIdsByParticipant(
+        participantId: String,
+        startDocumentId: String?,
+        limit: Int?,
+    ): Flow<PaginationElement> = exchangeDataLogic.findMainExchangeDataIdsByParticipant(participantId, startDocumentId, limit)
 }

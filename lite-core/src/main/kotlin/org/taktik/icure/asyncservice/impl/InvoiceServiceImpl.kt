@@ -23,6 +23,7 @@ import org.taktik.icure.entities.embed.MediumType
 import org.taktik.icure.entities.requests.BulkShareOrUpdateMetadataParams
 import org.taktik.icure.entities.requests.EntityBulkShareResult
 import org.taktik.icure.pagination.PaginationElement
+import org.taktik.icure.entities.filters.AbstractCustomFilter
 
 @Service
 class InvoiceServiceImpl(
@@ -168,4 +169,9 @@ class InvoiceServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = invoiceLogic.solveConflicts(limit, ids, strategy)
+
+	// Kraken lite does not restrict access to custom views by data owner
+	override suspend fun requestedDataOwnerIds(filter: AbstractCustomFilter): Set<String> = emptySet()
+
+	override fun matchByCustomFilter(filter: AbstractCustomFilter): Flow<PaginationElement> = invoiceLogic.matchEntitiesByCustomFilter(filter)
 }

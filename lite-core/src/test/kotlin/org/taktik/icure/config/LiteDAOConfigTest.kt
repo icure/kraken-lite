@@ -4,6 +4,7 @@ import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
+import org.taktik.icure.properties.LiteDAOProperties
 
 /**
  * [LiteDAOConfig] is mutable at runtime: `PUT /rest/v2/icure/lite/config/{property}/{value}` reaches
@@ -13,7 +14,7 @@ import io.kotest.matchers.string.shouldContain
 class LiteDAOConfigTest : StringSpec({
 
 	"setLiteConfig should toggle useDataOwnerPartition" {
-		val config = LiteDAOConfig()
+		val config = LiteDAOConfig(LiteDAOProperties())
 		config.useDataOwnerPartition shouldBe false
 
 		config.setLiteConfig("useDataOwnerPartition", true)
@@ -26,7 +27,7 @@ class LiteDAOConfigTest : StringSpec({
 	}
 
 	"setLiteConfig should toggle useObsoleteViews" {
-		val config = LiteDAOConfig()
+		val config = LiteDAOConfig(LiteDAOProperties())
 		config.useObsoleteViews shouldBe false
 
 		config.setLiteConfig("useObsoleteViews", true)
@@ -35,7 +36,7 @@ class LiteDAOConfigTest : StringSpec({
 	}
 
 	"setLiteConfig should reject an unrecognized property" {
-		val config = LiteDAOConfig()
+		val config = LiteDAOConfig(LiteDAOProperties())
 		listOf("", "UseObsoleteViews", "useobsoleteviews", "indexBuiltInViews", "unknown").forEach { property ->
 			shouldThrow<IllegalArgumentException> {
 				config.setLiteConfig(property, true)
@@ -46,38 +47,27 @@ class LiteDAOConfigTest : StringSpec({
 	"The query provider should stay in compatibility mode" {
 		// In compatibility mode the QueryProvider does not fail when a view is missing from the schema,
 		// which is what allows lite to run against a database where only some views were created.
-		LiteDAOConfig().queryProviderCompatibilityMode shouldBe true
+		LiteDAOConfig(LiteDAOProperties()).queryProviderCompatibilityMode shouldBe true
 	}
 
-	"viewsToIndexAtStartup should split the comma separated property" {
-		val config = LiteDAOConfig()
+	"viewsToIndexAtStartup should be taken from the properties" {
+		LiteDAOConfig(LiteDAOProperties()).viewsToIndexAtStartup shouldBe emptyList()
+		LiteDAOConfig(LiteDAOProperties(viewsToIndexAtStartup = listOf("Code_Maurice", "Contact_DataOwner")))
+			.viewsToIndexAtStartup shouldBe listOf("Code_Maurice", "Contact_DataOwner")
+	}
 
-		// Default: the empty property splits into a single empty string rather than an empty list. This is
-		// harmless because the list is only ever consulted with `contains`, but pin it so that a future
-		// change to the parsing is a deliberate one.
-		config.viewsToIndexAtStartup shouldBe listOf("")
-		config.viewsToIndexAtStartup.contains("Code_Maurice") shouldBe false
-
-		setCommaSeparatedViews(config, "Code_Maurice,Contact_DataOwner")
-		config.viewsToIndexAtStartup shouldBe listOf("Code_Maurice", "Contact_DataOwner")
+	"Initial mutable flags should be taken from the properties" {
+		with(LiteDAOConfig(LiteDAOProperties(useDataOwnerPartition = true, useObsoleteViews = true))) {
+			useDataOwnerPartition shouldBe true
+			useObsoleteViews shouldBe true
+		}
 	}
 
 	"Indexation defaults should favour background indexation" {
-		with(LiteDAOConfig()) {
+		with(LiteDAOConfig(LiteDAOProperties())) {
 			indexBuiltInViews shouldBe true
 			forceForegroundIndexation shouldBe false
 			backgroundIndexationWorkers shouldBe 1
 		}
 	}
 })
-
-/**
- * `commaSeparatedViewsToIndexAtStartup` is private and populated by Spring through `@Value`, so it is set
- * reflectively here to exercise the parsing performed by [LiteDAOConfig.viewsToIndexAtStartup].
- */
-private fun setCommaSeparatedViews(config: LiteDAOConfig, value: String) {
-	LiteDAOConfig::class.java.getDeclaredField("commaSeparatedViewsToIndexAtStartup").apply {
-		isAccessible = true
-		set(config, value)
-	}
-}

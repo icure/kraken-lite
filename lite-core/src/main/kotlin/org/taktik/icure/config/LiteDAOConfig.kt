@@ -3,7 +3,7 @@ package org.taktik.icure.config
 import io.icure.asyncjacksonhttpclient.net.web.WebClient
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.beans.factory.annotation.Value
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
@@ -22,37 +22,29 @@ import org.taktik.icure.asyncdao.impl.UserDAOImpl
 import org.taktik.icure.cache.ConfiguredCacheProvider
 import org.taktik.icure.dao.DesignDocSchemaProvider
 import org.taktik.icure.dao.QueryProvider
+import org.taktik.icure.properties.LiteDAOProperties
 import org.taktik.icure.security.CouchDbCredentialsProvider
 
 @Configuration
 @Profile("app")
-class LiteDAOConfig : DaoConfig {
+@EnableConfigurationProperties(LiteDAOProperties::class)
+class LiteDAOConfig(
+	properties: LiteDAOProperties,
+) : DaoConfig {
 
 	companion object {
 		private const val USE_DATA_OWNER_PARTITION = "useDataOwnerPartition"
 		private const val USE_OBSOLETE_VIEWS = "useObsoleteViews"
 	}
 
-	@Value("\${icure.dao.$USE_DATA_OWNER_PARTITION:false}")
-	override var useDataOwnerPartition: Boolean = false
+	// These two are the only mutable ones: they can be toggled at runtime through setLiteConfig.
+	override var useDataOwnerPartition: Boolean = properties.useDataOwnerPartition
+	override var useObsoleteViews: Boolean = properties.useObsoleteViews
 
-	@Value("\${icure.dao.$USE_OBSOLETE_VIEWS:false}")
-	override var useObsoleteViews: Boolean = false
-
-	@Value("\${icure.dao.forceForegroundIndexation:false}")
-	var forceForegroundIndexation: Boolean = false
-
-	@Value("\${icure.dao.viewsToIndexAtStartup:}")
-	private var commaSeparatedViewsToIndexAtStartup: String = ""
-
-	val viewsToIndexAtStartup: List<String>
-		get() = commaSeparatedViewsToIndexAtStartup.split(",")
-
-	@Value("\${icure.dao.backgroundIndexationWorkers:1}")
-	var backgroundIndexationWorkers: Int = 1
-
-	@Value("\${icure.dao.indexBuiltInViews:true}")
-	var indexBuiltInViews: Boolean = true
+	val forceForegroundIndexation: Boolean = properties.forceForegroundIndexation
+	val viewsToIndexAtStartup: List<String> = properties.viewsToIndexAtStartup
+	val backgroundIndexationWorkers: Int = properties.backgroundIndexationWorkers
+	val indexBuiltInViews: Boolean = properties.indexBuiltInViews
 
 	override val queryProviderCompatibilityMode = true
 

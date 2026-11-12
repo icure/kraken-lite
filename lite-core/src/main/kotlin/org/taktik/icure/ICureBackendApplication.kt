@@ -84,6 +84,7 @@ import kotlin.time.Duration.Companion.seconds
 		"org.taktik.icure.asynclogic",
 		"org.taktik.icure.asyncservice",
 		"org.taktik.icure.be.ehealth.logic",
+		"org.taktik.icure.customentities",
 		"org.taktik.icure.dao",
 		"org.taktik.icure.mergers.generated",
 		"org.taktik.icure.properties",

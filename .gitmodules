@@ -4,3 +4,6 @@
 [submodule "ksp-json-processor"]
 	path = ksp-json-processor
 	url = https://github.com/icure/ksp-json-processor.git
+[submodule "cardinal-support-libraries"]
+	path = cardinal-support-libraries
+	url = git@github.com:icure/cardinal-support-libraries.git

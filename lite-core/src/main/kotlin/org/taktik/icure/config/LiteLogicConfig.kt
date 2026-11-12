@@ -5,6 +5,7 @@
 package org.taktik.icure.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.icure.cardinal.customentities.util.CachedCustomEntitiesConfigurationProvider
 import kotlinx.coroutines.flow.Flow
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.context.annotation.Bean
@@ -18,6 +19,7 @@ import org.taktik.icure.asyncdao.CalendarItemTypeDAO
 import org.taktik.icure.asyncdao.ClassificationDAO
 import org.taktik.icure.asyncdao.CodeDAO
 import org.taktik.icure.asyncdao.ContactDAO
+import org.taktik.icure.asyncdao.CustomEntityDAO
 import org.taktik.icure.asyncdao.DeviceDAO
 import org.taktik.icure.asyncdao.DocumentDAO
 import org.taktik.icure.asyncdao.EntityInfoDAO
@@ -45,6 +47,7 @@ import org.taktik.icure.asynclogic.CalendarItemTypeLogic
 import org.taktik.icure.asynclogic.ClassificationLogic
 import org.taktik.icure.asynclogic.CodeLogic
 import org.taktik.icure.asynclogic.ContactLogic
+import org.taktik.icure.asynclogic.CustomEntityLogic
 import org.taktik.icure.asynclogic.DataOwnerLogic
 import org.taktik.icure.asynclogic.DeviceLogic
 import org.taktik.icure.asynclogic.DocumentLogic
@@ -75,6 +78,7 @@ import org.taktik.icure.asynclogic.impl.CalendarItemTypeLogicImpl
 import org.taktik.icure.asynclogic.impl.ClassificationLogicImpl
 import org.taktik.icure.asynclogic.impl.CodeLogicImpl
 import org.taktik.icure.asynclogic.impl.ContactLogicImpl
+import org.taktik.icure.asynclogic.impl.CustomEntityLogicImpl
 import org.taktik.icure.asynclogic.impl.DataOwnerLogicImpl
 import org.taktik.icure.asynclogic.impl.DeviceLogicImpl
 import org.taktik.icure.asynclogic.impl.DocumentLogicImpl
@@ -97,6 +101,7 @@ import org.taktik.icure.asynclogic.impl.SecureDelegationKeyMapLogicImpl
 import org.taktik.icure.asynclogic.impl.SessionInformationProviderImpl
 import org.taktik.icure.asynclogic.impl.TarificationLogicImpl
 import org.taktik.icure.asynclogic.impl.UserLogicImpl
+import org.taktik.icure.asynclogic.impl.customentities.CustomEntityDefinitionLogicContextFactory
 import org.taktik.icure.asynclogic.impl.filter.Filters
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentLoader
 import org.taktik.icure.asynclogic.objectstorage.DocumentDataAttachmentModificationLogic
@@ -146,6 +151,21 @@ class LiteLogicConfig {
 			dataOwnerProvider = sessionInformationProvider
 		),
 		forceSkipLegacyFixing = liteConfig.isConfiguredForCardinalModel()
+	)
+
+	@Bean
+	fun customEntityLogic(
+		dao: CustomEntityDAO,
+		datastoreInstanceProvider: DatastoreInstanceProvider,
+		customEntitiesConfigurationProvider: CachedCustomEntitiesConfigurationProvider,
+		customEntityContextFactory: CustomEntityDefinitionLogicContextFactory,
+		exchangeDataMapLogic: ExchangeDataMapLogic
+	): CustomEntityLogic = CustomEntityLogicImpl(
+		dao = dao,
+		datastoreInstanceProvider = datastoreInstanceProvider,
+		customEntitiesConfigurationProvider = customEntitiesConfigurationProvider,
+		customEntityContextFactory = customEntityContextFactory,
+		exchangeDataMapLogic = exchangeDataMapLogic,
 	)
 
 	@Bean
@@ -535,12 +555,14 @@ class LiteLogicConfig {
 		patientDAO: PatientDAO,
 		healthcarePartyDAO: HealthcarePartyDAO,
 		deviceDAO: DeviceDAO,
-		datastoreInstanceProvider: DatastoreInstanceProvider
+		datastoreInstanceProvider: DatastoreInstanceProvider,
+		exchangeDataDAO: ExchangeDataDAO
 	): DataOwnerLogic = DataOwnerLogicImpl(
 		patientDao = patientDAO,
 		hcpDao = healthcarePartyDAO,
 		deviceDao = deviceDAO,
-		datastoreInstanceProvider = datastoreInstanceProvider
+		datastoreInstanceProvider = datastoreInstanceProvider,
+		exchangeDataDao = exchangeDataDAO
 	)
 
 	@Bean

@@ -66,11 +66,11 @@ class LiteAuthenticationManagerImpl(
 		val user = userDAO.findUserOnUserDb(datastoreInformation, jwtRefreshDetails.userId, false)
 			?: throw InvalidJwtException("Cannot refresh authentication token for this user")
 		if (user.status != Users.Status.ACTIVE || user.deletionDate != null) throw InvalidJwtException("Cannot create access token for non-active user")
-		val hcpHierarchy = user.healthcarePartyId?.let { hcpId ->
+		val hcpAncestors = user.healthcarePartyId?.let { hcpId ->
 			healthcarePartyDAO.get(datastoreInformation, hcpId)?.let { baseHcp ->
-				getHcpHierarchy(baseHcp, datastoreInformation).map { it.id }
-			} ?: emptyList()
-		} ?: emptyList()
+				getHcpAncestorIdsByRights(baseHcp, datastoreInformation)
+			}
+		} ?: HcpAncestorIdsByRights.EMPTY
 
 		return BaseJwtDetails(
 			userId = jwtRefreshDetails.userId,
@@ -78,7 +78,8 @@ class LiteAuthenticationManagerImpl(
 				?: user.patientId
 				?: user.deviceId,
 			dataOwnerType = user.getDataOwnerTypeOrNull(),
-			hcpHierarchy = hcpHierarchy,
+			parentLinkedDataOwnerIds = hcpAncestors.parentLinkedIds,
+			simpleLinkedDataOwnerIds = hcpAncestors.simpleLinkedIds,
 			authorities = setOfNotNull(
 				SimpleGrantedAuthority(ROLE_USER),
 				SimpleGrantedAuthority(ROLE_HCP).takeIf { user.healthcarePartyId != null },
@@ -179,11 +180,11 @@ class LiteAuthenticationManagerImpl(
 	private suspend fun buildAuthenticationToken(user: User): LiteJwtAuthentication {
 		val datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup()
 
-		val hcpHierarchy = user.healthcarePartyId?.let {
+		val hcpAncestors = user.healthcarePartyId?.let {
 			healthcarePartyDAO.get(datastoreInformation, it)?.let { baseHcp ->
-				getHcpHierarchy(baseHcp, datastoreInformation).map { hcp ->  hcp.id }
+				getHcpAncestorIdsByRights(baseHcp, datastoreInformation)
 			}
-		} ?: emptyList()
+		} ?: HcpAncestorIdsByRights.EMPTY
 
 		val authorities = setOfNotNull(
 			SimpleGrantedAuthority(ROLE_USER),
@@ -196,7 +197,8 @@ class LiteAuthenticationManagerImpl(
 				?: user.patientId
 				?: user.deviceId,
 			dataOwnerType = user.getDataOwnerTypeOrNull(),
-			hcpHierarchy = hcpHierarchy,
+			parentLinkedDataOwnerIds = hcpAncestors.parentLinkedIds,
+			simpleLinkedDataOwnerIds = hcpAncestors.simpleLinkedIds,
 			authorities = authorities
 		)
 

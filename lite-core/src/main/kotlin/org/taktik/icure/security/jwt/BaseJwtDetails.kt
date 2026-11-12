@@ -11,7 +11,8 @@ data class BaseJwtDetails(
     override val userId: String,
     override val dataOwnerId: String?,
     override val dataOwnerType: DataOwnerType?,
-    override val hcpHierarchy: List<String>,
+    override val parentLinkedDataOwnerIds: Set<String>,
+    override val simpleLinkedDataOwnerIds: Set<String>,
     override val authorities: Set<GrantedAuthority>,
     override val expiration: Long? = null
 ) : AbstractUserDetails(), JwtDetails {
@@ -24,12 +25,18 @@ data class BaseJwtDetails(
                 userId = (claims[USER_ID] as String),
                 dataOwnerId = claims[DATA_OWNER_ID] as String?,
                 dataOwnerType = (claims[DATA_OWNER_TYPE] as String?)?.let { DataOwnerType.valueOfOrNullCaseInsensitive(it) },
-                hcpHierarchy = ((claims[HCP_HIERARCHY] ?: emptyList<Any>()) as Collection<Any?>).mapNotNull { it as? String },
+                parentLinkedDataOwnerIds = hierarchyEntries(claims).filterNot { it.startsWith(HCP_HIERARCHY_SIMPLE_PREFIX) }.toSet(),
+                simpleLinkedDataOwnerIds = hierarchyEntries(claims)
+                    .filter { it.startsWith(HCP_HIERARCHY_SIMPLE_PREFIX) }
+                    .mapTo(mutableSetOf()) { it.removePrefix(HCP_HIERARCHY_SIMPLE_PREFIX) },
                 authorities = (claims[AUTHORITIES] as Collection<Any?>)
                     .filterIsInstance<String>()
                     .fold(setOf<GrantedAuthority>()) { acc, x -> acc + SimpleGrantedAuthority(x) }.toSet(),
                 expiration = (claims[Jwt.StandardClaims.EXPIRES_AT] as Instant).epochSecond,
             )
+
+        private fun hierarchyEntries(claims: Map<String, Any?>): List<String> =
+            ((claims[HCP_HIERARCHY] ?: emptyList<Any>()) as Collection<Any?>).filterIsInstance<String>()
 
     }
 
@@ -37,7 +44,9 @@ data class BaseJwtDetails(
         USER_ID to userId,
         DATA_OWNER_ID to dataOwnerId,
         DATA_OWNER_TYPE to dataOwnerType,
-        HCP_HIERARCHY to hcpHierarchy,
+        HCP_HIERARCHY to (parentLinkedDataOwnerIds + simpleLinkedDataOwnerIds.map { "$HCP_HIERARCHY_SIMPLE_PREFIX$it" })
+            .takeIf { it.isNotEmpty() }
+            ?.toList(),
         AUTHORITIES to authorities.map { it.authority },
     ).filterValues { it != null }
 
