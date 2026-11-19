@@ -1,7 +1,7 @@
 ARG version
 FROM --platform=$BUILDPLATFORM icureio/cardinal:$version as builder
 
-FROM docker.taktik.be/ubuntu-graalvm:21.0.1
+FROM docker.taktik.be/ubuntu-jdk:21.0.13.1
 ARG version
 RUN apt update -y && apt install curl -y
 COPY --from=builder /build/lite-core-$version.jar ./lite-core-$version.jar
