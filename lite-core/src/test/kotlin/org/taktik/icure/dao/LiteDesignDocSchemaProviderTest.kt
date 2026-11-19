@@ -1,6 +1,7 @@
 package org.taktik.icure.dao
 
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import io.kotest.assertions.throwables.shouldThrow
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
@@ -23,10 +24,29 @@ import org.taktik.icure.config.LiteDAOConfig
 import org.taktik.icure.dao.repositories.GitHubRepoDownloader
 import org.taktik.icure.entities.Contact
 import org.taktik.icure.entities.base.Code
-import org.taktik.icure.properties.DesignDocSchemaProperties
+import org.taktik.icure.properties.LiteCustomEntitiesProperties
 import java.net.URI
+import kotlin.io.path.createTempFile
+import kotlin.io.path.writeText
 
 private const val REPO = "https://github.com/icure/kraken-builtin-views"
+
+/**
+ * Writes a schema file in the format downloaded from the cockpit and returns its path. The partition indices are
+ * the cloud ones: the lite provider only uses the view names and allocates its own partitions.
+ */
+internal fun writeSchemaFile(viewsByEntity: Map<String, List<String>>): String =
+	createTempFile("design-doc-schema", ".json").also { file ->
+		file.toFile().deleteOnExit()
+		file.writeText(
+			jacksonObjectMapper().writeValueAsString(
+				mapOf(
+					"_id" to "ddc:cloud-group:1",
+					"viewsByEntity" to viewsByEntity.mapValues { (_, views) -> views.associateWith { 0 } },
+				)
+			)
+		)
+	}.toString()
 
 /** A DAO as seen by [LiteDesignDocSchemaProvider]: it needs both the entity class and the dispatcher. */
 private interface TestDao<T : org.taktik.couchdb.id.Identifiable<String>> : GenericDAO<T>, CouchDbDAO
@@ -57,10 +77,9 @@ class LiteDesignDocSchemaProviderTest : StringSpec({
 	 * present in the database; every created document is captured in the returned list.
 	 */
 	fun fixture(
-		viewsByEntity: Map<String, List<String>>,
+		viewsByEntity: Map<String, List<String>>?,
 		repoViews: Map<String, Map<String, GitHubRepoDownloader.ViewDescriptor>>,
 		existingDesignDocs: List<DesignDocument> = emptyList(),
-		builtinViewsRepository: String? = REPO,
 		daoEntityClasses: List<Class<*>> = listOf(Contact::class.java),
 	): Fixture {
 		val client = mockk<Client>()
@@ -86,9 +105,9 @@ class LiteDesignDocSchemaProviderTest : StringSpec({
 		}
 
 		val provider = LiteDesignDocSchemaProvider(
-			designDocProperties = DesignDocSchemaProperties(
-				builtinViewsRepository = builtinViewsRepository,
-				viewsByEntity = viewsByEntity,
+			customEntitiesProperties = LiteCustomEntitiesProperties(
+				designDocSchemaPath = viewsByEntity?.let(::writeSchemaFile),
+				builtinViewsRepository = REPO,
 			),
 			gitHubRepoDownloader = mockk<GitHubRepoDownloader>().also {
 				coEvery { it.downloadViewsFromRepo(any()) } returns repoViews
@@ -105,11 +124,10 @@ class LiteDesignDocSchemaProviderTest : StringSpec({
 			isIndexing = { false },
 		)
 
-	"No schema should be produced when no builtin views repository is configured" {
+	"No schema should be produced when no schema file is configured" {
 		val (provider, created, daos, _) = fixture(
-			viewsByEntity = mapOf("Contact" to listOf("all")),
+			viewsByEntity = null,
 			repoViews = mapOf("contact" to mapOf("all" to viewDescriptor())),
-			builtinViewsRepository = null,
 		)
 
 		provider.initialize(daos)

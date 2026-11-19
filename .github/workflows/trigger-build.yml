@@ -10,7 +10,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Checkout target repository
-              uses: actions/checkout@v4
+              uses: actions/checkout@v7
               with:
                   repository: icure/the-forge
                   token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}

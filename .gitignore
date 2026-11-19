@@ -13,4 +13,6 @@ out
 ## IntelliJ profiles
 .run
 
+.kotlin
+
 scratch

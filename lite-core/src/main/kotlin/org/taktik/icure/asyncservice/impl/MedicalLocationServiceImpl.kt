@@ -2,12 +2,13 @@ package org.taktik.icure.asyncservice.impl
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
-import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.MedicalLocationLogic
 import org.taktik.icure.asyncservice.MedicalLocationService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
+import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.MedicalLocation
 import org.taktik.icure.pagination.PaginationElement
 
@@ -25,5 +26,10 @@ class MedicalLocationServiceImpl(
 	override fun findMedicalLocationByPostCode(postCode: String): Flow<MedicalLocation> = medicalLocationLogic.findMedicalLocationByPostCode(postCode)
 	override fun getAllMedicalLocations(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = medicalLocationLogic.getAllMedicalLocations(paginationOffset)
 	override fun getAllMedicalLocations(): Flow<MedicalLocation> = medicalLocationLogic.getEntities()
-	override fun matchMedicalLocationsBy(filter: AbstractFilter<MedicalLocation>): Flow<String> = medicalLocationLogic.matchEntitiesBy(filter)
+	override fun matchEntitiesBy(filter: AbstractFilter<MedicalLocation>): Flow<String> = medicalLocationLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<MedicalLocation>
+	): Flow<ViewQueryResultEvent> = medicalLocationLogic.filterEntitiesBy(paginationOffset, filter)
 }

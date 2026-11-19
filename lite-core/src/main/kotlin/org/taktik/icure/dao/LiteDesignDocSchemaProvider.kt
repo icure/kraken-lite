@@ -1,7 +1,10 @@
 package org.taktik.icure.dao
 
 import com.fasterxml.jackson.databind.JsonNode
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.firstOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -18,13 +21,13 @@ import org.taktik.icure.config.LiteDAOConfig
 import org.taktik.icure.dao.repositories.GitHubRepoDownloader
 import org.taktik.icure.datastore.IDatastoreInformation
 import org.taktik.icure.entities.designdoc.DesignDocSchema
-import org.taktik.icure.properties.DesignDocSchemaProperties
+import org.taktik.icure.properties.LiteCustomEntitiesProperties
 import kotlin.time.Duration.Companion.seconds
 
 @Service
 class LiteDesignDocSchemaProvider(
-	private val designDocProperties: DesignDocSchemaProperties,
-	private val gitHubRepoDownloader: GitHubRepoDownloader
+	private val customEntitiesProperties: LiteCustomEntitiesProperties,
+	private val gitHubRepoDownloader: GitHubRepoDownloader,
 ) : DesignDocSchemaProvider {
 
 	private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -39,46 +42,49 @@ class LiteDesignDocSchemaProvider(
 		daoConfig: LiteDAOConfig,
 		isIndexing: suspend () -> Boolean,
 	) where T : GenericDAO<*>, T : CouchDbDAO {
-		if (designDocProperties.builtinViewsRepository != null) {
+		val loadedSchema = customEntitiesProperties.designDocSchema
+		if (loadedSchema != null) {
 			logger.info("Starting generation of schema design docs")
 			val daoByEntity = daoList.associateBy { it.entityClass.simpleName }
-			val loadedViews = gitHubRepoDownloader.downloadViewsFromRepo(designDocProperties.builtinViewsRepository!!)
-			val viewToPartitionByEntity = designDocProperties.viewsByEntity.map { (entity, views) ->
-				logger.info("Creating design docs for $entity")
-				val dao = daoByEntity[entity] ?: throw IllegalStateException("Invalid config, unknown entity class $entity")
-				val client = dao.couchDbDispatcher.getClient(datastoreInformation)
-				// The new design doc system creates a single view per partition, to optimize access time per view
-				val configDesignDocsByView = client.designDocumentsIds().filter {
-					it.matches("^_design/$entity-[0-9]+$".toRegex())
-				}.mapNotNull { ddocId ->
-					client.get<DesignDocument>(ddocId)
-				}.associateBy {
-					it.views.keys.single()
-				}
-				var currentMaxPartition = configDesignDocsByView.values.maxOfOrNull {
-					it.getPartitionIndex()
-				} ?: 0
-				entity to views.associate { viewName ->
-					if (configDesignDocsByView.containsKey(viewName)) {
-						viewName to configDesignDocsByView.getValue(viewName).getPartitionIndex()
-					} else {
-						val loadedView = loadedViews[entity.lowercase()]?.get(viewName)
-							?: throw IllegalStateException("Invalid config, unknown view $viewName for entity $entity")
-						viewName to DesignDocument(
-							id = "_design/$entity-${++currentMaxPartition}",
-							views = mapOf(
-								viewName to View(
-									map = loadedView.map,
-									reduce = loadedView.reduce,
-								)
-							),
-							lib = loadedView.libResources,
-						).let {
-							client.create(it).getPartitionIndex()
+			val loadedViews = gitHubRepoDownloader.downloadViewsFromRepo(customEntitiesProperties.builtinViewsRepository)
+			val viewToPartitionByEntity =
+				loadedSchema.viewsByEntity.entries.associate { (entity, viewsToCloudPartition) ->
+					logger.info("Creating design docs for $entity")
+					val dao = daoByEntity[entity]
+						?: throw IllegalStateException("Invalid config, unknown entity class $entity")
+					val client = dao.couchDbDispatcher.getClient(datastoreInformation)
+					// The new design doc system creates a single view per partition, to optimize access time per view
+					val configDesignDocsByView = client.designDocumentsIds().filter {
+						it.matches("^_design/$entity-[0-9]+$".toRegex())
+					}.mapNotNull { ddocId ->
+						client.get<DesignDocument>(ddocId)
+					}.associateBy {
+						it.views.keys.single()
+					}
+					var currentMaxPartition = configDesignDocsByView.values.maxOfOrNull {
+						it.getPartitionIndex()
+					} ?: 0
+					entity to viewsToCloudPartition.keys.associate { viewName ->
+						if (configDesignDocsByView.containsKey(viewName)) {
+							viewName to configDesignDocsByView.getValue(viewName).getPartitionIndex()
+						} else {
+							val loadedView = loadedViews[entity.lowercase()]?.get(viewName)
+								?: throw IllegalStateException("Invalid config, unknown view $viewName for entity $entity")
+							viewName to DesignDocument(
+								id = "_design/$entity-${++currentMaxPartition}",
+								views = mapOf(
+									viewName to View(
+										map = loadedView.map,
+										reduce = loadedView.reduce,
+									)
+								),
+								lib = loadedView.libResources,
+							).let {
+								client.create(it).getPartitionIndex()
+							}
 						}
 					}
 				}
-			}.toMap()
 			val schema = DesignDocSchema(
 				rev = null,
 				applicationGroupId = "LOCAL",
@@ -95,6 +101,8 @@ class LiteDesignDocSchemaProvider(
 				isIndexing = isIndexing,
 			)
 			logger.info("Generation of schema design docs completed")
+		} else {
+			logger.info("Will not generate views for custom schema: icure.customentities.designDocSchemaPath is not set")
 		}
 	}
 
@@ -123,6 +131,10 @@ class LiteDesignDocSchemaProvider(
 					.limit(1)
 				client.queryView<ComplexKey, JsonNode>(query).firstOrNull()
 				true
+			}.onFailure {
+				if (it is CancellationException) {
+					currentCoroutineContext().ensureActive()
+				}
 			}.getOrDefault(false)
 
 			schema.viewsByEntity[dao.entityClass.simpleName]?.forEach { (viewName, partitionIndex) ->
@@ -133,6 +145,8 @@ class LiteDesignDocSchemaProvider(
 				while(!warmup(docId = "_design/${dao.entityClass.simpleName}-$partitionIndex", viewName)) {
 					delay(1L.seconds)
 				}
+				logger.info("Compacting $viewName for entity ${dao.entityClass.simpleName}")
+				client.compact("${dao.entityClass.simpleName}-$partitionIndex")
 			}
 		}
 	}

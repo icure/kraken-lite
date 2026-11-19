@@ -66,13 +66,6 @@ class HealthElementServiceImpl(
 	override suspend fun addDelegations(healthElementId: String, delegations: List<Delegation>): HealthElement? =
 		healthElementLogic.addDelegations(healthElementId, delegations)
 
-	override fun filter(
-		paginationOffset: PaginationOffset<Nothing>,
-		filter: FilterChain<HealthElement>
-	): Flow<ViewQueryResultEvent> = healthElementLogic.filter(paginationOffset, filter)
-
-	override fun matchHealthElementsBy(filter: AbstractFilter<HealthElement>): Flow<String> = healthElementLogic.matchEntitiesBy(filter)
-
 	override fun modifyEntities(entities: Flow<HealthElement>): Flow<HealthElement> = healthElementLogic.modifyEntities(entities)
 
 	override fun createEntities(entities: Flow<HealthElement>): Flow<HealthElement> = healthElementLogic.createEntities(entities)
@@ -96,4 +89,11 @@ class HealthElementServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = healthElementLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<HealthElement>): Flow<String> = healthElementLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<HealthElement>
+	): Flow<ViewQueryResultEvent> = healthElementLogic.filterEntitiesBy(paginationOffset, filter)
 }

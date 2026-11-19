@@ -3,10 +3,13 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.TimeTableLogic
 import org.taktik.icure.asyncservice.TimeTableService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
+import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.TimeTable
 
 @Service
@@ -32,6 +35,11 @@ class TimeTableServiceImpl(
 
 	override suspend fun modifyTimeTable(timeTable: TimeTable): TimeTable = timeTableLogic.modifyEntity(timeTable)
 
-	override fun matchTimeTablesBy(filter: AbstractFilter<TimeTable>): Flow<String> = timeTableLogic.matchEntitiesBy(filter)
+	override fun matchEntitiesBy(filter: AbstractFilter<TimeTable>): Flow<String> = timeTableLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<TimeTable>
+	): Flow<ViewQueryResultEvent> = timeTableLogic.filterEntitiesBy(paginationOffset, filter)
 
 }

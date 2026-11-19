@@ -4,10 +4,13 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.FormTemplateLogic
 import org.taktik.icure.asyncservice.FormTemplateService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
+import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.FormTemplate
 
 @Service
@@ -37,8 +40,6 @@ class FormTemplateServiceImpl(
 	override fun getFormTemplatesBySpecialty(specialityCode: String, loadLayout: Boolean): Flow<FormTemplate> =
 		formTemplateLogic.getFormTemplatesBySpecialty(specialityCode, loadLayout)
 	override fun getFormTemplatesByUser(userId: String, loadLayout: Boolean): Flow<FormTemplate> = formTemplateLogic.getFormTemplatesByUser(userId, loadLayout)
-	override fun matchFormTemplatesBy(filter: AbstractFilter<FormTemplate>): Flow<String> =
-		formTemplateLogic.matchEntitiesBy(filter)
 
 	override suspend fun undeleteFormTemplate(
 		formTemplateId: String,
@@ -54,4 +55,10 @@ class FormTemplateServiceImpl(
 	override fun undeleteFormTemplates(formTemplateIds: List<IdAndRev>): Flow<FormTemplate> = formTemplateLogic.undeleteEntities(formTemplateIds)
 	override suspend fun purgeFormTemplate(id: String, rev: String): DocIdentifier = formTemplateLogic.purgeEntity(id, rev)
 	override fun purgeFormTemplates(formTemplateIds: List<IdAndRev>): Flow<DocIdentifier> = formTemplateLogic.purgeEntities(formTemplateIds)
+	override fun matchEntitiesBy(filter: AbstractFilter<FormTemplate>): Flow<String> = formTemplateLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<FormTemplate>
+	): Flow<ViewQueryResultEvent> = formTemplateLogic.filterEntitiesBy(paginationOffset, filter)
 }

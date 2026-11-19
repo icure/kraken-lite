@@ -28,16 +28,16 @@ class MaintenanceTaskServiceImpl(
 
 	override fun modifyMaintenanceTasks(entities: Collection<MaintenanceTask>): Flow<MaintenanceTask> = maintenanceTaskLogic.modifyEntities(entities)
 
-	override fun filterMaintenanceTasks(
-		paginationOffset: PaginationOffset<Nothing>,
-		filter: FilterChain<MaintenanceTask>
-	): Flow<ViewQueryResultEvent> = maintenanceTaskLogic.filter(paginationOffset, filter)
-
 	override suspend fun getMaintenanceTask(id: String): MaintenanceTask? = maintenanceTaskLogic.getEntity(id)
 	override fun getMaintenanceTasks(ids: List<String>): Flow<MaintenanceTask> = maintenanceTaskLogic.getEntities(ids)
 
 	override fun createMaintenanceTasks(entities: Collection<MaintenanceTask>): Flow<MaintenanceTask> = maintenanceTaskLogic.createEntities(entities)
-	override fun matchMaintenanceTasksBy(filter: AbstractFilter<MaintenanceTask>): Flow<String> = maintenanceTaskLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<MaintenanceTask>> = maintenanceTaskLogic.bulkShareOrUpdateMetadata(requests)
+	override fun matchEntitiesBy(filter: AbstractFilter<MaintenanceTask>): Flow<String> = maintenanceTaskLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<MaintenanceTask>
+	): Flow<ViewQueryResultEvent> = maintenanceTaskLogic.filterEntitiesBy(paginationOffset, filter)
 }

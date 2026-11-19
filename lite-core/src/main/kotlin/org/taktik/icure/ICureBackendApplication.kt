@@ -4,12 +4,13 @@
 
 package org.taktik.icure
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
@@ -24,6 +25,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.JndiDataSourceAutoConfiguration
 import org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration
 import org.springframework.boot.builder.SpringApplicationBuilder
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
@@ -47,7 +49,6 @@ import org.taktik.icure.config.ExternalViewsConfig
 import org.taktik.icure.config.LiteDAOConfig
 import org.taktik.icure.constants.Users
 import org.taktik.icure.dao.LiteDesignDocSchemaProvider
-import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.User
 import org.taktik.icure.entities.embed.AddressType
 import org.taktik.icure.entities.embed.Confidentiality
@@ -61,9 +62,9 @@ import org.taktik.icure.entities.embed.PaymentType
 import org.taktik.icure.entities.embed.PersonalStatus
 import org.taktik.icure.entities.embed.TelecomType
 import org.taktik.icure.entities.embed.Visibility
-import org.taktik.icure.pagination.PaginationRowElement
 import org.taktik.icure.properties.AuthenticationLiteProperties
 import org.taktik.icure.properties.CouchDbLiteProperties
+import org.taktik.icure.properties.LiteCustomEntitiesProperties
 import org.taktik.icure.utils.suspendRetry
 import java.util.*
 import kotlin.system.exitProcess
@@ -96,7 +97,8 @@ import kotlin.time.Duration.Companion.seconds
 		"org.taktik.icure.services.external.rest.v1.controllers",
 		"org.taktik.icure.services.external.rest.v1.controllers.support",
 		"org.taktik.icure.services.external.rest.v1.mapper",
-		"org.taktik.icure.services.external.rest.v2.mapper"
+		"org.taktik.icure.services.external.rest.v2.mapper",
+		"org.taktik.icure.utils"
 	],
 	exclude = [
 		FreeMarkerAutoConfiguration::class,
@@ -107,6 +109,7 @@ import kotlin.time.Duration.Companion.seconds
 	]
 )
 @EnableScheduling
+@EnableConfigurationProperties(LiteCustomEntitiesProperties::class)
 class ICureBackendApplication {
 	private val log = LoggerFactory.getLogger(this.javaClass)
 
@@ -127,7 +130,8 @@ class ICureBackendApplication {
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		externalViewsConfig: ExternalViewsConfig,
 		daoConfig: LiteDAOConfig,
-		schemaProvider: LiteDesignDocSchemaProvider
+		schemaProvider: LiteDesignDocSchemaProvider,
+		customEntitiesProperties: LiteCustomEntitiesProperties
 	) = ApplicationRunner {
 		//Check that core types have corresponding codes
 		log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
@@ -140,15 +144,14 @@ class ICureBackendApplication {
 					key = "batch_channels",
 					newValue = "${daoConfig.backgroundIndexationWorkers}"
 				)
-				if (daoConfig.indexBuiltInViews) {
-					allDaos.forEach { dao ->
-						dao.forceInitStandardDesignDocument(
-							datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
-							updateIfExists = true,
-							partition = Partitions.Main,
-							ignoreIfUnchanged = true
-						)
-					}
+				allDaos.forEach { dao ->
+					dao.forceInitStandardDesignDocument(
+						datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
+						onlyForSystemViews = customEntitiesProperties.customSchemaEnabled,
+						updateIfExists = true,
+						partition = Partitions.Main,
+						ignoreIfUnchanged = true
+					)
 				}
 				allInternalDaos.forEach { dao ->
 					dao.forceInitStandardDesignDocument(true)
@@ -159,17 +162,18 @@ class ICureBackendApplication {
 					externalViewRepositories = externalViewsConfig.repos,
 					datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
 					daoConfig = daoConfig,
-					schemaProvider = schemaProvider
+					schemaProvider = schemaProvider,
+					customEntitiesProperties = customEntitiesProperties,
 				)
 				allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
 				allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
 			}
 
+			// hasEntities only queries the User `all` view, which is a system view: it exists whether or not a
+			// custom design doc schema is used, and before the background generation of the schema completes.
 			if (
 				authenticationLiteProperties.createAdminUser &&
-					suspendRetry(10) {
-						userLogic.listUsers(PaginationOffset(1), true)
-							.filterIsInstance<PaginationRowElement<*, *>>().toList().isEmpty() }
+					suspendRetry(10) { !userLogic.hasEntities() }
 			) {
 				val password = UUID.randomUUID().toString().substring(0,13).replace("-","")
 				userLogic.createUser(User(id = UUID.randomUUID().toString(), login = "admin", passwordHash = password, type =  Users.Type.database, status = Users.Status.ACTIVE))
@@ -217,7 +221,8 @@ class ICureBackendApplication {
 		externalViewRepositories: Map<String, String>,
 		datastoreInformation: IDatastoreInformation,
 		daoConfig: LiteDAOConfig,
-		schemaProvider: LiteDesignDocSchemaProvider
+		schemaProvider: LiteDesignDocSchemaProvider,
+		customEntitiesProperties: LiteCustomEntitiesProperties
 	) = GlobalScope.launch {
 
 		suspend fun isIndexingWithDebouncing(): Boolean {
@@ -236,18 +241,28 @@ class ICureBackendApplication {
 		): Boolean = runCatching {
 			dao.warmupPartition(datastoreInformation, partition)
 			true
+		}.onFailure {
+			if (it is CancellationException) {
+				currentCoroutineContext().ensureActive()
+			}
 		}.getOrDefault(false)
 
-		if (daoConfig.indexBuiltInViews) {
-			// The design documents need to be created. If they are not warmed up manually, background indexation will be
-			// started by CouchDB
-			listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
-				log.info("Creating $partition design docs.")
-				genericDAOs.forEach {
-					it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
-				}
+		// The design documents need to be created. If they are not warmed up manually, background indexation will be
+		// started by CouchDB
+		listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+			log.info("Creating $partition design docs.")
+			genericDAOs.forEach {
+				it.forceInitStandardDesignDocument(
+					datastoreInformation = datastoreInformation,
+					onlyForSystemViews = customEntitiesProperties.customSchemaEnabled,
+					updateIfExists = true,
+					partition = partition,
+					ignoreIfUnchanged = true
+				)
 			}
+		}
 
+		if (!customEntitiesProperties.customSchemaEnabled) {
 			// Warm up a view will trigger foreground indexation, that will occupy all the resources in the system.
 			listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
 				genericDAOs.filter { dao ->

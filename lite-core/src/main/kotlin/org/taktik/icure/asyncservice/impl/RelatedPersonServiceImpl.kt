@@ -61,14 +61,6 @@ class RelatedPersonServiceImpl(
 	override fun undeleteRelatedPersons(relatedPersonIds: List<IdAndRev>): Flow<RelatedPerson> =
 		relatedPersonLogic.undeleteEntities(relatedPersonIds)
 
-	override fun filterRelatedPersons(
-		paginationOffset: PaginationOffset<Nothing>,
-		filter: FilterChain<RelatedPerson>
-	): Flow<ViewQueryResultEvent> = relatedPersonLogic.filter(paginationOffset, filter)
-
-	override fun matchRelatedPersonsBy(filter: AbstractFilter<RelatedPerson>): Flow<String> =
-		relatedPersonLogic.matchEntitiesBy(filter)
-
 	override fun createEntities(entities: Flow<RelatedPerson>): Flow<RelatedPerson> =
 		relatedPersonLogic.createEntities(entities)
 
@@ -99,4 +91,11 @@ class RelatedPersonServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = relatedPersonLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<RelatedPerson>): Flow<String> = relatedPersonLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<RelatedPerson>
+	): Flow<ViewQueryResultEvent> = relatedPersonLogic.filterEntitiesBy(paginationOffset, filter)
 }

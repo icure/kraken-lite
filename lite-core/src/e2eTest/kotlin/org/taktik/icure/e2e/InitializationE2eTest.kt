@@ -6,8 +6,6 @@ import io.kotest.matchers.collections.shouldNotBeEmpty
 import io.kotest.matchers.maps.shouldNotBeEmpty
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
-import kotlinx.coroutines.delay
-import kotlin.time.Duration.Companion.seconds
 
 /**
  * Startup behaviour of kraken-lite, which is where it diverges most from kraken-cloud: it owns its CouchDB,
@@ -114,75 +112,48 @@ class InitializationE2eTest : StringSpec({
 		}
 	}
 
-	"Starting with the builtin views disabled should not create any design document" {
+	"Custom design documents should be created from the configured schema" {
 		CouchDbAdmin.wipeIcureDatabases()
 
-		withKrakenLite(
-			"no-builtin-views",
-			mapOf(
-				"icure.dao.indexBuiltInViews" to "false",
-				// The admin bootstrap MUST be off here: it calls userLogic.listUsers, which needs
-				// _design/User, which is exactly what indexBuiltInViews=false stops the runner from
-				// creating. With both enabled on an empty database the context fails to start with
-				// "No design doc for _design/User can be found at this time". See the note below.
-				"icure.authentication.lite.createAdminUser" to "false",
-			),
-		) {
-			// Databases are created lazily, by the first dispatcher that opens a client on them. With no
-			// design document to write, only the families the startup path actually touches show up - the
-			// patient and healthdata ones are not created at all until an entity needs them.
-			CouchDbAdmin.allDatabases() shouldContainAll listOf(
-				"${E2eConfig.DB_PREFIX}-base",
-				"${E2eConfig.DB_PREFIX}-system",
-			)
+		val base = "${E2eConfig.DB_PREFIX}-base"
 
-			// No design document is created for the entity databases.
-			CouchDbAdmin.designDocumentIds("${E2eConfig.DB_PREFIX}-base") shouldBe emptyList()
-		}
-	}
-
-	"Disabling the builtin views while bootstrapping the admin user should fail to start" {
-		// Documents a real interaction rather than asserting a desirable behaviour: on an empty database
-		// these two options are mutually exclusive, and the failure surfaces as an opaque design document
-		// error rather than a configuration error. The README presents indexBuiltInViews=false as something
-		// to combine with a custom views repository, which is the configuration that does work.
-		CouchDbAdmin.wipeIcureDatabases()
-
-		val failure = runCatching {
-			withKrakenLite(
-				"no-builtin-views-with-admin",
-				mapOf(
-					"icure.dao.indexBuiltInViews" to "false",
-					"icure.authentication.lite.createAdminUser" to "true",
-				),
-			) {}
-		}.exceptionOrNull()
-
-		failure?.message shouldContain "No design doc for _design/User can be found at this time"
-	}
-
-	"Custom design documents should be created from the configured views repository" {
-		CouchDbAdmin.wipeIcureDatabases()
-
-		ViewsRepoStub.start(
-			mapOf("code" to mapOf("all" to "function(doc) { if (doc.java_type == 'Code') emit(null, doc._id) }")),
-		).use { repo ->
+		ViewsRepoStub.start(mapOf("code" to mapOf("all" to CODE_ALL_MAP))).use { repo ->
 			withKrakenLite(
 				"custom-design-docs",
-				mapOf(
-					"icure.designdoc.lite.builtinViewsRepository" to repo.repoUrl,
-					"icure.designdoc.lite.views-by-entity.Code" to "all",
-				),
-			) {
+				customSchemaProperties(repo, writeDesignDocSchema("custom-design-docs", mapOf("Code" to listOf("all")))),
+			) { instance ->
 				// LiteDesignDocSchemaProvider allocates one partition per view: _design/<Entity>-<n>. The
 				// schema is generated on GlobalScope, after the partitioned design documents, so it appears
 				// some time after the application reports itself started.
 				waitUntil("_design/Code-1 to be created") {
-					CouchDbAdmin.designDocumentIds("${E2eConfig.DB_PREFIX}-base").contains("_design/Code-1")
+					CouchDbAdmin.designDocumentIds(base).contains("_design/Code-1")
 				}
 
-				CouchDbAdmin.designDocument("${E2eConfig.DB_PREFIX}-base", "_design/Code-1")
-					?.get("views")?.fieldNames()?.asSequence()?.toList() shouldBe listOf("all")
+				with(CouchDbAdmin.designDocument(base, "_design/Code-1")!!["views"]) {
+					fieldNames().asSequence().toList() shouldBe listOf("all")
+					this["all"]["map"].asText() shouldBe CODE_ALL_MAP
+				}
+
+				// With a schema only the system views come from the code. Code has no system view in its
+				// main partition, so no versioned main design document must be created for it...
+				CouchDbAdmin.designDocumentIds(base).filter { it.startsWith("_design/Code_") } shouldBe emptyList()
+
+				// ...and its Maurice design document keeps only the `conflicts` system view. It is still
+				// versioned: the hash suffix is what lets a view change be indexed without downtime.
+				val mauriceDesignDoc = CouchDbAdmin.designDocumentIds(base)
+					.single { it.startsWith("_design/Code-Maurice_") }
+				mauriceDesignDoc.matches("^_design/Code-Maurice_[0-9a-f]+$".toRegex()) shouldBe true
+				CouchDbAdmin.designDocument(base, mauriceDesignDoc)
+					?.get("views")?.fieldNames()?.asSequence()?.toList() shouldBe listOf("conflicts")
+
+				// The admin bootstrap and the login only use User system views, so the admin user is created and
+				// can log in although the full builtin design documents are not. Listing users is deliberately
+				// not used: it needs the `allForPagination` view, which is neither a system view nor in the schema.
+				requireNotNull(instance.adminPassword) { "The admin user should have been created with a custom schema" }
+				instance.adminClient().get("/rest/v2/user/current").orFail("Getting the current user as admin")
+					.json["login"].asText() shouldBe KrakenLiteInstance.ADMIN_LOGIN
+
+				instance.logs() shouldContain "Generation of schema design docs completed"
 			}
 		}
 	}
@@ -190,85 +161,85 @@ class InitializationE2eTest : StringSpec({
 	"A second boot should reuse the existing custom design document partition" {
 		CouchDbAdmin.wipeIcureDatabases()
 
-		val properties = { repoUrl: String ->
-			mapOf(
-				"icure.designdoc.lite.builtinViewsRepository" to repoUrl,
-				"icure.designdoc.lite.views-by-entity.Code" to "all",
-			)
-		}
+		val base = "${E2eConfig.DB_PREFIX}-base"
+		val schema = writeDesignDocSchema("custom-design-docs-reuse", mapOf("Code" to listOf("all")))
 
-		ViewsRepoStub.start(
-			mapOf("code" to mapOf("all" to "function(doc) { if (doc.java_type == 'Code') emit(null, doc._id) }")),
-		).use { repo ->
-			withKrakenLite("custom-design-docs-first", properties(repo.repoUrl)) {
-				waitUntil("_design/Code-1 to be created on the first boot") {
-					CouchDbAdmin.designDocumentIds("${E2eConfig.DB_PREFIX}-base").contains("_design/Code-1")
+		ViewsRepoStub.start(mapOf("code" to mapOf("all" to CODE_ALL_MAP))).use { repo ->
+			withKrakenLite("custom-design-docs-first", customSchemaProperties(repo, schema)) { instance ->
+				waitUntil("the schema to be generated on the first boot") {
+					instance.logs().contains("Generation of schema design docs completed")
 				}
 			}
 
-			withKrakenLite("custom-design-docs-second", properties(repo.repoUrl)) {
-				// Give the second boot the same chance to allocate a new partition, then assert it did not.
-				waitUntil("the schema to be regenerated on the second boot") {
-					CouchDbAdmin.designDocumentIds("${E2eConfig.DB_PREFIX}-base").contains("_design/Code-1")
+			withKrakenLite("custom-design-docs-second", customSchemaProperties(repo, schema)) { instance ->
+				// Wait for the second boot to go through the schema generation, then assert it did not
+				// allocate a new partition.
+				waitUntil("the schema to be generated on the second boot") {
+					instance.logs().contains("Generation of schema design docs completed")
 				}
-				delay(5.seconds)
-
-				val codeDesignDocs = CouchDbAdmin.designDocumentIds("${E2eConfig.DB_PREFIX}-base")
-					.filter { it.matches("^_design/Code-\\d+$".toRegex()) }
 
 				// Reusing the partition index is what stops a restart from allocating _design/Code-2 and
 				// reindexing the view from scratch.
-				codeDesignDocs shouldBe listOf("_design/Code-1")
+				CouchDbAdmin.designDocumentIds(base)
+					.filter { it.matches("^_design/Code-\\d+$".toRegex()) } shouldBe listOf("_design/Code-1")
 			}
 		}
 	}
 
-	"Dropping a view from the configuration should leave its design document in place" {
+	"Dropping a view from the schema should leave its design document in place" {
 		CouchDbAdmin.wipeIcureDatabases()
 
 		val base = "${E2eConfig.DB_PREFIX}-base"
 
 		// Two views to start with, so the schema provider allocates two partitions for Code.
 		ViewsRepoStub.start(
-			mapOf(
-				"code" to mapOf(
-					"all" to "function(doc) { if (doc.java_type == 'Code') emit(null, doc._id) }",
-					"by_type" to "function(doc) { if (doc.java_type == 'Code') emit(doc.type, doc._id) }",
-				),
-			),
+			mapOf("code" to mapOf("all" to CODE_ALL_MAP, "by_type" to CODE_BY_TYPE_MAP)),
 		).use { repo ->
-			fun properties(views: String) = mapOf(
-				"icure.designdoc.lite.builtinViewsRepository" to repo.repoUrl,
-				"icure.designdoc.lite.views-by-entity.Code" to views,
-			)
-
-			withKrakenLite("dropped-view-first", properties("all,by_type")) {
+			withKrakenLite(
+				"dropped-view-first",
+				customSchemaProperties(repo, writeDesignDocSchema("dropped-view-first", mapOf("Code" to listOf("all", "by_type")))),
+			) {
 				waitUntil("both Code partitions to be created") {
 					CouchDbAdmin.designDocumentIds(base).containsAll(listOf("_design/Code-1", "_design/Code-2"))
 				}
 			}
 
-			// Restart with by_type no longer configured. The schema built in memory now only knows about
+			// Restart with by_type no longer in the schema. The schema built in memory now only knows about
 			// `all`, but the design document backing the dropped view must survive: deleting it would throw
 			// away an index that is expensive to rebuild, and would break any instance still querying it.
-			withKrakenLite("dropped-view-second", properties("all")) {
-				waitUntil("the schema to be regenerated for the remaining view") {
-					CouchDbAdmin.designDocumentIds(base).contains("_design/Code-1")
+			withKrakenLite(
+				"dropped-view-second",
+				customSchemaProperties(repo, writeDesignDocSchema("dropped-view-second", mapOf("Code" to listOf("all")))),
+			) { instance ->
+				waitUntil("the schema to be generated for the remaining view") {
+					instance.logs().contains("Generation of schema design docs completed")
 				}
-				// Give the startup path time to do the wrong thing before concluding that it did not.
-				delay(10.seconds)
 
-				val codeDesignDocs = CouchDbAdmin.designDocumentIds(base)
+				CouchDbAdmin.designDocumentIds(base)
 					.filter { it.matches("^_design/Code-\\d+$".toRegex()) }
-					.sorted()
-
-				codeDesignDocs shouldBe listOf("_design/Code-1", "_design/Code-2")
+					.sorted() shouldBe listOf("_design/Code-1", "_design/Code-2")
 
 				// The orphaned design document must still carry its view, not just exist as an empty shell.
 				CouchDbAdmin.designDocument(base, "_design/Code-2")
 					?.get("views")?.fieldNames()?.asSequence()?.toList() shouldBe listOf("by_type")
 			}
 		}
+	}
+
+	"A missing schema file should prevent the startup" {
+		// The schema is loaded when the properties are bound, so a wrong path is a configuration error that
+		// stops the boot, rather than a failure of the background job that would leave the instance running
+		// without its views.
+		CouchDbAdmin.wipeIcureDatabases()
+
+		val failure = runCatching {
+			withKrakenLite(
+				"missing-schema-file",
+				mapOf("icure.customentities.designDocSchemaPath" to "/does/not/exist/schema.json"),
+			) {}
+		}.exceptionOrNull()
+
+		failure?.message shouldContain "icure.customentities.designDocSchemaPath (/does/not/exist/schema.json) is not a readable file"
 	}
 
 	"The number of background indexation workers should be written to the couchdb config" {
@@ -298,6 +269,15 @@ class InitializationE2eTest : StringSpec({
 		}
 	}
 })
+
+private const val CODE_ALL_MAP = "function(doc) { if (doc.java_type == 'Code') emit(null, doc._id) }"
+private const val CODE_BY_TYPE_MAP = "function(doc) { if (doc.java_type == 'Code') emit(doc.type, doc._id) }"
+
+/** Enables the custom design doc schema, with the views served by [repo] in place of the GitHub repository. */
+private fun customSchemaProperties(repo: ViewsRepoStub, schemaPath: String) = mapOf(
+	"icure.customentities.builtinViewsRepository" to repo.repoUrl,
+	"icure.customentities.designDocSchemaPath" to schemaPath,
+)
 
 /**
  * Entities from [DaoCatalog] that have no design document in any of the databases.

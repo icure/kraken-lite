@@ -125,11 +125,6 @@ class MessageServiceImpl(
 
 	override fun listMessagesByInvoiceIds(ids: List<String>): Flow<Message> = messageLogic.listMessagesByInvoiceIds(ids)
 
-	override fun filterMessages(
-		paginationOffset: PaginationOffset<Nothing>,
-		filter: FilterChain<Message>
-	): Flow<ViewQueryResultEvent> = messageLogic.filterMessages(paginationOffset, filter)
-
 	override fun deleteMessages(ids: List<IdAndRev>): Flow<Message> = messageLogic.deleteEntities(ids)
 	override suspend fun deleteMessage(id: String, rev: String?): Message = messageLogic.deleteEntity(id, rev)
 	override suspend fun purgeMessage(id: String, rev: String): DocIdentifier = messageLogic.purgeEntity(id, rev)
@@ -137,8 +132,6 @@ class MessageServiceImpl(
 
 	override suspend fun undeleteMessage(id: String, rev: String): Message = messageLogic.undeleteEntity(id, rev)
 	override fun undeleteMessages(messageIds: List<IdAndRev>): Flow<Message> = messageLogic.undeleteEntities(messageIds)
-
-	override fun matchMessagesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Message>> = messageLogic.bulkShareOrUpdateMetadata(requests)
 
@@ -158,4 +151,11 @@ class MessageServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = messageLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Message>): Flow<String> = messageLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Message>
+	): Flow<ViewQueryResultEvent> = messageLogic.filterEntitiesBy(paginationOffset, filter)
 }

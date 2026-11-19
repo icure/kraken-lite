@@ -3,11 +3,13 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.AgendaLogic
 import org.taktik.icure.asyncservice.AgendaService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
+import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Agenda
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
 import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
@@ -36,7 +38,6 @@ class AgendaServiceImpl(
 	override fun getReadableAgendaForUser(userId: String): Flow<Agenda> = agendaLogic.getReadableAgendaForUserLegacy(userId)
 	override fun getAllAgendas(offset: PaginationOffset<Nothing>): Flow<PaginationElement> = agendaLogic.getAllPaginated(offset)
 	override fun getAllAgendas(): Flow<Agenda>  = agendaLogic.getEntities()
-	override fun matchAgendasBy(filter: AbstractFilter<Agenda>): Flow<String> = agendaLogic.matchEntitiesBy(filter)
 	override fun getConflictingEntitiesIds(): Flow<String> = agendaLogic.getConflictingEntitiesIds()
 	override fun getConflictsFor(entityId: String): Flow<Agenda> = agendaLogic.getConflictsFor(entityId)
 	override suspend fun declareConflictWinner(
@@ -53,4 +54,11 @@ class AgendaServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy,
 	): Flow<MergeResult> = agendaLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Agenda>): Flow<String> = agendaLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Agenda>
+	): Flow<ViewQueryResultEvent> = agendaLogic.filterEntitiesBy(paginationOffset, filter)
 }

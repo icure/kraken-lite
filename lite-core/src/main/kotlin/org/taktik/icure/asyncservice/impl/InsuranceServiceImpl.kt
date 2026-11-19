@@ -3,11 +3,13 @@ package org.taktik.icure.asyncservice.impl
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.InsuranceLogic
 import org.taktik.icure.asyncservice.InsuranceService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
+import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Insurance
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
 import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
@@ -46,7 +48,6 @@ class InsuranceServiceImpl(
 	override fun modifyInsurances(insurances: List<Insurance>): Flow<Insurance> = insuranceLogic.modifyEntities(insurances)
 
 	override fun getInsurances(ids: Set<String>): Flow<Insurance> = insuranceLogic.getInsurances(ids)
-	override fun matchInsurancesBy(filter: AbstractFilter<Insurance>): Flow<String> = insuranceLogic.matchEntitiesBy(filter)
 
 	override fun getAllInsurances(paginationOffset: PaginationOffset<Nothing>): Flow<PaginationElement> = insuranceLogic.getAllInsurances(paginationOffset)
 
@@ -66,4 +67,11 @@ class InsuranceServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = insuranceLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Insurance>): Flow<String> = insuranceLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Insurance>
+	): Flow<ViewQueryResultEvent> = insuranceLogic.filterEntitiesBy(paginationOffset, filter)
 }

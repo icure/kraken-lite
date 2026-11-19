@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.map
 import org.springframework.stereotype.Repository
 import org.taktik.couchdb.annotation.View
 import org.taktik.couchdb.dao.DesignDocumentProvider
+import org.taktik.couchdb.dao.annotations.SystemView
 import org.taktik.couchdb.queryViewIncludeDocsNoValue
 import org.taktik.icure.asyncdao.CouchDbDispatcher
 import org.taktik.icure.asyncdao.impl.InternalDAOImpl
@@ -15,6 +16,7 @@ import org.taktik.icure.entities.base.HasDataAttachments
 import org.taktik.icure.entities.objectstorage.ObjectStorageMigrationTask
 
 @Repository
+@SystemView
 @View(name = "all", map = "function(doc) { if (doc.java_type == 'org.taktik.icure.entities.objectstorage.ObjectStorageMigrationTask' && !doc.deleted) emit( null, doc._id )}")
 class ObjectStorageMigrationTasksDAOImpl(
 	systemCouchDbDispatcher: CouchDbDispatcher,
@@ -32,6 +34,7 @@ class ObjectStorageMigrationTasksDAOImpl(
 		private const val BY_ENTITY_CLASS = "by_entityclass"
 	}
 
+	@SystemView
 	@View(name = BY_ENTITY_CLASS, map = "function(doc) { if (doc.java_type === 'org.taktik.icure.entities.objectstorage.ObjectStorageMigrationTask' && !doc.deleted) emit(doc.entityClassName, doc._id) }")
 	override fun <T : HasDataAttachments<T>> findTasksForEntities(entityClass: Class<T>) = flow {
 		val client = couchDbDispatcher.getClient(datastoreInstanceProvider.getInstanceAndGroup())

@@ -109,7 +109,6 @@ class CodeServiceImpl(
 	override suspend fun isValid(code: CodeStub, ofType: String?): Boolean = codeLogic.isValid(code, ofType)
 
 	override suspend fun getCodeByLabel(region: String?, label: String, type: String, languages: List<String>): Code? = codeLogic.getCodeByLabel(region, label, type, languages)
-	override fun matchCodesBy(filter: AbstractFilter<Code>): Flow<String> = codeLogic.matchEntitiesBy(filter)
 
 	override fun getConflictingEntitiesIds(): Flow<String> = codeLogic.getConflictingEntitiesIds()
 	override fun getConflictsFor(entityId: String): Flow<Code> = codeLogic.getConflictsFor(entityId)
@@ -127,4 +126,11 @@ class CodeServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = codeLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Code>): Flow<String> = codeLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Code>
+	): Flow<ViewQueryResultEvent> = codeLogic.filterEntitiesBy(paginationOffset, filter)
 }

@@ -83,14 +83,7 @@ class HealthcarePartyServiceImpl(
 
 	override suspend fun getHcpHierarchyIds(sender: HealthcareParty): HashSet<String> = healthcarePartyLogic.getHcpHierarchyIds(sender)
 
-	override fun filterHealthcareParties(
-		paginationOffset: PaginationOffset<Nothing>,
-		filter: FilterChain<HealthcareParty>
-	): Flow<ViewQueryResultEvent> = healthcarePartyLogic.filterHealthcareParties(paginationOffset, filter)
-
 	override fun modifyHealthcareParties(entities: Collection<HealthcareParty>): Flow<HealthcareParty> = healthcarePartyLogic.modifyEntities(entities)
-	override fun matchHealthcarePartiesBy(filter: AbstractFilter<HealthcareParty>): Flow<String> = healthcarePartyLogic.matchEntitiesBy(filter)
-
 	override fun getConflictingEntitiesIds(): Flow<String> = healthcarePartyLogic.getConflictingEntitiesIds()
 	override fun getConflictsFor(entityId: String): Flow<HealthcareParty> = healthcarePartyLogic.getConflictsFor(entityId)
 	override suspend fun declareConflictWinner(
@@ -107,4 +100,11 @@ class HealthcarePartyServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = healthcarePartyLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<HealthcareParty>): Flow<String> = healthcarePartyLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<HealthcareParty>
+	): Flow<ViewQueryResultEvent> = healthcarePartyLogic.filterEntitiesBy(paginationOffset, filter)
 }

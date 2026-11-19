@@ -51,9 +51,6 @@ class LiteDAOConfig : DaoConfig {
 	@Value("\${icure.dao.backgroundIndexationWorkers:1}")
 	var backgroundIndexationWorkers: Int = 1
 
-	@Value("\${icure.dao.indexBuiltInViews:true}")
-	var indexBuiltInViews: Boolean = true
-
 	override val queryProviderCompatibilityMode = true
 
 	@Bean

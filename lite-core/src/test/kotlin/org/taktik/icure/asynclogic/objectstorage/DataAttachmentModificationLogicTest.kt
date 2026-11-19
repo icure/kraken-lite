@@ -15,6 +15,7 @@ import io.mockk.mockk
 import io.mockk.slot
 import kotlinx.coroutines.flow.Flow
 import org.springframework.core.io.buffer.DataBuffer
+import org.taktik.couchdb.entity.AttachmentUpload
 import org.taktik.commons.uti.UTI
 import org.taktik.icure.asyncdao.DocumentDAO
 import org.taktik.icure.asynclogic.objectstorage.impl.DocumentDataAttachmentModificationLogicImpl
@@ -74,23 +75,16 @@ class DataAttachmentModificationLogicTest : StringSpec({
 		expectedObjectStorageDeletions: Map<String, String> = emptyMap()
 	): suspend () -> Unit {
 		val minimumDeletionTime = System.currentTimeMillis()
+		// The entity, the content of its new couchdb attachments and the removal of the obsolete ones are all
+		// written by a single saveWithAttachments call, in a single revision.
 		val savedDocument = slot<Document>()
-		coEvery { dao.save(datastoreInfo, capture(savedDocument)) } answers { arg<Document>(1).let { it.withIdRev(rev = nextRev(it.rev)) } }
-		val couchDbData = mutableMapOf<String, Pair<String, Flow<ByteBuffer>>>()
-		if (expectedCouchDbCreations.isNotEmpty()) {
-			coEvery { dao.createAttachment(datastoreInfo, initialDocument.id, any(), any(), any(), any()) } answers {
-				couchDbData[arg(2)] = Pair(arg(4), arg(5))
-				nextRev(arg(3))
-			}
-		}
+		val couchDbUploads = slot<Map<String, AttachmentUpload>>()
+		coEvery {
+			dao.saveWithAttachments(datastoreInfo, capture(savedDocument), capture(couchDbUploads))
+		} answers { secondArg<Document>().let { it.withIdRev(rev = nextRev(it.rev)) } }
 		coEvery {
 			dao.get(datastoreInfo, initialDocument.id)
 		} returns initialDocument
-		expectedCouchDbDeletions.forEach { (_, attachmentId) ->
-			coEvery {
-				dao.deleteAttachment(datastoreInfo, initialDocument.id, any(), attachmentId)
-			} answers { nextRev(thirdArg()) }
-		}
 		val objectStoreData = mutableMapOf<String, Pair<Flow<DataBuffer>, Long>>()
 		if (expectedObjectStorageCreations.isNotEmpty()) {
 			coEvery { icureObjectStorage.scheduleStoreAttachment(any(), any()) } just Runs
@@ -105,7 +99,11 @@ class DataAttachmentModificationLogicTest : StringSpec({
 			}
 		}
 		return {
-			println(savedDocument.captured)
+			val couchDbData: Map<String, Pair<String, Flow<ByteBuffer>>> =
+				couchDbUploads.captured.mapValues { (_, upload) -> upload.contentType to upload.data }
+			couchDbData.keys shouldBe expectedCouchDbCreations.keys.map {
+				savedDocument.captured.dataAttachments.getValue(it).couchDbAttachmentId
+			}.toSet()
 			savedDocument.captured.apply {
 				// Original attachment data must be unchanged
 				(dataAttachments - expectedCouchDbCreations.keys - expectedObjectStorageCreations.keys) shouldBe (initialDocument.dataAttachments
@@ -115,8 +113,11 @@ class DataAttachmentModificationLogicTest : StringSpec({
 					- expectedObjectStorageCreations.keys
 					)
 				deletedAttachments shouldContainAll initialDocument.deletedAttachments
-				// Must first upload couchdb attachments
-				rev shouldBe expectedCouchDbCreations.toList().fold(initialDocument.rev) { rev, _ -> nextRev(rev) }
+				// Everything is saved from the current revision, so a failed update leaves the entity untouched
+				rev shouldBe initialDocument.rev
+				// The couchdb attachments of the entity are exactly the ones still referenced by a data attachment:
+				// the obsolete ones are deleted by leaving them out
+				attachments.orEmpty().keys shouldBe dataAttachments.values.mapNotNull { it.couchDbAttachmentId }.toSet()
 				// There should not be unexpected attachments or deleted attachments
 				dataAttachments.keys shouldBe (initialDocument.dataAttachments.keys
 					- expectedCouchDbDeletions.keys
@@ -144,6 +145,7 @@ class DataAttachmentModificationLogicTest : StringSpec({
 				}
 			}
 			expectedCouchDbDeletions.forEach { (attachmentKey, attachmentId) ->
+				savedDocument.captured.attachments.orEmpty().keys.contains(attachmentId) shouldBe false
 				savedDocument.captured.deletedAttachments.firstOrNull { d ->
 					d.couchDbAttachmentId == attachmentId && d.key == attachmentKey && d.deletionTime?.let { it >= minimumDeletionTime } == true
 				}.shouldNotBeNull()

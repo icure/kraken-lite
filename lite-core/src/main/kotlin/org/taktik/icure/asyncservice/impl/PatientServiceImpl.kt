@@ -156,8 +156,6 @@ class PatientServiceImpl(
 		omitEncryptionKeysOfFrom: Boolean
 	): Patient = patientLogic.mergePatients(fromId, expectedFromRev, updatedInto, omitEncryptionKeysOfFrom)
 
-	override fun matchPatientsBy(filter: AbstractFilter<Patient>): Flow<String> = patientLogic.matchEntitiesBy(filter)
-
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Patient>> = patientLogic.bulkShareOrUpdateMetadata(requests)
 
 	override fun getConflictingEntitiesIds(): Flow<String> = patientLogic.getConflictingEntitiesIds()
@@ -176,4 +174,11 @@ class PatientServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = patientLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Patient>): Flow<String> = patientLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Patient>
+	): Flow<ViewQueryResultEvent> = patientLogic.filterEntitiesBy(paginationOffset, filter)
 }
