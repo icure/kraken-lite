@@ -4,10 +4,13 @@
 
 package org.taktik.icure
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
@@ -64,6 +67,7 @@ import org.taktik.icure.entities.embed.Visibility
 import org.taktik.icure.pagination.PaginationRowElement
 import org.taktik.icure.properties.AuthenticationLiteProperties
 import org.taktik.icure.properties.CouchDbLiteProperties
+import org.taktik.icure.properties.LiteCustomEntitiesProperties
 import org.taktik.icure.utils.suspendRetry
 import java.util.*
 import kotlin.system.exitProcess
@@ -96,7 +100,8 @@ import kotlin.time.Duration.Companion.seconds
 		"org.taktik.icure.services.external.rest.v1.controllers",
 		"org.taktik.icure.services.external.rest.v1.controllers.support",
 		"org.taktik.icure.services.external.rest.v1.mapper",
-		"org.taktik.icure.services.external.rest.v2.mapper"
+		"org.taktik.icure.services.external.rest.v2.mapper",
+		"org.taktik.icure.utils"
 	],
 	exclude = [
 		FreeMarkerAutoConfiguration::class,
@@ -127,7 +132,8 @@ class ICureBackendApplication {
 		datastoreInstanceProvider: DatastoreInstanceProvider,
 		externalViewsConfig: ExternalViewsConfig,
 		daoConfig: LiteDAOConfig,
-		schemaProvider: LiteDesignDocSchemaProvider
+		schemaProvider: LiteDesignDocSchemaProvider,
+		customEntitiesProperties: LiteCustomEntitiesProperties
 	) = ApplicationRunner {
 		//Check that core types have corresponding codes
 		log.info("icure (" + iCureLogic.getVersion() + ") is initialised")
@@ -140,15 +146,14 @@ class ICureBackendApplication {
 					key = "batch_channels",
 					newValue = "${daoConfig.backgroundIndexationWorkers}"
 				)
-				if (daoConfig.indexBuiltInViews) {
-					allDaos.forEach { dao ->
-						dao.forceInitStandardDesignDocument(
-							datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
-							updateIfExists = true,
-							partition = Partitions.Main,
-							ignoreIfUnchanged = true
-						)
-					}
+				allDaos.forEach { dao ->
+					dao.forceInitStandardDesignDocument(
+						datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
+						onlyForSystemViews = customEntitiesProperties.designDocSchemaPath != null,
+						updateIfExists = true,
+						partition = Partitions.Main,
+						ignoreIfUnchanged = true
+					)
 				}
 				allInternalDaos.forEach { dao ->
 					dao.forceInitStandardDesignDocument(true)
@@ -159,7 +164,8 @@ class ICureBackendApplication {
 					externalViewRepositories = externalViewsConfig.repos,
 					datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
 					daoConfig = daoConfig,
-					schemaProvider = schemaProvider
+					schemaProvider = schemaProvider,
+					customEntitiesProperties = customEntitiesProperties,
 				)
 				allObjectStorageLogic.forEach { logic -> logic.rescheduleFailedStorageTasks() }
 				allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
@@ -217,7 +223,8 @@ class ICureBackendApplication {
 		externalViewRepositories: Map<String, String>,
 		datastoreInformation: IDatastoreInformation,
 		daoConfig: LiteDAOConfig,
-		schemaProvider: LiteDesignDocSchemaProvider
+		schemaProvider: LiteDesignDocSchemaProvider,
+		customEntitiesProperties: LiteCustomEntitiesProperties
 	) = GlobalScope.launch {
 
 		suspend fun isIndexingWithDebouncing(): Boolean {
@@ -236,18 +243,28 @@ class ICureBackendApplication {
 		): Boolean = runCatching {
 			dao.warmupPartition(datastoreInformation, partition)
 			true
+		}.onFailure {
+			if (it is CancellationException) {
+				currentCoroutineContext().ensureActive()
+			}
 		}.getOrDefault(false)
 
-		if (daoConfig.indexBuiltInViews) {
-			// The design documents need to be created. If they are not warmed up manually, background indexation will be
-			// started by CouchDB
-			listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
-				log.info("Creating $partition design docs.")
-				genericDAOs.forEach {
-					it.forceInitStandardDesignDocument(datastoreInformation, true, partition = partition, ignoreIfUnchanged = true)
-				}
+		// The design documents need to be created. If they are not warmed up manually, background indexation will be
+		// started by CouchDB
+		listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
+			log.info("Creating $partition design docs.")
+			genericDAOs.forEach {
+				it.forceInitStandardDesignDocument(
+					datastoreInformation = datastoreInformation,
+					onlyForSystemViews = customEntitiesProperties.designDocSchemaPath != null,
+					updateIfExists = true,
+					partition = partition,
+					ignoreIfUnchanged = true
+				)
 			}
+		}
 
+		if (customEntitiesProperties.designDocSchemaPath == null) {
 			// Warm up a view will trigger foreground indexation, that will occupy all the resources in the system.
 			listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
 				genericDAOs.filter { dao ->

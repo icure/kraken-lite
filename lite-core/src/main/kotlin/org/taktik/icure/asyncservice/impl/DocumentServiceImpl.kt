@@ -4,12 +4,15 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.core.io.buffer.DataBuffer
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.DocumentLogic
 import org.taktik.icure.asynclogic.objectstorage.DataAttachmentChange
 import org.taktik.icure.asyncservice.DocumentService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.BatchUpdateDocumentInfo
 import org.taktik.icure.domain.filter.AbstractFilter
+import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Document
 import org.taktik.icure.entities.conflicts.ConflictResolutionResult
 import org.taktik.icure.entities.conflicts.ConflictResolutionStrategy
@@ -83,7 +86,6 @@ class DocumentServiceImpl(
 	override fun undeleteDocuments(documentIds: List<IdAndRev>): Flow<Document> = documentLogic.undeleteEntities(documentIds)
 
 	override suspend fun modifyDocuments(documents: Collection<Document>): Flow<Document> = documentLogic.modifyEntities(documents)
-	override fun matchDocumentsBy(filter: AbstractFilter<Document>): Flow<String> = documentLogic.matchEntitiesBy(filter)
 
 	override fun bulkShareOrUpdateMetadata(requests: BulkShareOrUpdateMetadataParams): Flow<EntityBulkShareResult<Document>> = documentLogic.bulkShareOrUpdateMetadata(requests)
 
@@ -103,4 +105,11 @@ class DocumentServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = documentLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Document>): Flow<String> = documentLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Document>
+	): Flow<ViewQueryResultEvent> = documentLogic.filterEntitiesBy(paginationOffset, filter)
 }

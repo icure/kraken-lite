@@ -53,13 +53,6 @@ class UserServiceImpl(
 		skipPatients: Boolean
 	): Flow<PaginationElement> = userLogic.listUsers(paginationOffset, skipPatients)
 
-	override fun filterUsers(
-		paginationOffset: PaginationOffset<Nothing>,
-		filter: FilterChain<User>
-	): Flow<ViewQueryResultEvent> = userLogic.filterUsers(paginationOffset, filter)
-
-	override fun matchUsersBy(filter: AbstractFilter<User>): Flow<String> = userLogic.matchEntitiesBy(filter)
-
 	override suspend fun modifyUser(modifiedUser: User): User = userLogic.modifyUser(modifiedUser)
 	override fun modifyUsers(users: List<User>): Flow<User> = userLogic.modifyEntities(users)
 
@@ -68,6 +61,16 @@ class UserServiceImpl(
 		userId: String,
 		propertyTypeIdentifiers: Set<String>
 	): User? = userLogic.removeProperties(userId, propertyTypeIdentifiers)
+
+	override suspend fun deleteAuthenticationToken(
+		userId: String,
+		key: String
+	): User = userLogic.deleteAuthenticationToken(userId, key)
+
+	override suspend fun deleteAllAuthenticationTokens(
+		userId: String,
+		keysToSkip: Set<String>
+	): User = userLogic.deleteAllAuthenticationTokens(userId, keysToSkip)
 
 	override suspend fun disableUser(userId: String): User? = userLogic.disableUser(userId)
 
@@ -123,4 +126,11 @@ class UserServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = userLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<User>): Flow<String> = userLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<User>
+	): Flow<ViewQueryResultEvent> = userLogic.filterEntitiesBy(paginationOffset, filter)
 }

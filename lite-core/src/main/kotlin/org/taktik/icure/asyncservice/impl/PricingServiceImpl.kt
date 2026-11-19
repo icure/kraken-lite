@@ -8,6 +8,7 @@ import org.taktik.icure.asynclogic.TarificationLogic
 import org.taktik.icure.asyncservice.PricingService
 import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
+import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Tarification
 import org.taktik.icure.pagination.PaginationElement
 
@@ -34,10 +35,6 @@ class PricingServiceImpl(
 		version: String?
 	): Flow<Tarification> = tarificationLogic.findTarificationsBy(region, type, tarification, version)
 
-	override fun matchTarificationsBy(filter: AbstractFilter<Tarification>): Flow<String> {
-		throw NotImplementedError()
-	}
-
 	override fun findTarificationsBy(
 		region: String?,
 		type: String?,
@@ -63,4 +60,10 @@ class PricingServiceImpl(
 	): Flow<ViewQueryResultEvent> = tarificationLogic.findTarificationsByLabel(region, language, type, label, paginationOffset)
 
 	override suspend fun getOrCreateTarification(type: String, tarification: String): Tarification? = tarificationLogic.getOrCreateTarification(type, tarification)
+	override fun matchEntitiesBy(filter: AbstractFilter<Tarification>): Flow<String> = tarificationLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Tarification>
+	): Flow<ViewQueryResultEvent> = tarificationLogic.filterEntitiesBy(paginationOffset, filter)
 }

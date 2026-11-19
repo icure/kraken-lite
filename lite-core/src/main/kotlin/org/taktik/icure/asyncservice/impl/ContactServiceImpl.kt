@@ -85,11 +85,6 @@ class ContactServiceImpl(
 
 	override fun listContactsByHcPartyAndFormIds(hcPartyId: String, ids: List<String>): Flow<Contact> = contactLogic.listContactsByHcPartyAndFormIds(hcPartyId, ids)
 
-	override fun filterContacts(
-		paginationOffset: PaginationOffset<Nothing>,
-		filter: FilterChain<Contact>
-	): Flow<ViewQueryResultEvent> = contactLogic.filterContacts(paginationOffset, filter)
-
 	override fun filterServices(
 		paginationOffset: PaginationOffset<Nothing>,
 		filter: FilterChain<Service>
@@ -109,7 +104,6 @@ class ContactServiceImpl(
 	override fun createContacts(contacts: Flow<Contact>): Flow<Contact> = contactLogic.createContacts(contacts)
 
 	override fun modifyContacts(contacts: Collection<Contact>): Flow<Contact> = contactLogic.modifyContacts(contacts.toList())
-	override fun matchContactsBy(filter: AbstractFilter<Contact>): Flow<String> = contactLogic.matchEntitiesBy(filter)
 
 	override fun matchServicesBy(filter: AbstractFilter<Service>): Flow<String> = contactLogic.matchEntitiesBy(filter)
 
@@ -131,4 +125,11 @@ class ContactServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = contactLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Contact>): Flow<String> = contactLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Contact>
+	): Flow<ViewQueryResultEvent> = contactLogic.filterEntitiesBy(paginationOffset, filter)
 }

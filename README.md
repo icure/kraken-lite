@@ -116,22 +116,14 @@ for each entity.
 To define the custom DesignDocs, you need to set up the following properties:
 The url of the public repository containing the views: 
 ```bash
--Dbuiltin-views-repository=https://github.com/icure/kraken-builtin-views
+-Dicure.customentities.builtInViewsRepository=https://github.com/icure/kraken-builtin-views
 ```
-Then you have to define the views to include for each entity, as a property for each entity that associates the name of 
-the entity to the list of views:
+The path pointing to the JSON file with the DesignDoc schema downloaded from the cockpit:
 ```bash
--Dicure.designdoc.lite.views-by-entity.Contact=all,service_by_all_delegates_code_prefix,by_all_delegates_code,by_service_latest
--Dicure.designdoc.lite.views-by-entity.Document=all,conflicts
--Dicure.designdoc.lite.views-by-entity.HealthElement=all,conflicts
+-Dicure.customentities.designDocSchemaPath=/path/to/schema.json
 ```
 The views will be automatically indexed in background. You can set up foreground indexation for all the views of a single
 entity or for all the entity as described in the previous section.
-
-You can disable the creation of the design document defined in the code of kraken-lite by setting up the following property
-```bash
--Dicure.dao.indexBuiltInViews=false
-```
 
 ### Kraken-lite authentication
 

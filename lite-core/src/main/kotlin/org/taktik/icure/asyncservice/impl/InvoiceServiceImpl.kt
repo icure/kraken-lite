@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.toList
 import org.springframework.stereotype.Service
 import org.taktik.couchdb.DocIdentifier
+import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.InvoiceLogic
@@ -142,7 +143,6 @@ class InvoiceServiceImpl(
 	override fun getUnsentInvoicesForUsersAndInsuranceIds(userIds: List<String>?): Flow<Invoice> = invoiceLogic.getUnsentInvoicesForUsersAndInsuranceIds(userIds)
 
 	override fun createInvoices(invoices: Collection<Invoice>): Flow<Invoice> = invoiceLogic.createEntities(invoices)
-	override fun matchInvoicesBy(filter: AbstractFilter<Invoice>): Flow<String> = invoiceLogic.matchEntitiesBy(filter)
 	override fun deleteInvoices(ids: List<IdAndRev>): Flow<Invoice> = invoiceLogic.deleteEntities(ids)
 	override suspend fun deleteInvoice(id: String, rev: String?): Invoice = invoiceLogic.deleteEntity(id, rev)
 	override suspend fun purgeInvoice(id: String, rev: String): DocIdentifier = invoiceLogic.purgeEntity(id, rev)
@@ -168,4 +168,11 @@ class InvoiceServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = invoiceLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Invoice>): Flow<String> = invoiceLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Invoice>
+	): Flow<ViewQueryResultEvent> = invoiceLogic.filterEntitiesBy(paginationOffset, filter)
 }

@@ -7,6 +7,7 @@ import org.taktik.couchdb.ViewQueryResultEvent
 import org.taktik.couchdb.entity.IdAndRev
 import org.taktik.icure.asynclogic.DeviceLogic
 import org.taktik.icure.asyncservice.DeviceService
+import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.domain.filter.AbstractFilter
 import org.taktik.icure.domain.filter.chain.FilterChain
 import org.taktik.icure.entities.Device
@@ -43,14 +44,7 @@ class DeviceServiceImpl(
 	override suspend fun undeleteDevice(id: String, rev: String): Device = deviceLogic.undeleteEntity(id, rev)
 	override fun undeleteDevices(deviceIds: List<IdAndRev>): Flow<Device> = deviceLogic.undeleteEntities(deviceIds)
 
-	override fun filterDevices(
-		filter: FilterChain<Device>,
-		limit: Int,
-		startDocumentId: String?
-	): Flow<ViewQueryResultEvent> = deviceLogic.filterDevices(filter, limit, startDocumentId)
-
 	override fun getEntityIds(): Flow<String> = deviceLogic.getEntityIds()
-	override fun matchDevicesBy(filter: AbstractFilter<Device>): Flow<String> = deviceLogic.matchEntitiesBy(filter)
 
 	override fun getConflictingEntitiesIds(): Flow<String> = deviceLogic.getConflictingEntitiesIds()
 	override fun getConflictsFor(entityId: String): Flow<Device> = deviceLogic.getConflictsFor(entityId)
@@ -68,4 +62,11 @@ class DeviceServiceImpl(
 		ids: List<String>?,
 		strategy: ConflictResolutionStrategy
 	): Flow<MergeResult> = deviceLogic.solveConflicts(limit, ids, strategy)
+
+	override fun matchEntitiesBy(filter: AbstractFilter<Device>): Flow<String> = deviceLogic.matchEntitiesBy(filter)
+
+	override fun filterEntitiesBy(
+		paginationOffset: PaginationOffset<Nothing>,
+		filter: FilterChain<Device>
+	): Flow<ViewQueryResultEvent> = deviceLogic.filterEntitiesBy(paginationOffset, filter)
 }
