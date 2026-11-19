@@ -26,6 +26,7 @@ import org.taktik.icure.asyncdao.Partitions
 import org.taktik.icure.asyncdao.components.ExternalViewsLoader
 import org.taktik.icure.config.ExternalViewsConfig
 import org.taktik.icure.properties.CouchDbLiteProperties
+import org.taktik.icure.properties.LiteCustomEntitiesProperties
 import java.time.Duration
 import java.util.concurrent.TimeUnit
 
@@ -34,7 +35,8 @@ import java.util.concurrent.TimeUnit
 class LiteDesignDocumentProvider(
 	private val couchDbProperties: CouchDbLiteProperties,
 	private val externalViewsLoader: ExternalViewsLoader?,
-	private val externalViewsConfig: ExternalViewsConfig
+	private val externalViewsConfig: ExternalViewsConfig,
+	private val customEntitiesProperties: LiteCustomEntitiesProperties,
 ) : DesignDocumentProvider() {
 	private data class DesignDocInfo(val metaDataSource: Any, val entityClass: Class<*>, val partition: String?)
 
@@ -110,7 +112,9 @@ class LiteDesignDocumentProvider(
 				generateDesignDocuments(
 					entityClass = entityClass,
 					metaDataSource = metaDataSource,
-					onlyForSystemViews = false
+					// Must mirror how the design docs were created to get the same version hash: only the system views
+					// are created from the code when a custom schema is used.
+					onlyForSystemViews = customEntitiesProperties.customSchemaEnabled
 				).find { it.id.startsWith(baseId) }
 			} else {
 				generateExternalDesignDocuments(entityClass, externalViewsConfig.repos).find { it.id.startsWith(baseId) }
@@ -167,7 +171,7 @@ class LiteDesignDocumentProvider(
 						DesignDocumentFactory.TargetPartition.Partition(partition.partitionName)
 				},
 				metaDataSource = metaDataSource,
-				useVersioning = false
+				useVersioning = true
 			).filter { dd ->
 				when(partition) {
 					Partitions.All -> true

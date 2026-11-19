@@ -1,8 +1,6 @@
 package org.taktik.icure.dao
 
 import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -24,14 +22,12 @@ import org.taktik.icure.dao.repositories.GitHubRepoDownloader
 import org.taktik.icure.datastore.IDatastoreInformation
 import org.taktik.icure.entities.designdoc.DesignDocSchema
 import org.taktik.icure.properties.LiteCustomEntitiesProperties
-import java.io.File
 import kotlin.time.Duration.Companion.seconds
 
 @Service
 class LiteDesignDocSchemaProvider(
 	private val customEntitiesProperties: LiteCustomEntitiesProperties,
 	private val gitHubRepoDownloader: GitHubRepoDownloader,
-	private val objectMapper: ObjectMapper,
 ) : DesignDocSchemaProvider {
 
 	private val logger = LoggerFactory.getLogger(this.javaClass)
@@ -46,14 +42,11 @@ class LiteDesignDocSchemaProvider(
 		daoConfig: LiteDAOConfig,
 		isIndexing: suspend () -> Boolean,
 	) where T : GenericDAO<*>, T : CouchDbDAO {
-		val builtInViewsRepository = customEntitiesProperties.builtinViewsRepository
-		val loadedSchema = customEntitiesProperties.designDocSchemaPath?.let {
-			objectMapper.readValue<DesignDocSchema>(File(it).readText())
-		}
-		if (builtInViewsRepository != null && loadedSchema != null) {
+		val loadedSchema = customEntitiesProperties.designDocSchema
+		if (loadedSchema != null) {
 			logger.info("Starting generation of schema design docs")
 			val daoByEntity = daoList.associateBy { it.entityClass.simpleName }
-			val loadedViews = gitHubRepoDownloader.downloadViewsFromRepo(builtInViewsRepository)
+			val loadedViews = gitHubRepoDownloader.downloadViewsFromRepo(customEntitiesProperties.builtinViewsRepository)
 			val viewToPartitionByEntity =
 				loadedSchema.viewsByEntity.entries.associate { (entity, viewsToCloudPartition) ->
 					logger.info("Creating design docs for $entity")
@@ -109,17 +102,7 @@ class LiteDesignDocSchemaProvider(
 			)
 			logger.info("Generation of schema design docs completed")
 		} else {
-			logger.info(
-				buildString {
-					append("Will not generate views for custom schema:")
-					append(
-						listOfNotNull(
-							if (builtInViewsRepository == null) "`icure.customentities.builtInViewsRepository`" else null,
-							if (loadedSchema == null) "icure.customentities.designDocSchemaPath" else null,
-						).joinToString(", ") { "$it is null" }
-					)
-				}
-			)
+			logger.info("Will not generate views for custom schema: icure.customentities.designDocSchemaPath is not set")
 		}
 	}
 

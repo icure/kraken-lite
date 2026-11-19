@@ -11,8 +11,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.flow.filterIsInstance
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
@@ -27,6 +25,7 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
 import org.springframework.boot.autoconfigure.jdbc.JndiDataSourceAutoConfiguration
 import org.springframework.boot.autoconfigure.web.reactive.error.ErrorWebFluxAutoConfiguration
 import org.springframework.boot.builder.SpringApplicationBuilder
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Profile
@@ -50,7 +49,6 @@ import org.taktik.icure.config.ExternalViewsConfig
 import org.taktik.icure.config.LiteDAOConfig
 import org.taktik.icure.constants.Users
 import org.taktik.icure.dao.LiteDesignDocSchemaProvider
-import org.taktik.icure.db.PaginationOffset
 import org.taktik.icure.entities.User
 import org.taktik.icure.entities.embed.AddressType
 import org.taktik.icure.entities.embed.Confidentiality
@@ -64,7 +62,6 @@ import org.taktik.icure.entities.embed.PaymentType
 import org.taktik.icure.entities.embed.PersonalStatus
 import org.taktik.icure.entities.embed.TelecomType
 import org.taktik.icure.entities.embed.Visibility
-import org.taktik.icure.pagination.PaginationRowElement
 import org.taktik.icure.properties.AuthenticationLiteProperties
 import org.taktik.icure.properties.CouchDbLiteProperties
 import org.taktik.icure.properties.LiteCustomEntitiesProperties
@@ -112,6 +109,7 @@ import kotlin.time.Duration.Companion.seconds
 	]
 )
 @EnableScheduling
+@EnableConfigurationProperties(LiteCustomEntitiesProperties::class)
 class ICureBackendApplication {
 	private val log = LoggerFactory.getLogger(this.javaClass)
 
@@ -149,7 +147,7 @@ class ICureBackendApplication {
 				allDaos.forEach { dao ->
 					dao.forceInitStandardDesignDocument(
 						datastoreInformation = datastoreInstanceProvider.getInstanceAndGroup(),
-						onlyForSystemViews = customEntitiesProperties.designDocSchemaPath != null,
+						onlyForSystemViews = customEntitiesProperties.customSchemaEnabled,
 						updateIfExists = true,
 						partition = Partitions.Main,
 						ignoreIfUnchanged = true
@@ -171,11 +169,11 @@ class ICureBackendApplication {
 				allObjectStorageMigrationLogic.forEach { logic -> logic.rescheduleStoredMigrationTasks() }
 			}
 
+			// hasEntities only queries the User `all` view, which is a system view: it exists whether or not a
+			// custom design doc schema is used, and before the background generation of the schema completes.
 			if (
 				authenticationLiteProperties.createAdminUser &&
-					suspendRetry(10) {
-						userLogic.listUsers(PaginationOffset(1), true)
-							.filterIsInstance<PaginationRowElement<*, *>>().toList().isEmpty() }
+					suspendRetry(10) { !userLogic.hasEntities() }
 			) {
 				val password = UUID.randomUUID().toString().substring(0,13).replace("-","")
 				userLogic.createUser(User(id = UUID.randomUUID().toString(), login = "admin", passwordHash = password, type =  Users.Type.database, status = Users.Status.ACTIVE))
@@ -256,7 +254,7 @@ class ICureBackendApplication {
 			genericDAOs.forEach {
 				it.forceInitStandardDesignDocument(
 					datastoreInformation = datastoreInformation,
-					onlyForSystemViews = customEntitiesProperties.designDocSchemaPath != null,
+					onlyForSystemViews = customEntitiesProperties.customSchemaEnabled,
 					updateIfExists = true,
 					partition = partition,
 					ignoreIfUnchanged = true
@@ -264,7 +262,7 @@ class ICureBackendApplication {
 			}
 		}
 
-		if (customEntitiesProperties.designDocSchemaPath == null) {
+		if (!customEntitiesProperties.customSchemaEnabled) {
 			// Warm up a view will trigger foreground indexation, that will occupy all the resources in the system.
 			listOf(Partitions.Maurice, Partitions.DataOwner).forEach { partition ->
 				genericDAOs.filter { dao ->

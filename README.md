@@ -114,9 +114,9 @@ entity of any partition.
 Kraken-lite supports the new custom design documents mechanism, that allow to only create and index the desired view
 for each entity.
 To define the custom DesignDocs, you need to set up the following properties:
-The url of the public repository containing the views: 
+The url of the public repository containing the views (optional, defaults to `https://github.com/icure/kraken-builtin-views`):
 ```bash
--Dicure.customentities.builtInViewsRepository=https://github.com/icure/kraken-builtin-views
+-Dicure.customentities.builtinViewsRepository=https://github.com/icure/kraken-builtin-views
 ```
 The path pointing to the JSON file with the DesignDoc schema downloaded from the cockpit:
 ```bash

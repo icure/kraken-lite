@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Repository
 import org.taktik.couchdb.annotation.View
 import org.taktik.couchdb.dao.DesignDocumentProvider
+import org.taktik.couchdb.dao.annotations.SystemView
 import org.taktik.couchdb.entity.ComplexKey
 import org.taktik.couchdb.queryViewIncludeDocsNoValue
 import org.taktik.icure.asyncdao.CouchDbDispatcher
@@ -18,6 +19,7 @@ import org.taktik.icure.entities.base.HasDataAttachments
 import org.taktik.icure.entities.objectstorage.ObjectStorageTask
 
 @Repository
+@SystemView
 @View(name = "all", map = "function(doc) { if (doc.java_type == 'org.taktik.icure.entities.objectstorage.ObjectStorageTask' && !doc.deleted) emit( null, doc._id )}")
 class ObjectStorageTasksDAOImpl(
 	@Qualifier("systemCouchDbDispatcher") systemCouchDbDispatcher: CouchDbDispatcher,
@@ -34,6 +36,7 @@ class ObjectStorageTasksDAOImpl(
 		private const val BY_ENTITY_CLASS = "by_entityclass"
 	}
 
+	@SystemView
 	@View(name = BY_ENTITY_CLASS_ENTITY_ID_ATTACHMENT_ID, map = "function(doc) { if (doc.java_type === 'org.taktik.icure.entities.objectstorage.ObjectStorageTask' && !doc.deleted) emit([doc.entityClassName, doc.entityId, doc.attachmentId], doc._id) }")
 	override fun findRelatedTasks(task: ObjectStorageTask): Flow<ObjectStorageTask> = flow {
 		val client = couchDbDispatcher.getClient(datastoreInstanceProvider.getInstanceAndGroup())
@@ -43,6 +46,7 @@ class ObjectStorageTasksDAOImpl(
 		emitAll(client.queryViewIncludeDocsNoValue<ComplexKey, ObjectStorageTask>(viewQuery).map { it.doc })
 	}
 
+	@SystemView
 	@View(name = BY_ENTITY_CLASS, map = "function(doc) { if (doc.java_type === 'org.taktik.icure.entities.objectstorage.ObjectStorageTask' && !doc.deleted) emit(doc.entityClassName, doc._id) }")
 	override fun <T : HasDataAttachments<T>> findTasksForEntities(entityClass: Class<T>) = flow {
 		val client = couchDbDispatcher.getClient(datastoreInstanceProvider.getInstanceAndGroup())

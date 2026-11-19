@@ -64,7 +64,6 @@ class LiteDAOConfigTest : StringSpec({
 
 	"Indexation defaults should favour background indexation" {
 		with(LiteDAOConfig()) {
-			indexBuiltInViews shouldBe true
 			forceForegroundIndexation shouldBe false
 			backgroundIndexationWorkers shouldBe 1
 		}

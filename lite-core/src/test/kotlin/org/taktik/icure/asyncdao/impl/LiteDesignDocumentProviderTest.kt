@@ -5,16 +5,20 @@ import io.kotest.matchers.collections.shouldBeEmpty
 import io.kotest.matchers.collections.shouldContainExactlyInAnyOrder
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
+import io.kotest.matchers.shouldNotBe
 import io.mockk.coEvery
 import io.mockk.mockk
 import org.taktik.couchdb.Client
 import org.taktik.couchdb.annotation.View
 import org.taktik.couchdb.annotation.Views
+import org.taktik.couchdb.dao.annotations.SystemView
 import org.taktik.couchdb.entity.DesignDocument
 import org.taktik.icure.asyncdao.Partitions
+import org.taktik.icure.dao.writeSchemaFile
 import org.taktik.icure.config.ExternalViewsConfig
 import org.taktik.icure.entities.Contact
 import org.taktik.icure.properties.CouchDbPropertiesImpl
+import org.taktik.icure.properties.LiteCustomEntitiesProperties
 
 private const val ALL_MAP = "function(doc) { if (doc.java_type == 'Contact') emit(null, doc._id) }"
 private const val BY_CODE_MAP = "function(doc) { emit(doc.code, doc._id) }"
@@ -32,6 +36,16 @@ private class ContactMetaDataSource
 @Views(View(name = "all", map = ALL_MAP))
 private class MainOnlyMetaDataSource
 
+/** A main partition with a system view next to a regular one, as most generic DAOs have. */
+private class WithSystemViewMetaDataSource {
+	@View(name = "all", map = ALL_MAP)
+	fun all() = Unit
+
+	@SystemView
+	@View(name = "by_code", map = BY_CODE_MAP)
+	fun byCode() = Unit
+}
+
 /**
  * [LiteDesignDocumentProvider] is the lite-only [org.taktik.couchdb.dao.DesignDocumentProvider]. The
  * behaviour pinned here is what keeps a restart cheap: design documents whose views are unchanged must be
@@ -39,10 +53,16 @@ private class MainOnlyMetaDataSource
  */
 class LiteDesignDocumentProviderTest : StringSpec({
 
-	fun provider() = LiteDesignDocumentProvider(
-		couchDbProperties = CouchDbPropertiesImpl(),
-		externalViewsLoader = null,
-		externalViewsConfig = ExternalViewsConfig(),
+	fun provider(customEntitiesProperties: LiteCustomEntitiesProperties = LiteCustomEntitiesProperties()) =
+		LiteDesignDocumentProvider(
+			couchDbProperties = CouchDbPropertiesImpl(),
+			externalViewsLoader = null,
+			externalViewsConfig = ExternalViewsConfig(),
+			customEntitiesProperties = customEntitiesProperties,
+		)
+
+	fun providerWithCustomSchema() = provider(
+		LiteCustomEntitiesProperties(designDocSchemaPath = writeSchemaFile(mapOf("Contact" to listOf("all")))),
 	)
 
 	/** A client that reports [existing] as the design documents already stored in the database. */
@@ -65,6 +85,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		val generated = provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = ContactMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Main,
 			ignoreIfUnchanged = false,
@@ -80,6 +101,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		val generated = provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = ContactMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Maurice,
 			ignoreIfUnchanged = false,
@@ -94,6 +116,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = ContactMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.All,
 			ignoreIfUnchanged = false,
@@ -104,6 +127,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Maurice,
 			ignoreIfUnchanged = false,
@@ -114,6 +138,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		val current = provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Main,
 			ignoreIfUnchanged = false,
@@ -122,6 +147,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = clientWith(listOf(current)),
 			partition = Partitions.Main,
 			ignoreIfUnchanged = true,
@@ -132,6 +158,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		val current = provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Main,
 			ignoreIfUnchanged = false,
@@ -140,6 +167,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = clientWith(listOf(current)),
 			partition = Partitions.Main,
 			ignoreIfUnchanged = true.not(),
@@ -150,6 +178,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		val current = provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Main,
 			ignoreIfUnchanged = false,
@@ -165,6 +194,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = clientWith(listOf(reformatted)),
 			partition = Partitions.Main,
 			ignoreIfUnchanged = true,
@@ -175,6 +205,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		val current = provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Main,
 			ignoreIfUnchanged = false,
@@ -189,6 +220,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = clientWith(listOf(changed)),
 			partition = Partitions.Main,
 			ignoreIfUnchanged = true,
@@ -199,6 +231,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		val current = provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = null,
 			partition = Partitions.Main,
 			ignoreIfUnchanged = false,
@@ -211,6 +244,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = clientWith(listOf(changed)),
 			partition = Partitions.Main,
 			ignoreIfUnchanged = true,
@@ -221,6 +255,7 @@ class LiteDesignDocumentProviderTest : StringSpec({
 		provider().generateDesignDocuments(
 			entityClass = Contact::class.java,
 			metaDataSource = MainOnlyMetaDataSource(),
+			onlyForSystemViews = false,
 			client = clientWith(emptyList()),
 			partition = Partitions.Main,
 			ignoreIfUnchanged = true,
@@ -246,6 +281,20 @@ class LiteDesignDocumentProviderTest : StringSpec({
 			// partition must not invalidate it, otherwise it would be reindexed for nothing.
 			currentDesignDocumentId(Contact::class.java, ContactMetaDataSource(), null) shouldBe first
 		}
+	}
+
+	"With a custom schema, currentDesignDocumentId of a dao should only hash its system views" {
+		val systemOnlyId = provider().generateDesignDocuments(
+			entityClass = Contact::class.java,
+			metaDataSource = WithSystemViewMetaDataSource(),
+			onlyForSystemViews = true,
+			partition = Partitions.Main,
+		).single().id
+
+		// The id must be the one of the design document actually stored, which only has the system views...
+		providerWithCustomSchema().currentDesignDocumentId(Contact::class.java, WithSystemViewMetaDataSource(), null) shouldBe systemOnlyId
+		// ...and not the one of the full design document created when no custom schema is used.
+		provider().currentDesignDocumentId(Contact::class.java, WithSystemViewMetaDataSource(), null) shouldNotBe systemOnlyId
 	}
 
 	"External design documents should be empty when no external views loader is configured" {
